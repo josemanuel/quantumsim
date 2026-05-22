@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Simulator</title>
+<style>
+:root {
+  --bg:#060910;--bg2:#0b0e1c;--bg3:#10142a;
+  --panel:rgba(10,13,28,0.97);--glass:rgba(130,60,255,0.06);--glassc:rgba(0,220,255,0.05);
+  --border:rgba(130,60,255,0.2);--borderc:rgba(0,220,255,0.2);
+  --av:#a855f7;--ac:#00dcff;--am:#f72585;--ag:#39ff8e;--ao:#ffaa00;
+  --text:#d8e8f8;--text2:#5a7090;--text3:#334055;
+  --gv:0 0 18px rgba(168,85,247,.4);--gc:0 0 18px rgba(0,220,255,.4);
+  --gm:0 0 18px rgba(247,37,133,.4);--gg:0 0 18px rgba(57,255,142,.4);
+  --r:10px;--rs:6px;--mono:'Courier New',monospace;--ui:'Trebuchet MS','Segoe UI',sans-serif;
+}
+body.lm{
+  --bg:#f0f3fc;--bg2:#f8f9ff;--bg3:#ffffff;--panel:rgba(255,255,255,.98);
+  --glass:rgba(130,60,255,.05);--glassc:rgba(0,180,220,.04);
+  --border:rgba(130,60,255,.2);--borderc:rgba(0,180,220,.2);
+  --text:#0a1020;--text2:#4a5a80;--text3:#9aaac0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ui);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .4s,color .4s}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(168,85,247,.07) 0,transparent 70%),
+    radial-gradient(ellipse 50% 35% at 80% 80%,rgba(0,220,255,.06) 0,transparent 70%),
+    radial-gradient(ellipse 40% 30% at 60% 30%,rgba(247,37,133,.05) 0,transparent 70%)}
+body.lm::before{display:none}
+#app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;gap:8px;flex-wrap:wrap;
+  background:var(--panel);border-bottom:1px solid var(--border);backdrop-filter:blur(24px);position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.brand-orb{width:38px;height:38px;border-radius:50%;flex-shrink:0;border:2px solid var(--av);position:relative;
+  box-shadow:var(--gv);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--av);
+  animation:orb 6s ease-in-out infinite}
+@keyframes orb{0%,100%{box-shadow:var(--gv)}50%{box-shadow:0 0 32px rgba(168,85,247,.8)}}
+.brand-orb::after{content:'';position:absolute;width:6px;height:6px;background:var(--ac);border-radius:50%;
+  box-shadow:var(--gc);animation:odot 3s linear infinite}
+@keyframes odot{0%{transform:rotate(0deg) translateX(22px)}100%{transform:rotate(360deg) translateX(22px)}}
+.brand h1{font-family:var(--mono);font-size:1rem;letter-spacing:3px;color:var(--av);text-transform:uppercase;line-height:1}
+.brand .sub{font-size:.58rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase}
+.hdr-btns{display:flex;gap:5px;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{padding:6px 13px;border-radius:var(--rs);border:1px solid var(--border);background:var(--glass);
+  color:var(--text);font-family:var(--mono);font-size:.68rem;cursor:pointer;transition:all .2s;
+  letter-spacing:.5px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;user-select:none}
+.btn:hover{border-color:var(--av);color:var(--av);background:rgba(168,85,247,.1);box-shadow:var(--gv);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.c{border-color:var(--borderc);color:var(--ac);background:var(--glassc)}
+.btn.c:hover{background:rgba(0,220,255,.12);box-shadow:var(--gc);border-color:var(--ac)}
+.btn.m{border-color:rgba(247,37,133,.4);color:var(--am);background:rgba(247,37,133,.06)}
+.btn.m:hover{background:rgba(247,37,133,.15);box-shadow:var(--gm)}
+.btn.g{border-color:rgba(57,255,142,.4);color:var(--ag);background:rgba(57,255,142,.06)}
+.btn.g:hover{background:rgba(57,255,142,.15);box-shadow:var(--gg)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* LAYOUT */
+.main{display:grid;grid-template-columns:210px 1fr 290px;flex:1;overflow:hidden}
+
+/* LEFT SIDEBAR */
+.sl{border-right:1px solid var(--border);background:var(--panel);overflow-y:auto;
+  padding:12px;display:flex;flex-direction:column;gap:10px}
+.sec-title{font-family:var(--mono);font-size:.6rem;color:var(--text2);text-transform:uppercase;
+  letter-spacing:2px;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.sec-title::before{content:'';width:3px;height:11px;border-radius:2px;flex-shrink:0}
+.sec-title.v::before{background:var(--av);box-shadow:var(--gv)}
+.sec-title.c::before{background:var(--ac);box-shadow:var(--gc)}
+.sec-title.m::before{background:var(--am);box-shadow:var(--gm)}
+.sec-title.g::before{background:var(--ag);box-shadow:var(--gg)}
+
+.gates-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:4px}
+.gc{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:var(--rs);border:1px solid var(--border);background:var(--glass);
+  cursor:grab;transition:all .2s;gap:1px;user-select:none;position:relative}
+.gc:hover{transform:scale(1.1);z-index:10}
+.gc:active{cursor:grabbing;transform:scale(.96)}
+.gc .gs{font-size:.95rem;line-height:1;font-family:var(--mono);font-weight:bold}
+.gc .gn{font-size:.45rem;text-transform:uppercase;letter-spacing:.5px;opacity:.75}
+.gc.sel{outline:2px solid currentColor;outline-offset:1px}
+.gH{color:var(--ac);border-color:rgba(0,220,255,.4)}.gH:hover{background:rgba(0,220,255,.12);box-shadow:var(--gc)}
+.gX,.gY{color:var(--am);border-color:rgba(247,37,133,.4)}.gX:hover,.gY:hover{background:rgba(247,37,133,.12);box-shadow:var(--gm)}
+.gZ{color:var(--ag);border-color:rgba(57,255,142,.4)}.gZ:hover{background:rgba(57,255,142,.12);box-shadow:var(--gg)}
+.gS,.gT{color:var(--ao);border-color:rgba(255,170,0,.4)}.gS:hover,.gT:hover{background:rgba(255,170,0,.12)}
+.gRx,.gRy,.gRz{color:var(--ag);border-color:rgba(57,255,142,.3)}.gRx:hover,.gRy:hover,.gRz:hover{background:rgba(57,255,142,.1);box-shadow:var(--gg)}
+.gCX,.gCZ,.gSW{color:var(--av);border-color:rgba(168,85,247,.5)}.gCX:hover,.gCZ:hover,.gSW:hover{background:rgba(168,85,247,.12);box-shadow:var(--gv)}
+.gCC{color:var(--am);border-color:rgba(247,37,133,.5)}.gCC:hover{background:rgba(247,37,133,.12);box-shadow:var(--gm)}
+.gM{color:var(--ao);border-color:rgba(255,170,0,.5)}.gM:hover{background:rgba(255,170,0,.12)}
+.gI{color:var(--text2);border-color:var(--border)}
+.gBAR{color:var(--text3);border-color:var(--border);border-style:dashed}
+
+/* CIRCUIT */
+.ca{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.ctb{padding:9px 14px;border-bottom:1px solid var(--border);background:var(--bg2);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.ctb label{font-family:var(--mono);font-size:.62rem;color:var(--text2)}
+input[type=range]{-webkit-appearance:none;height:3px;border-radius:2px;background:var(--border);
+  cursor:pointer;min-width:55px;max-width:100px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--av);cursor:pointer;box-shadow:var(--gv)}
+.qb{font-family:var(--mono);font-size:.65rem;padding:2px 9px;border-radius:20px;
+  background:rgba(168,85,247,.12);border:1px solid var(--border);color:var(--av)}
+.step-info{font-family:var(--mono);font-size:.6rem;color:var(--text2);margin-left:auto;white-space:nowrap}
+#cw{flex:1;overflow:auto;padding:18px 14px;position:relative;background:var(--bg);cursor:crosshair}
+#cc{display:block}
+
+/* RIGHT SIDEBAR */
+.sr{border-left:1px solid var(--border);background:var(--panel);overflow-y:auto;
+  display:flex;flex-direction:column;max-height:calc(100vh - 90px)}
+.mtabs{display:flex;border-bottom:1px solid var(--border)}
+.mt{flex:1;padding:9px 4px;border:none;background:transparent;color:var(--text2);font-family:var(--mono);
+  font-size:.6rem;cursor:pointer;transition:all .2s;text-align:center;letter-spacing:.5px;
+  border-bottom:2px solid transparent}
+.mt.on{color:var(--av);border-bottom-color:var(--av);background:rgba(168,85,247,.06)}
+.mt:hover:not(.on){color:var(--text);background:rgba(255,255,255,.03)}
+.rsp{padding:12px 14px;border-bottom:1px solid var(--border)}
+
+/* Bloch */
+#bcanv{display:block;margin:0 auto}
+.bloch-angles{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.ba-item{text-align:center;padding:5px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass)}
+.ba-lbl{font-family:var(--mono);font-size:.55rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.ba-val{font-family:var(--mono);font-size:.75rem;color:var(--ac);margin-top:2px}
+
+/* State vector */
+.sv-row{display:flex;align-items:center;gap:7px;padding:4px 2px;
+  border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;border-radius:4px;transition:background .15s}
+.sv-row:hover{background:rgba(255,255,255,.03)}
+.sv-ket{color:var(--ac);width:50px;font-family:var(--mono);font-size:.64rem;flex-shrink:0}
+.sv-bw{flex:1;height:7px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.sv-bf{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--av),var(--ac));transition:width .35s ease;box-shadow:0 0 6px rgba(168,85,247,.5)}
+.sv-pct{color:var(--ag);width:36px;text-align:right;font-family:var(--mono);font-size:.58rem;flex-shrink:0}
+.sv-amp{color:var(--text2);font-size:.55rem;min-width:88px;text-align:right;font-family:var(--mono)}
+
+/* Measure buttons */
+.mbtn{width:100%;padding:13px;border-radius:var(--r);border:2px solid var(--am);
+  background:linear-gradient(135deg,rgba(247,37,133,.14),rgba(168,85,247,.07));
+  color:var(--am);font-family:var(--mono);font-size:.8rem;letter-spacing:2px;
+  cursor:pointer;transition:all .3s;box-shadow:var(--gm)}
+.mbtn:hover{box-shadow:0 0 35px rgba(247,37,133,.55);transform:translateY(-2px)}
+.mbtn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+.mbtn-run{width:100%;padding:11px;border-radius:var(--r);margin-bottom:6px;border:2px solid var(--ac);
+  background:linear-gradient(135deg,rgba(0,220,255,.12),rgba(168,85,247,.06));
+  color:var(--ac);font-family:var(--mono);font-size:.8rem;letter-spacing:2px;
+  cursor:pointer;transition:all .3s;box-shadow:var(--gc)}
+.mbtn-run:hover{box-shadow:0 0 35px rgba(0,220,255,.55);transform:translateY(-2px)}
+.mbtn-run:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* Charts */
+#prob-chart{display:block;width:100%;border-radius:var(--rs);border:1px solid var(--border)}
+
+/* Measurement history */
+.mh-bar{display:flex;align-items:center;gap:6px;padding:3px 0;font-family:var(--mono);font-size:.6rem}
+.mh-ket{color:var(--ac);width:44px;flex-shrink:0}
+.mh-bw{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.mh-bf{height:100%;border-radius:3px;background:var(--ag);transition:width .4s}
+.mh-cnt{color:var(--ag);width:28px;text-align:right;font-size:.58rem}
+.mh-pct{color:var(--text2);width:32px;text-align:right;font-size:.55rem}
+
+/* Info card */
+.info-card{border:1px solid var(--border);border-radius:var(--r);padding:12px;background:var(--glass);transition:all .3s}
+.info-card .it{font-family:var(--mono);font-size:.68rem;color:var(--av);margin-bottom:7px;
+  letter-spacing:.8px;display:flex;align-items:center;gap:6px}
+.info-card .it::before{content:'';width:3px;height:11px;background:var(--av);border-radius:2px;box-shadow:var(--gv);flex-shrink:0}
+.info-card p{font-size:.7rem;color:var(--text2);line-height:1.75}
+.info-card .hl{color:var(--av);font-family:var(--mono)}
+.info-card .hc{color:var(--ac);font-family:var(--mono)}
+.mat-box{font-family:var(--mono);font-size:.6rem;color:var(--text2);background:rgba(0,0,0,.25);
+  padding:8px 10px;border-radius:var(--rs);border:1px solid var(--border);margin-top:8px;line-height:2;white-space:pre;overflow-x:auto}
+body.lm .mat-box{background:rgba(0,0,0,.05)}
+
+/* Learn steps */
+.ls{padding:13px;display:none}
+.ls.on{display:block}
+.ls-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ls-num{width:22px;height:22px;border-radius:50%;border:1px solid var(--av);color:var(--av);
+  font-family:var(--mono);font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ls-title{font-family:var(--mono);font-size:.7rem;color:var(--av)}
+.ls-desc{font-size:.7rem;color:var(--text2);line-height:1.75;margin-bottom:11px}
+.ls-desc strong{color:var(--av)}
+.ls-nav{display:flex;gap:5px}
+.ls-progress{display:flex;gap:4px;padding:10px 13px;border-bottom:1px solid var(--border)}
+.ls-dot{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s}
+.ls-dot.on{background:var(--av);box-shadow:var(--gv)}
+.ls-dot.done{background:rgba(168,85,247,.5)}
+
+/* Challenges */
+.ch-card{padding:11px;border:1px solid var(--border);border-radius:var(--rs);
+  background:var(--glass);margin-bottom:7px;position:relative;transition:border-color .3s}
+.ch-card.done{border-color:rgba(57,255,142,.4)}
+.ch-title{font-family:var(--mono);font-size:.68rem;color:var(--ao);margin-bottom:3px}
+.ch-card.done .ch-title{color:var(--ag)}
+.ch-desc{font-size:.63rem;color:var(--text2);line-height:1.5}
+.ch-badge{position:absolute;top:7px;right:7px;font-family:var(--mono);font-size:.52rem;padding:2px 7px;border-radius:20px}
+.ch-badge.pending{background:rgba(255,170,0,.1);border:1px solid rgba(255,170,0,.4);color:var(--ao)}
+.ch-badge.done{background:rgba(57,255,142,.15);border:1px solid rgba(57,255,142,.5);color:var(--ag)}
+
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border)}
+.stat-cell{background:var(--bg2);padding:6px 10px;text-align:center}
+.stat-cell .sv2{font-family:var(--mono);font-size:.8rem;color:var(--ac)}
+.stat-cell .sl2{font-family:var(--mono);font-size:.52rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+
+/* Matrix view */
+.matrix-view{font-family:var(--mono);font-size:.58rem;color:var(--text2);background:rgba(0,0,0,.2);
+  border:1px solid var(--border);border-radius:var(--rs);padding:8px;overflow-x:auto;white-space:pre;line-height:1.8}
+body.lm .matrix-view{background:rgba(0,0,0,.04)}
+
+/* MODALS */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(5px);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:14px;
+  opacity:0;pointer-events:none;transition:opacity .28s}
+.ov.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:22px;
+  width:100%;max-width:640px;max-height:88vh;overflow-y:auto;
+  transform:scale(.9) translateY(18px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:var(--gv),0 32px 100px rgba(0,0,0,.8)}
+.ov.open .modal{transform:scale(1) translateY(0)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mhdr h2{font-family:var(--mono);font-size:.82rem;color:var(--av);letter-spacing:2px;text-transform:uppercase}
+.mclose{background:none;border:1px solid var(--border);color:var(--text2);width:27px;height:27px;
+  border-radius:50%;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.mclose:hover{border-color:var(--am);color:var(--am)}
+.ecard{border:1px solid var(--border);border-radius:var(--rs);padding:13px;background:var(--glass);margin-bottom:10px}
+.ecard .et{font-family:var(--mono);font-size:.68rem;color:var(--ac);margin-bottom:7px;letter-spacing:.8px}
+.ecard p{font-size:.7rem;color:var(--text2);line-height:1.75}
+.ecard .hl{color:var(--av);font-family:var(--mono)}
+.ecard .hm{color:var(--am)}
+.ecard .hc{color:var(--ac)}
+.ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.ex-card{padding:11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass);cursor:pointer;transition:all .2s}
+.ex-card:hover{border-color:var(--ac);background:rgba(0,220,255,.07);box-shadow:var(--gc);transform:translateY(-2px)}
+.ex-card .ext{font-family:var(--mono);font-size:.68rem;color:var(--ac);margin-bottom:4px}
+.ex-card .exd{font-size:.63rem;color:var(--text2);line-height:1.5}
+.glos-item{padding:10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass);margin-bottom:6px}
+.glos-item summary{font-family:var(--mono);font-size:.68rem;color:var(--av);cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px}
+.glos-item summary::before{content:'▶';font-size:.55rem;transition:transform .2s;color:var(--text2)}
+.glos-item[open] summary::before{transform:rotate(90deg);color:var(--av)}
+.glos-body{font-size:.68rem;color:var(--text2);line-height:1.7;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.glos-body .hl{color:var(--av);font-family:var(--mono)}
+.angle-display{font-family:var(--mono);font-size:.75rem;color:var(--ac);text-align:center;
+  padding:7px;background:rgba(0,0,0,.2);border-radius:var(--rs);border:1px solid var(--borderc);margin-bottom:10px}
+.angle-presets{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+
+/* Toast */
+#toasts{position:fixed;bottom:16px;right:16px;z-index:500;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.toast{padding:9px 15px;border-radius:var(--rs);border:1px solid;font-family:var(--mono);font-size:.65rem;
+  backdrop-filter:blur(10px);animation:tin .3s cubic-bezier(.34,1.56,.64,1) both,tout .28s ease 3.5s forwards;
+  display:flex;align-items:center;gap:7px}
+.toast.ok{border-color:var(--ag);color:var(--ag);background:rgba(57,255,142,.1)}
+.toast.er{border-color:var(--am);color:var(--am);background:rgba(247,37,133,.1)}
+.toast.in{border-color:var(--ac);color:var(--ac);background:rgba(0,220,255,.1)}
+.toast.wa{border-color:var(--ao);color:var(--ao);background:rgba(255,170,0,.1)}
+@keyframes tin{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes tout{from{opacity:1}to{opacity:0;transform:translateX(40px)}}
+
+/* Particles */
+#ptcls{position:fixed;inset:0;pointer-events:none;z-index:400;overflow:hidden}
+.pt{position:absolute;border-radius:50%;pointer-events:none;animation:pf var(--d,2s) ease-out forwards}
+@keyframes pf{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx,0),var(--ty,-80px)) scale(0)}}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--av)}
+
+/* Responsive */
+@media(max-width:1000px){
+  .main{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+  .sl{flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--border);max-height:200px}
+  .sr{border-left:none;border-top:1px solid var(--border);max-height:none}
+  .gates-grid{grid-template-columns:repeat(6,1fr)}
+  #bcanv{width:110px!important;height:110px!important}
+}
+@media(max-width:560px){
+  header{padding:7px 10px}.brand h1{font-size:.8rem}
+  .hdr-btns .btn span{display:none}
+  .gates-grid{grid-template-columns:repeat(5,1fr)}
+  .ex-grid{grid-template-columns:1fr}
+}
+
+/* ── QUANTUM UNIVERSE 3D PANEL ──────────────────────── */
+#universe-overlay{position:fixed;inset:0;z-index:150;background:#000;display:none}
+#universe-overlay.open{display:block}
+#uv-canvas{display:block;width:100%;height:100vh;cursor:grab}
+#uv-canvas:active{cursor:grabbing}
+#uv-topbar{position:absolute;top:0;left:0;right:0;z-index:10;padding:10px 18px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  background:linear-gradient(180deg,rgba(0,0,10,.95) 0%,transparent 100%)}
+#uv-title{font-family:var(--mono);font-size:.85rem;letter-spacing:4px;text-transform:uppercase;
+  background:linear-gradient(90deg,#a855f7,#00dcff,#f72585);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#uv-sub{font-size:.55rem;color:#5a7090;letter-spacing:2px;margin-top:1px}
+.uv-btns{display:flex;gap:5px;flex-wrap:wrap}
+.uvb{padding:5px 12px;border-radius:20px;border:1px solid rgba(168,85,247,.4);
+  background:rgba(168,85,247,.1);color:#a855f7;font-family:var(--mono);
+  font-size:.62rem;cursor:pointer;transition:all .2s;letter-spacing:.8px;user-select:none}
+.uvb:hover{background:rgba(168,85,247,.28);box-shadow:0 0 12px rgba(168,85,247,.4)}
+.uvb.c{border-color:rgba(0,220,255,.4);background:rgba(0,220,255,.1);color:#00dcff}
+.uvb.c:hover{background:rgba(0,220,255,.28);box-shadow:0 0 12px rgba(0,220,255,.4)}
+.uvb.m{border-color:rgba(247,37,133,.4);background:rgba(247,37,133,.1);color:#f72585}
+.uvb.m:hover{background:rgba(247,37,133,.28);box-shadow:0 0 12px rgba(247,37,133,.4)}
+.uvb.g{border-color:rgba(57,255,142,.4);background:rgba(57,255,142,.1);color:#39ff8e}
+.uvb.g:hover{background:rgba(57,255,142,.28);box-shadow:0 0 12px rgba(57,255,142,.4)}
+#uv-bottom{position:absolute;bottom:0;left:0;right:0;z-index:10;padding:10px 18px;
+  display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  background:linear-gradient(0deg,rgba(0,0,10,.92) 0%,transparent 100%)}
+#uv-info{font-family:var(--mono);font-size:.6rem;color:#5a7090;line-height:1.9;max-width:380px}
+#uv-info .v{color:#00dcff}
+#uv-info .v2{color:#a855f7}
+#uv-info .v3{color:#f72585}
+#uv-legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.uv-leg{display:flex;align-items:center;gap:5px;font-size:.56rem;font-family:var(--mono);color:#5a7090;letter-spacing:.8px}
+.uv-ld{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+#uv-meas{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:var(--mono);font-size:2.2rem;font-weight:bold;text-align:center;
+  pointer-events:none;z-index:20;opacity:0;transition:opacity .3s;text-shadow:0 0 30px currentColor}
+#uv-tooltip{position:fixed;background:rgba(0,0,10,.92);border:1px solid rgba(168,85,247,.4);
+  padding:8px 14px;border-radius:8px;font-size:.62rem;font-family:var(--mono);
+  pointer-events:none;z-index:400;display:none;line-height:1.9;min-width:200px}
+#uv-tooltip .tv{color:#00dcff}
+#uv-help{position:absolute;bottom:60px;right:18px;font-size:.56rem;color:#2a3a50;
+  text-align:right;line-height:2;pointer-events:none;font-family:var(--mono)}
+#uv-shots-bar{display:flex;flex-direction:column;gap:3px;max-width:220px}
+.uv-sh{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.58rem}
+.uv-sh-ket{color:#00dcff;width:40px;flex-shrink:0}
+.uv-sh-bw{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.uv-sh-bf{height:100%;border-radius:2px;background:#39ff8e;transition:width .4s}
+.uv-sh-n{color:#39ff8e;font-size:.55rem;width:24px;text-align:right}
+
+</style>
+</head>
+<body>
+<div id="ptcls"></div>
+<div id="toasts"></div>
+
+<!-- MODALS -->
+<div class="ov" id="mo-exp">
+ <div class="modal" style="max-width:680px">
+  <div class="mhdr"><h2>📚 Fundamentos Cuánticos</h2><button class="mclose" onclick="Q.cm('mo-exp')">✕</button></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+   <button class="btn c" onclick="Q.eduTab('theory')" id="et-theory">Teoría</button>
+   <button class="btn" onclick="Q.eduTab('gates')" id="et-gates">Puertas</button>
+   <button class="btn" onclick="Q.eduTab('algos')" id="et-algos">Algoritmos</button>
+   <button class="btn" onclick="Q.eduTab('glos')" id="et-glos">Glosario</button>
+  </div>
+  <div id="etab-theory">
+   <div class="ecard"><div class="et">⚛️ El Qubit</div><p>Un <span class="hl">qubit</span> puede existir en <span class="hm">superposición</span>: <span class="hl">α|0⟩ + β|1⟩</span> donde α,β son números complejos con <span class="hc">|α|²+|β|²=1</span>. |α|² es la probabilidad de medir 0, |β|² la de medir 1.</p></div>
+   <div class="ecard"><div class="et">🌊 Superposición y Esfera de Bloch</div><p>Cada estado puro de 1 qubit corresponde a un punto en la <span class="hl">Esfera de Bloch</span>: <span class="hc">|ψ⟩=cos(θ/2)|0⟩+e^(iφ)sin(θ/2)|1⟩</span>. Polo norte=|0⟩, polo sur=|1⟩, ecuador=superposición. Las puertas son <span class="hm">rotaciones</span> de esta esfera.</p></div>
+   <div class="ecard"><div class="et">🔗 Entrelazamiento</div><p>Dos qubits están <span class="hm">entrelazados</span> cuando el estado no factoriza: <span class="hc">|Φ+⟩=(|00⟩+|11⟩)/√2</span>. Medir uno determina al otro instantáneamente. H+CNOT genera este estado de Bell.</p></div>
+   <div class="ecard"><div class="et">📏 Medición y Colapso</div><p>Al medir, la superposición <span class="hm">colapsa irreversiblemente</span>. La probabilidad de |k⟩ es |αₖ|². La <span class="hl">aleatoriedad es fundamental</span>, no epistémica (diferencia clave con la física clásica).</p></div>
+  </div>
+  <div id="etab-gates" style="display:none">
+   <div class="ecard"><div class="et">H — Hadamard</div><p>Superposición perfecta. <span class="hc">H|0⟩=(|0⟩+|1⟩)/√2</span>. H²=I (su propia inversa). Rota π en el eje (X+Z)/√2 de la esfera de Bloch.</p>
+    <div class="mat-box">H = 1/√2·⎡ 1   1⎤
+              ⎣ 1  -1⎦</div></div>
+   <div class="ecard"><div class="et">X, Y, Z — Paulis</div><p><span class="hl">X</span>: NOT cuántico |0⟩↔|1⟩ · <span class="hl">Y</span>: Rot π en eje Y · <span class="hl">Z</span>: fase de |1⟩→-|1⟩, invisible en probabilidades pero crucial para interferencia.</p>
+    <div class="mat-box">X=⎡0 1⎤  Y=⎡ 0 -i⎤  Z=⎡1  0⎤
+  ⎣1 0⎦    ⎣ i  0⎦    ⎣0 -1⎦</div></div>
+   <div class="ecard"><div class="et">S, T — Puertas de Fase</div><p><span class="hl">S=√Z</span>: fase i a |1⟩ · <span class="hl">T=⁴√Z</span>: fase e^(iπ/4). Junto con H y CNOT forman un <span class="hm">conjunto universal</span>.</p></div>
+   <div class="ecard"><div class="et">CNOT, CZ, SWAP — Dos Qubits</div><p><span class="hl">CNOT</span>: si control=|1⟩ aplica X al objetivo. Crea entrelazamiento. Su matriz 4×4 actúa en {|00⟩,|01⟩,|10⟩,|11⟩}.</p>
+    <div class="mat-box">CNOT=⎡1 0 0 0⎤
+      ⎢0 1 0 0⎥
+      ⎢0 0 0 1⎥
+      ⎣0 0 1 0⎦</div></div>
+   <div class="ecard"><div class="et">Rx, Ry, Rz — Rotaciones</div><p>Rotan el vector de Bloch θ radianes en cada eje. Base de VQE, QAOA y cómputo variacional. <span class="hc">Rx(π)=iX, Ry(π)=iY, Rz(π)=iZ</span>.</p></div>
+  </div>
+  <div id="etab-algos" style="display:none">
+   <div class="ecard"><div class="et">🔗 Teleportación Cuántica</div><p>Transfiere el estado de un qubit a otro usando <span class="hl">entrelazamiento + 2 bits clásicos</span>. No viola relatividad: requiere canal clásico. Base de redes cuánticas futuras.</p></div>
+   <div class="ecard"><div class="et">🔬 Deutsch-Jozsa</div><p>Primera demostración de ventaja cuántica exponencial. Determina en <span class="hl">1 consulta</span> si f es constante o balanceada (clásico: hasta 2ⁿ⁻¹+1 consultas). Usa interferencia cuántica.</p></div>
+   <div class="ecard"><div class="et">🔍 Grover — Búsqueda Cuántica</div><p>Busca en N elementos en <span class="hl">O(√N)</span> pasos. El oráculo aplica fase -1 al objetivo. El operador de difusión <span class="hm">amplifica esa amplitud</span> iterativamente. Ventaja cuadrática.</p></div>
+   <div class="ecard"><div class="et">🎵 QFT — Fourier Cuántica</div><p>DFT en tiempo <span class="hl">O(n²)</span> vs O(N log N) clásico (N=2ⁿ → exponencialmente más rápida). Base del <span class="hm">algoritmo de Shor</span> para factorización y de estimación de fase.</p></div>
+  </div>
+  <div id="etab-glos" style="display:none">
+   <details class="glos-item"><summary>Amplitud de probabilidad</summary><div class="glos-body">Número complejo α asociado a cada estado base. Probabilidad = <span class="hl">|α|²</span>. Las amplitudes pueden interferir constructiva o destructivamente.</div></details>
+   <details class="glos-item"><summary>Unitariedad</summary><div class="glos-body">Toda puerta cuántica es unitaria: <span class="hl">U†U=I</span>. Conserva la norma y garantiza reversibilidad (excepto la medición).</div></details>
+   <details class="glos-item"><summary>Decoherencia</summary><div class="glos-body">El qubit real pierde coherencia al interactuar con el entorno. Es el principal obstáculo para construir computadoras cuánticas grandes.</div></details>
+   <details class="glos-item"><summary>Ventaja cuántica</summary><div class="glos-body">Cuando un algoritmo cuántico supera exponencial o polinomialmente a cualquier clásico conocido. Grover: √N; Shor: polinomial vs exponencial.</div></details>
+   <details class="glos-item"><summary>Notación de Dirac (bra-ket)</summary><div class="glos-body"><span class="hl">|ψ⟩</span> = vector de estado (ket). <span class="hl">⟨ψ|</span> = conjugado transpuesto (bra). <span class="hl">⟨φ|ψ⟩</span> = producto interno. Inventada por Dirac, estándar en mecánica cuántica.</div></details>
+   <details class="glos-item"><summary>Conjunto universal de puertas</summary><div class="glos-body">Conjunto que aproxima cualquier operación unitaria: <span class="hl">{H, T, CNOT}</span>. Análogo al NAND clásico.</div></details>
+  </div>
+ </div>
+</div>
+
+<div class="ov" id="mo-ex">
+ <div class="modal">
+  <div class="mhdr"><h2>⚡ Circuitos de Ejemplo</h2><button class="mclose" onclick="Q.cm('mo-ex')">✕</button></div>
+  <div class="ex-grid" id="ex-grid"></div>
+ </div>
+</div>
+
+<div class="ov" id="mo-ang">
+ <div class="modal" style="max-width:380px">
+  <div class="mhdr"><h2 id="ang-title">Ángulo θ</h2><button class="mclose" onclick="Q.cm('mo-ang')">✕</button></div>
+  <p style="font-size:.7rem;color:var(--text2);margin-bottom:12px;line-height:1.6">Elige el ángulo de rotación. P(|1⟩) = sin²(θ/2).</p>
+  <div class="angle-display" id="ang-disp">θ = π/2 ≈ 1.5708 rad</div>
+  <input type="range" id="ang-sl" min="-628" max="628" value="157" step="1"
+    style="width:100%;max-width:none;margin-bottom:10px" oninput="Q.angUpdate(this.value/100)">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;font-family:var(--mono);font-size:.62rem;color:var(--text2)">
+   <div>P(|0⟩) = <span id="ang-p0" style="color:var(--ac)">50.0%</span></div>
+   <div>P(|1⟩) = <span id="ang-p1" style="color:var(--am)">50.0%</span></div>
+  </div>
+  <div class="angle-presets">
+   <button class="btn c" onclick="Q.setAng(Math.PI/6)">π/6</button>
+   <button class="btn c" onclick="Q.setAng(Math.PI/4)">π/4</button>
+   <button class="btn c" onclick="Q.setAng(Math.PI/3)">π/3</button>
+   <button class="btn c" onclick="Q.setAng(Math.PI/2)">π/2</button>
+   <button class="btn c" onclick="Q.setAng(Math.PI)">π</button>
+   <button class="btn c" onclick="Q.setAng(2*Math.PI)">2π</button>
+  </div>
+  <button class="btn c" onclick="Q.confirmAngle()" style="width:100%;justify-content:center;padding:10px">✓ Aplicar Puerta</button>
+ </div>
+</div>
+
+<div class="ov" id="mo-gate">
+ <div class="modal" style="max-width:440px">
+  <div class="mhdr"><h2 id="gi-title">Puerta</h2><button class="mclose" onclick="Q.cm('mo-gate')">✕</button></div>
+  <div id="gi-body"></div>
+ </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<header>
+ <div class="brand">
+  <div class="brand-orb">ψ</div>
+  <div><h1>Quantum Simulator</h1><div class="sub">Real Linear Algebra · 2ⁿ State Vector</div></div>
+ </div>
+ <div class="hdr-btns">
+  <button class="btn c" onclick="Q.newCircuit()">✦ <span>Nuevo</span></button>
+  <button class="btn" onclick="Q.resetState()">↺ <span>Reiniciar</span></button>
+  <button class="btn" onclick="Q.om('mo-exp')">📚 <span>Teoría</span></button>
+  <button class="btn" onclick="Q.om('mo-ex')">⚡ <span>Ejemplos</span></button>
+  <button class="btn" id="btn-theme" onclick="Q.toggleTheme()">☀️ <span>Tema</span></button>
+  <button class="btn" onclick="Q.exportJSON()">↓ <span>Export</span></button>
+  <button class="btn" onclick="document.getElementById('imp').click()">↑ <span>Import</span></button>
+  <input type="file" id="imp" accept=".json" style="display:none" onchange="Q.importJSON(event)">
+  <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
+ </div>
+</header>
+
+<div class="stats-bar">
+ <div class="stat-cell"><div class="sv2" id="st-q">2</div><div class="sl2">Qubits</div></div>
+ <div class="stat-cell"><div class="sv2" id="st-g">0</div><div class="sl2">Puertas</div></div>
+ <div class="stat-cell"><div class="sv2" id="st-d">0</div><div class="sl2">Profundidad</div></div>
+ <div class="stat-cell"><div class="sv2" id="st-e">—</div><div class="sl2">Entrelazado</div></div>
+</div>
+
+<div class="main">
+ <div class="sl">
+  <div><div class="sec-title c">Un Qubit</div><div class="gates-grid" id="gp1"></div></div>
+  <div><div class="sec-title v">Dos Qubits</div><div class="gates-grid" id="gp2"></div></div>
+  <div><div class="sec-title m">Tres Qubits</div><div class="gates-grid" id="gp3"></div></div>
+  <div><div class="sec-title g">Medición · Misc</div><div class="gates-grid" id="gp4"></div></div>
+  <div style="margin-top:auto;padding-top:10px;border-top:1px solid var(--border)">
+   <div style="font-family:var(--mono);font-size:.56rem;color:var(--text3);line-height:1.8">
+    💡 Arrastra o clic → circuito<br>
+    🖱 Clic derecho → eliminar<br>
+    ⇧+clic → inspector<br>
+    Ctrl+Enter → ejecutar<br>
+    Ctrl+Z → deshacer
+   </div>
+  </div>
+ </div>
+
+ <div class="ca">
+  <div class="ctb">
+   <label>Qubits:</label>
+   <input type="range" id="sl-q" min="1" max="5" value="2" oninput="Q.setQubits(+this.value)">
+   <span class="qb" id="qb">2 qubits</span>
+   <label style="margin-left:6px">Velocidad:</label>
+   <input type="range" id="sl-sp" min="1" max="10" value="6">
+   <button class="btn c" id="btn-run" onclick="Q.runCircuit()">▶ Ejecutar</button>
+   <button class="btn" id="btn-step" onclick="Q.step()">⏭ Paso</button>
+   <button class="btn" onclick="Q.undo()">↩ Deshacer</button>
+   <button class="btn m" onclick="Q.clearCircuit()">🗑 Limpiar</button>
+   <span class="step-info" id="step-info"></span>
+  </div>
+  <div id="cw"><canvas id="cc"></canvas></div>
+ </div>
+
+ <div class="sr">
+  <div class="mtabs">
+   <button class="mt on" id="mt-0" onclick="Q.setMode(0)">🔬 Libre</button>
+   <button class="mt" id="mt-1" onclick="Q.setMode(1)">🎓 Guiado</button>
+   <button class="mt" id="mt-2" onclick="Q.setMode(2)">🏆 Retos</button>
+   <button class="mt" id="mt-3" onclick="Q.setMode(3)">📊 Estado</button>
+   <button class="mt" id="mt-4" onclick="Q.setMode(4)">🌌 Universo</button>
+  </div>
+
+  <div id="mode0">
+   <div class="rsp" style="display:flex;flex-direction:column;gap:7px">
+    <button class="mbtn-run" id="btn-run2" onclick="Q.runCircuit()">▶ EJECUTAR CIRCUITO</button>
+    <button class="mbtn" id="btn-meas" onclick="Q.measureAll()">📏 MEDIR TODOS LOS QUBITS</button>
+    <div style="display:flex;gap:5px;margin-top:2px">
+     <button class="btn" onclick="Q.measureMany(100)" style="flex:1;justify-content:center;font-size:.6rem">×100 shots</button>
+     <button class="btn" onclick="Q.measureMany(1000)" style="flex:1;justify-content:center;font-size:.6rem">×1000</button>
+    </div>
+   </div>
+   <div class="rsp">
+    <div class="sec-title c">Esfera de Bloch (q0)</div>
+    <canvas id="bcanv" width="170" height="170"></canvas>
+    <div class="bloch-angles">
+     <div class="ba-item"><div class="ba-lbl">θ (polar)</div><div class="ba-val" id="ba-th">0.0°</div></div>
+     <div class="ba-item"><div class="ba-lbl">φ (azimutal)</div><div class="ba-val" id="ba-ph">0.0°</div></div>
+    </div>
+   </div>
+   <div class="rsp"><div class="sec-title v">Vector de Estado</div><div id="sv"></div></div>
+   <div class="rsp"><div class="sec-title g">Distribución de Probabilidades</div><canvas id="prob-chart" height="100"></canvas></div>
+   <div class="rsp">
+    <div class="sec-title g">Historial de Mediciones</div>
+    <div id="mhist"></div>
+    <div style="display:flex;gap:5px;margin-top:8px">
+     <button class="btn m" onclick="Q.clearHist()" style="font-size:.6rem">🗑 Borrar</button>
+     <button class="btn" onclick="Q.exportHist()" style="font-size:.6rem">↓ CSV</button>
+    </div>
+   </div>
+   <div class="rsp"><div class="sec-title v">Puerta Seleccionada</div><div id="gate-info"><div style="font-family:var(--mono);font-size:.62rem;color:var(--text3);padding:8px">Haz clic en una puerta del circuito.</div></div></div>
+  </div>
+
+  <div id="mode1" style="display:none">
+   <div class="ls-progress" id="ls-prog"></div>
+   <div id="ls-cont"></div>
+  </div>
+
+  <div id="mode2" style="display:none">
+   <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+    <div class="sec-title m">Mini-retos Cuánticos</div>
+    <div style="font-size:.65rem;color:var(--text2);line-height:1.6">Diseña circuitos que satisfagan cada condición. El simulador valida automáticamente.</div>
+   </div>
+   <div style="padding:12px" id="ch-list"></div>
+  </div>
+
+  <div id="mode3" style="display:none">
+   <div class="rsp"><div class="sec-title c">Vector de Estado Completo</div><div id="full-sv"></div></div>
+   <div class="rsp">
+    <div class="sec-title v">Propiedades del Estado</div>
+    <div id="state-props"></div>
+   </div>
+   <div class="rsp">
+    <div class="sec-title g">Amplitudes Re + Im</div>
+    <canvas id="amp-chart" height="120" style="width:100%;border-radius:var(--rs);border:1px solid var(--border)"></canvas>
+   </div>
+   <div class="rsp">
+    <div class="sec-title m">Matriz del Circuito</div>
+    <div style="font-size:.62rem;color:var(--text2);margin-bottom:6px">Ejecuta el circuito primero.</div>
+    <div class="matrix-view" id="circ-matrix">—</div>
+   </div>
+  <div id="mode4" style="display:none">
+   <div style="padding:16px 14px;text-align:center">
+    <div style="font-family:var(--mono);font-size:.62rem;color:var(--text2);line-height:1.9;margin-bottom:14px">
+     El <span style="color:var(--av)">Quantum Universe</span> es una visualización 3D del espacio de Hilbert.<br>
+     Cada estado base <span style="color:var(--ac)">|ψ⟩</span> aparece como un planeta en el espacio.<br>
+     Se sincroniza en tiempo real con tu circuito.
+    </div>
+    <button class="btn c" onclick="UV.open()" style="width:100%;justify-content:center;padding:12px;font-size:.75rem">
+     🌌 Abrir Quantum Universe (Pantalla Completa)
+    </button>
+    <div style="margin-top:12px;font-family:var(--mono);font-size:.58rem;color:var(--text3);line-height:1.9">
+     Arrastra → rotar 3D con inercia · Rueda → zoom<br>
+     ⇧+clic en esfera → colapsar a ese estado<br>
+     Hover → ver amplitud compleja · Esc → cerrar
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+</div>
+
+<!-- QUANTUM UNIVERSE 3D OVERLAY -->
+<div id="universe-overlay">
+ <canvas id="uv-canvas"></canvas>
+ <div id="uv-topbar">
+  <div>
+   <div id="uv-title">⚛ Quantum Universe</div>
+   <div id="uv-sub">Espacio de Hilbert · Sincronizado con el circuito</div>
+  </div>
+  <div class="uv-btns">
+   <button class="uvb m" onclick="UV.measure()">📏 Medir</button>
+   <button class="uvb c" onclick="UV.measure100()">× 100 shots</button>
+   <button class="uvb" onclick="UV.togglePulsar()" id="uv-btn-pulsar">💫 Pulsar</button>
+   <button class="uvb g" onclick="UV.toggleGrid()" id="uv-btn-grid">⊞ Grid</button>
+   <button class="uvb" onclick="UV.toggleAuto()" id="uv-btn-auto">↻ Auto</button>
+   <button class="uvb" onclick="UV.resetView()">⟳ Vista</button>
+   <button class="uvb m" onclick="UV.close()">✕ Cerrar</button>
+  </div>
+ </div>
+ <div id="uv-meas"></div>
+ <div id="uv-tooltip"></div>
+ <div id="uv-bottom">
+  <div id="uv-info">
+   <div>Estado: <span class="v" id="uv-sv">|00⟩</span></div>
+   <div>Entropía: <span class="v2" id="uv-ent">0.000</span> bits · Entrelazado: <span class="v3" id="uv-entg">No</span></div>
+   <div>Mediciones: <span class="v" id="uv-shots">0</span></div>
+  </div>
+  <div id="uv-shots-bar"></div>
+  <div id="uv-legend">
+   <div class="uv-leg"><div class="uv-ld" style="background:#a855f7;box-shadow:0 0 5px #a855f7"></div>|0…0⟩</div>
+   <div class="uv-leg"><div class="uv-ld" style="background:#00dcff;box-shadow:0 0 5px #00dcff"></div>Amp alta</div>
+   <div class="uv-leg"><div class="uv-ld" style="background:#f72585;box-shadow:0 0 5px #f72585"></div>Fase</div>
+   <div class="uv-leg"><div class="uv-ld" style="background:#39ff8e;box-shadow:0 0 5px #39ff8e"></div>Medido</div>
+  </div>
+ </div>
+ <div id="uv-help">Arrastra → rotar · Rueda → zoom<br>⇧+clic → colapsar · Esc → cerrar</div>
+</div>
+<script>
+/* ============================================================
+   QUANTUM SIMULATOR — Full JavaScript Engine
+   Complex arithmetic · 2^n state vector · Gate matrices
+   Canvas circuit · Bloch sphere · Probability charts
+   ============================================================ */
+
+// ── COMPLEX NUMBER ──────────────────────────────────────
+class C {
+  constructor(re=0,im=0){this.re=re;this.im=im}
+  add(b){return new C(this.re+b.re,this.im+b.im)}
+  sub(b){return new C(this.re-b.re,this.im-b.im)}
+  mul(b){return new C(this.re*b.re-this.im*b.im,this.re*b.im+this.im*b.re)}
+  scale(s){return new C(this.re*s,this.im*s)}
+  conj(){return new C(this.re,-this.im)}
+  abs2(){return this.re*this.re+this.im*this.im}
+  abs(){return Math.sqrt(this.abs2())}
+  arg(){return Math.atan2(this.im,this.re)}
+  static polar(r,a){return new C(r*Math.cos(a),r*Math.sin(a))}
+  static Z(){return new C(0,0)}
+  static O(){return new C(1,0)}
+  static I(){return new C(0,1)}
+  str(){
+    const re=Math.abs(this.re)<1e-9?0:+this.re.toFixed(3)
+    const im=Math.abs(this.im)<1e-9?0:+this.im.toFixed(3)
+    if(im===0)return`${re}`
+    if(re===0)return`${im}i`
+    return`${re}${im>=0?'+':''}${im}i`
+  }
+  short(){return`${this.abs().toFixed(3)}∠${(this.arg()*180/Math.PI).toFixed(1)}°`}
+}
+
+const s2=1/Math.sqrt(2)
+
+// ── GATE DEFINITIONS ────────────────────────────────────
+const GATES={
+  H: {lbl:'H', sym:'H', cls:'gH',n:1,desc:'Hadamard: superposición perfecta. H|0⟩=(|0⟩+|1⟩)/√2. H²=I.',
+      mat:()=>[[new C(s2,0),new C(s2,0)],[new C(s2,0),new C(-s2,0)]]},
+  X: {lbl:'X', sym:'X', cls:'gX',n:1,desc:'Pauli-X (NOT cuántico). Invierte |0⟩↔|1⟩. Rotación π en eje X.',
+      mat:()=>[[C.Z(),C.O()],[C.O(),C.Z()]]},
+  Y: {lbl:'Y', sym:'Y', cls:'gY',n:1,desc:'Pauli-Y. Rotación π en eje Y. Y|0⟩=i|1⟩, Y|1⟩=-i|0⟩.',
+      mat:()=>[[C.Z(),new C(0,-1)],[C.I(),C.Z()]]},
+  Z: {lbl:'Z', sym:'Z', cls:'gZ',n:1,desc:'Pauli-Z. Cambia fase de |1⟩→-|1⟩. Sin efecto en probabilidades.',
+      mat:()=>[[C.O(),C.Z()],[C.Z(),new C(-1,0)]]},
+  S: {lbl:'S', sym:'S', cls:'gS',n:1,desc:'Phase S=√Z. Fase i a |1⟩. S²=Z.',
+      mat:()=>[[C.O(),C.Z()],[C.Z(),C.I()]]},
+  Sd:{lbl:'S†',sym:'S†',cls:'gS',n:1,desc:'S† (dagger): inversa de S. Fase -i a |1⟩.',
+      mat:()=>[[C.O(),C.Z()],[C.Z(),new C(0,-1)]]},
+  T: {lbl:'T', sym:'T', cls:'gT',n:1,desc:'T=⁴√Z. Fase e^(iπ/4). Con H+CNOT: conjunto universal.',
+      mat:()=>[[C.O(),C.Z()],[C.Z(),C.polar(1,Math.PI/4)]]},
+  Td:{lbl:'T†',sym:'T†',cls:'gT',n:1,desc:'T† inversa de T. Fase e^(-iπ/4).',
+      mat:()=>[[C.O(),C.Z()],[C.Z(),C.polar(1,-Math.PI/4)]]},
+  Rx:{lbl:'Rx',sym:'Rx',cls:'gRx',n:1,param:true,desc:'Rotación θ en eje X. Rx(π)=iX. Base VQE.',
+      mat:(t)=>[[new C(Math.cos(t/2),0),new C(0,-Math.sin(t/2))],[new C(0,-Math.sin(t/2)),new C(Math.cos(t/2),0)]]},
+  Ry:{lbl:'Ry',sym:'Ry',cls:'gRy',n:1,param:true,desc:'Rotación θ en eje Y. Ry(π)=iY. Usada en QAOA.',
+      mat:(t)=>[[new C(Math.cos(t/2),0),new C(-Math.sin(t/2),0)],[new C(Math.sin(t/2),0),new C(Math.cos(t/2),0)]]},
+  Rz:{lbl:'Rz',sym:'Rz',cls:'gRz',n:1,param:true,desc:'Rotación θ en eje Z. Solo cambia fases relativas.',
+      mat:(t)=>[[C.polar(1,-t/2),C.Z()],[C.Z(),C.polar(1,t/2)]]},
+  I: {lbl:'I', sym:'I', cls:'gI', n:1,desc:'Identidad: no hace nada. Útil como separador visual.',
+      mat:()=>[[C.O(),C.Z()],[C.Z(),C.O()]]},
+  CX:{lbl:'CNOT',sym:'CX',cls:'gCX',n:2,sp:'cnot',desc:'CNOT: si control=|1⟩ aplica X al objetivo. Crea entrelazamiento.'},
+  CZ:{lbl:'CZ', sym:'CZ',cls:'gCZ',n:2,sp:'cz',  desc:'CZ: si control=|1⟩ aplica Z al objetivo. Simétrica.'},
+  SW:{lbl:'SWAP',sym:'↔',cls:'gSW',n:2,sp:'swap', desc:'SWAP: intercambia los estados de dos qubits. Equivale a 3 CNOTs.'},
+  iSW:{lbl:'iSW',sym:'iS',cls:'gSW',n:2,sp:'iswap',desc:'iSWAP: SWAP con fase i en estados intercambiados.'},
+  CC:{lbl:'Toffoli',sym:'CC',cls:'gCC',n:3,sp:'toffoli',desc:'Toffoli (CCNOT): NOT si ambos controles son |1⟩. Universal clásico reversible.'},
+  CCZ:{lbl:'CCZ',sym:'CCZ',cls:'gCC',n:3,sp:'ccz',desc:'CCZ: Z condicionada a dos controles. Usada en oráculos de Grover.'},
+  M: {lbl:'Medir',sym:'M',cls:'gM',n:1,sp:'measure',desc:'Medición proyectiva. Colapsa qubit a |0⟩ ó |1⟩ según |amp|².'},
+  BAR:{lbl:'Barra',sym:'|',cls:'gBAR',n:0,sp:'barrier',desc:'Barrera visual. Separa secciones del circuito sin afectar la simulación.'},
+}
+
+const GCOL={H:'#00dcff',X:'#f72585',Y:'#f72585',Z:'#39ff8e',S:'#ffaa00',Sd:'#ffaa00',
+  T:'#ffaa00',Td:'#ffaa00',Rx:'#39ff8e',Ry:'#39ff8e',Rz:'#39ff8e',I:'#5a7090',
+  CX:'#a855f7',CZ:'#a855f7',SW:'#a855f7',iSW:'#a855f7',CC:'#f72585',CCZ:'#f72585',M:'#ffaa00',BAR:'#334055'}
+const gc=id=>GCOL[id]||'#a855f7'
+
+// ── QUANTUM SIMULATOR ───────────────────────────────────
+class QSim {
+  constructor(n=2){
+    this.n=n;this.dim=1<<n
+    this.state=Array.from({length:1<<n},(_,i)=>i===0?C.O():C.Z())
+  }
+  reset(){this.state=Array.from({length:this.dim},(_,i)=>i===0?C.O():C.Z())}
+  clone(){const s=new QSim(this.n);s.state=this.state.map(c=>new C(c.re,c.im));return s}
+
+  // Apply 2×2 matrix to qubit t
+  apply1(mat,t){
+    const n=this.n,d=this.dim,ns=Array.from({length:d},()=>C.Z())
+    for(let i=0;i<d;i++){
+      if(this.state[i].abs2()<1e-15)continue
+      const b=(i>>(n-1-t))&1
+      const j0=i&~(1<<(n-1-t)),j1=j0|(1<<(n-1-t))
+      for(let r=0;r<2;r++) ns[r?j1:j0]=ns[r?j1:j0].add(mat[r][b].mul(this.state[i]))
+    }
+    this.state=ns
+  }
+
+  cnot(c,t){
+    const n=this.n,d=this.dim,ns=this.state.slice()
+    for(let i=0;i<d;i++){
+      if(!((i>>(n-1-c))&1))continue
+      const j=i^(1<<(n-1-t));if(j>i){const tmp=ns[i];ns[i]=ns[j];ns[j]=tmp}
+    }
+    this.state=ns
+  }
+  cz(c,t){
+    const n=this.n,d=this.dim
+    for(let i=0;i<d;i++)
+      if(((i>>(n-1-c))&1)&&((i>>(n-1-t))&1))this.state[i]=this.state[i].scale(-1)
+  }
+  swap(a,b){
+    const n=this.n,d=this.dim,ns=this.state.slice()
+    for(let i=0;i<d;i++){
+      const ba=(i>>(n-1-a))&1,bb=(i>>(n-1-b))&1
+      if(ba!==bb){const j=i^((1<<(n-1-a))|(1<<(n-1-b)));if(j>i){const t=ns[i];ns[i]=ns[j];ns[j]=t}}
+    }
+    this.state=ns
+  }
+  iswap(a,b){
+    const n=this.n,d=this.dim
+    for(let i=0;i<d;i++){
+      const ba=(i>>(n-1-a))&1,bb=(i>>(n-1-b))&1
+      if(ba!==bb){
+        const j=i^((1<<(n-1-a))|(1<<(n-1-b)))
+        if(j>i){const t=this.state[i];this.state[i]=this.state[j].mul(C.I());this.state[j]=t.mul(C.I())}
+      }
+    }
+  }
+  toffoli(c0,c1,t){
+    const n=this.n,d=this.dim,ns=this.state.slice()
+    for(let i=0;i<d;i++){
+      if(!((i>>(n-1-c0))&1)||!((i>>(n-1-c1))&1))continue
+      const j=i^(1<<(n-1-t));if(j>i){const tmp=ns[i];ns[i]=ns[j];ns[j]=tmp}
+    }
+    this.state=ns
+  }
+  ccz(c0,c1,t){
+    const n=this.n,d=this.dim
+    for(let i=0;i<d;i++)
+      if(((i>>(n-1-c0))&1)&&((i>>(n-1-c1))&1)&&((i>>(n-1-t))&1))
+        this.state[i]=this.state[i].scale(-1)
+  }
+  measure(q){
+    const n=this.n,d=this.dim
+    let p1=0
+    for(let i=0;i<d;i++)if((i>>(n-1-q))&1)p1+=this.state[i].abs2()
+    const res=Math.random()<p1?1:0
+    let norm2=0
+    for(let i=0;i<d;i++){
+      if(((i>>(n-1-q))&1)!==res)this.state[i]=C.Z()
+      else norm2+=this.state[i].abs2()
+    }
+    const nr=Math.sqrt(norm2)
+    if(nr>1e-12)for(let i=0;i<d;i++)this.state[i]=this.state[i].scale(1/nr)
+    return res
+  }
+  measureAll(){const r=[];for(let q=0;q<this.n;q++)r.push(this.measure(q));return r}
+  probs(){return this.state.map(a=>a.abs2())}
+
+  blochQ0(){
+    const n=this.n,d=this.dim
+    let a0=C.Z(),a1=C.Z()
+    for(let i=0;i<d;i++){if((i>>(n-1))&1)a1=a1.add(this.state[i]);else a0=a0.add(this.state[i])}
+    const norm=Math.sqrt(a0.abs2()+a1.abs2())
+    if(norm<1e-12)return{theta:0,phi:0,x:0,y:0,z:1}
+    a0=a0.scale(1/norm);a1=a1.scale(1/norm)
+    const theta=2*Math.acos(Math.min(a0.abs(),1))
+    const phi=a1.arg()-a0.arg()
+    return{theta,phi,x:Math.sin(theta)*Math.cos(phi),y:Math.sin(theta)*Math.sin(phi),z:Math.cos(theta)}
+  }
+  isEntangled(){
+    if(this.n<2)return false
+    const bv=this.blochQ0()
+    return Math.sqrt(bv.x**2+bv.y**2+bv.z**2)<0.99
+  }
+  entropy(){
+    let e=0;this.probs().forEach(p=>{if(p>1e-9)e-=p*Math.log2(p)});return e
+  }
+  applyOp(op){
+    const g=GATES[op.gate];if(!g)return
+    const qs=op.qubits,t=op.param||0
+    switch(g.sp){
+      case'cnot':    this.cnot(qs[0],qs[1]);break
+      case'cz':      this.cz(qs[0],qs[1]);break
+      case'swap':    this.swap(qs[0],qs[1]);break
+      case'iswap':   this.iswap(qs[0],qs[1]);break
+      case'toffoli': this.toffoli(qs[0],qs[1],qs[2]);break
+      case'ccz':     this.ccz(qs[0],qs[1],qs[2]);break
+      case'measure': op._res=this.measure(qs[0]);break
+      case'barrier': break
+      default: if(g.mat)this.apply1(g.mat(t),qs[0])
+    }
+  }
+}
+
+// ── CIRCUIT MODEL ───────────────────────────────────────
+class Circuit {
+  constructor(n=2){this.n=n;this.ops=[];this._id=0;this._hist=[]}
+  add(gate,qubits,col,param=null){
+    const op={gate,qubits:[...qubits],param,col,id:this._id++}
+    this._hist.push({type:'add',op});this.ops.push(op);return op.id
+  }
+  remove(id){
+    const op=this.ops.find(o=>o.id===id)
+    if(op){this._hist.push({type:'rm',op:{...op,qubits:[...op.qubits]}});this.ops=this.ops.filter(o=>o.id!==id)}
+  }
+  undo(){
+    const h=this._hist.pop();if(!h)return
+    if(h.type==='add')this.ops=this.ops.filter(o=>o.id!==h.op.id)
+    else this.ops.push({...h.op,qubits:[...h.op.qubits]})
+  }
+  maxCol(){return this.ops.reduce((m,o)=>Math.max(m,o.col),-1)}
+  sorted(){return[...this.ops].sort((a,b)=>a.col-b.col||(a.qubits[0]-b.qubits[0]))}
+  depth(){
+    const last=new Array(this.n).fill(-1);let md=0
+    for(const op of this.sorted()){
+      const d=Math.max(...op.qubits.map(q=>last[q]))+1
+      op.qubits.forEach(q=>last[q]=d);md=Math.max(md,d)
+    }
+    return md
+  }
+}
+
+// ── CANVAS RENDERER ─────────────────────────────────────
+const CW=74,CH=58,PL=54,PT=28,GW=46,GH=30
+
+function renderCircuit(canvas,circuit,sim,hiCol=-1,selId=-1){
+  const ctx=canvas.getContext('2d'),n=circuit.n
+  const cols=Math.max(circuit.maxCol()+2,9)
+  const W=PL+cols*CW+24,H=PT+n*CH+20
+  canvas.width=W;canvas.height=H
+  ctx.clearRect(0,0,W,H)
+  const dm=!document.body.classList.contains('lm')
+  ctx.fillStyle=dm?'#060910':'#f0f3fc';ctx.fillRect(0,0,W,H)
+
+  if(hiCol>=0){
+    ctx.fillStyle=dm?'rgba(0,220,255,.06)':'rgba(0,220,255,.1)'
+    ctx.fillRect(PL+hiCol*CW,PT-4,CW,n*CH+8)
+  }
+  for(let q=0;q<n;q++){
+    const y=PT+q*CH+CH/2
+    ctx.fillStyle=dm?'#a855f7':'#8030d0';ctx.font='bold 12px monospace'
+    ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`q${q}`,5,y)
+    ctx.strokeStyle=dm?'rgba(80,100,160,.25)':'rgba(80,100,180,.3)';ctx.lineWidth=1.5
+    ctx.beginPath();ctx.moveTo(PL,y);ctx.lineTo(W-10,y);ctx.stroke()
+    // |0⟩ label
+    ctx.fillStyle=dm?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)'
+    ctx.fillRect(PL-1,y-8,14,16)
+    ctx.fillStyle=dm?'#334055':'#9aaac0';ctx.font='10px monospace';ctx.textAlign='center'
+    ctx.fillText('0',PL+6,y);ctx.textAlign='left'
+  }
+  for(const op of circuit.ops){
+    const g=GATES[op.gate];if(!g)continue
+    const x=PL+op.col*CW,sel=op.id===selId
+    ctx.save()
+    if(g.sp==='barrier'){
+      ctx.strokeStyle=dm?'rgba(80,100,200,.3)':'rgba(80,100,200,.4)'
+      ctx.lineWidth=1.5;ctx.setLineDash([4,4])
+      ctx.beginPath();ctx.moveTo(x+CW/2,PT-4);ctx.lineTo(x+CW/2,PT+n*CH+4);ctx.stroke()
+      ctx.setLineDash([])
+    } else if(g.sp==='cnot'||g.sp==='cz'){
+      drawCtrlTgt(ctx,x,op.qubits[0],op.qubits[1],gc(op.gate),g.sp==='cz',dm)
+    } else if(g.sp==='swap'||g.sp==='iswap'){
+      const y0=PT+op.qubits[0]*CH+CH/2,y1=PT+op.qubits[1]*CH+CH/2,cx=x+CW/2
+      ctx.strokeStyle=gc(op.gate);ctx.lineWidth=2
+      ctx.beginPath();ctx.moveTo(cx,y0);ctx.lineTo(cx,y1);ctx.stroke()
+      drawCross(ctx,cx,y0,9,gc(op.gate));drawCross(ctx,cx,y1,9,gc(op.gate))
+      if(g.sp==='iswap'){ctx.fillStyle=gc(op.gate);ctx.font='9px monospace';ctx.textAlign='center';ctx.fillText('i',cx+12,(y0+y1)/2)}
+    } else if(g.sp==='toffoli'||g.sp==='ccz'){
+      const ys=op.qubits.map(q=>PT+q*CH+CH/2),cx=x+CW/2
+      ctx.strokeStyle=gc(op.gate);ctx.lineWidth=2
+      ctx.beginPath();ctx.moveTo(cx,Math.min(...ys));ctx.lineTo(cx,Math.max(...ys));ctx.stroke()
+      ;[ys[0],ys[1]].forEach(y=>{ctx.fillStyle=gc(op.gate);ctx.beginPath();ctx.arc(cx,y,5,0,Math.PI*2);ctx.fill()})
+      if(g.sp==='toffoli')drawCircTgt(ctx,cx,ys[2],gc(op.gate))
+      else{ctx.fillStyle=gc(op.gate);ctx.beginPath();ctx.arc(cx,ys[2],5,0,Math.PI*2);ctx.fill()}
+    } else if(g.sp==='measure'){
+      drawMeasGate(ctx,x,op.qubits[0],dm)
+    } else {
+      drawBox(ctx,x,op.qubits[0],op,gc(op.gate),sel,dm)
+    }
+    ctx.restore()
+    if(sel&&op._bounds){
+      const b=op._bounds;ctx.strokeStyle=gc(op.gate);ctx.lineWidth=2.5
+      ctx.shadowColor=gc(op.gate);ctx.shadowBlur=14
+      rr(ctx,b.x-2,b.y-2,b.w+4,b.h+4,8);ctx.stroke();ctx.shadowBlur=0
+    }
+  }
+}
+
+function drawCtrlTgt(ctx,x,ctrl,tgt,color,isZ,dm){
+  const yc=PT+ctrl*CH+CH/2,yt=PT+tgt*CH+CH/2,cx=x+CW/2
+  ctx.strokeStyle=color;ctx.lineWidth=2
+  ctx.beginPath();ctx.moveTo(cx,yc);ctx.lineTo(cx,yt);ctx.stroke()
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(cx,yc,5,0,Math.PI*2);ctx.fill()
+  if(isZ){
+    ctx.fillStyle=dm?`${color}22`:`${color}18`
+    rr(ctx,cx-12,yt-10,24,20,4);ctx.fill()
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;rr(ctx,cx-12,yt-10,24,20,4);ctx.stroke()
+    ctx.fillStyle=color;ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.textBaseline='middle'
+    ctx.fillText('Z',cx,yt);ctx.textAlign='left'
+  } else drawCircTgt(ctx,cx,yt,color)
+}
+function drawCircTgt(ctx,cx,cy,color){
+  ctx.strokeStyle=color;ctx.lineWidth=2
+  ctx.beginPath();ctx.arc(cx,cy,11,0,Math.PI*2);ctx.stroke()
+  ctx.beginPath();ctx.moveTo(cx,cy-11);ctx.lineTo(cx,cy+11);ctx.moveTo(cx-11,cy);ctx.lineTo(cx+11,cy);ctx.stroke()
+}
+function drawCross(ctx,cx,cy,r,color){
+  ctx.strokeStyle=color;ctx.lineWidth=2.5
+  ctx.beginPath();ctx.moveTo(cx-r,cy-r);ctx.lineTo(cx+r,cy+r);ctx.stroke()
+  ctx.beginPath();ctx.moveTo(cx+r,cy-r);ctx.lineTo(cx-r,cy+r);ctx.stroke()
+}
+function drawMeasGate(ctx,x,q,dm){
+  const y=PT+q*CH+(CH-GH)/2,gx=x+(CW-GW)/2
+  ctx.fillStyle=dm?'rgba(255,170,0,.1)':'rgba(255,170,0,.15)'
+  rr(ctx,gx,y,GW,GH,5);ctx.fill()
+  ctx.strokeStyle='rgba(255,170,0,.7)';ctx.lineWidth=1.5;rr(ctx,gx,y,GW,GH,5);ctx.stroke()
+  const mx=gx+GW/2,my=y+GH*.7
+  ctx.strokeStyle='#ffaa00';ctx.lineWidth=1.5
+  ctx.beginPath();ctx.arc(mx,my,GH*.35,Math.PI,0);ctx.stroke()
+  ctx.beginPath();ctx.moveTo(mx,my);ctx.lineTo(mx+GH*.26,my-GH*.26);ctx.stroke()
+}
+function drawBox(ctx,x,q,op,color,sel,dm){
+  const gy=PT+q*CH+(CH-GH)/2,gx=x+(CW-GW)/2
+  ctx.fillStyle=dm?`${color}1a`:`${color}18`
+  rr(ctx,gx,gy,GW,GH,5);ctx.fill()
+  ctx.strokeStyle=sel?color:`${color}88`;ctx.lineWidth=sel?2:1.5
+  if(sel){ctx.shadowColor=color;ctx.shadowBlur=12}
+  rr(ctx,gx,gy,GW,GH,5);ctx.stroke();ctx.shadowBlur=0
+  ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle'
+  const lbl=GATES[op.gate]?.lbl||op.gate
+  if(op.param!=null){
+    ctx.font='bold 11px monospace';ctx.fillText(lbl,gx+GW/2,gy+GH/2-5)
+    ctx.font='8px monospace';ctx.fillStyle=dm?'rgba(255,255,255,.45)':'rgba(0,0,0,.45)'
+    ctx.fillText(`${(op.param/Math.PI).toFixed(2)}π`,gx+GW/2,gy+GH/2+7)
+  } else {
+    ctx.font='bold 13px monospace';ctx.fillText(lbl,gx+GW/2,gy+GH/2+1)
+  }
+  ctx.textAlign='left';ctx.textBaseline='alphabetic'
+  op._bounds={x:gx,y:gy,w:GW,h:GH}
+}
+function rr(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r)
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h)
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r)
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()
+}
+
+// ── BLOCH SPHERE ────────────────────────────────────────
+function renderBloch(canvas,sim){
+  const W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d')
+  const cx=W/2,cy=H/2,R=Math.min(W,H)/2-8
+  const dm=!document.body.classList.contains('lm')
+  ctx.clearRect(0,0,W,H)
+  const bg=ctx.createRadialGradient(cx-R*.3,cy-R*.3,R*.05,cx,cy,R*1.05)
+  bg.addColorStop(0,dm?'#1a1040':'#ede8ff')
+  bg.addColorStop(1,dm?'#060910':'#f0eaff')
+  ctx.fillStyle=bg;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill()
+  ctx.strokeStyle=dm?'rgba(168,85,247,.2)':'rgba(140,80,220,.35)';ctx.lineWidth=1
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke()
+  ctx.beginPath();ctx.ellipse(cx,cy,R,R*.28,0,0,Math.PI*2)
+  ctx.strokeStyle=dm?'rgba(168,85,247,.12)':'rgba(140,80,220,.22)';ctx.stroke()
+  ctx.beginPath();ctx.ellipse(cx,cy,R*.28,R,0,0,Math.PI*2)
+  ctx.strokeStyle=dm?'rgba(100,120,200,.08)':'rgba(100,120,200,.15)';ctx.stroke()
+  ctx.setLineDash([3,4]);ctx.strokeStyle=dm?'rgba(168,85,247,.18)':'rgba(140,80,220,.25)';ctx.lineWidth=1
+  ctx.beginPath();ctx.moveTo(cx,cy+R+8);ctx.lineTo(cx,cy-R-8);ctx.stroke()
+  ctx.beginPath();ctx.moveTo(cx-R-8,cy);ctx.lineTo(cx+R+8,cy);ctx.stroke()
+  ctx.setLineDash([])
+  const lc=dm?'rgba(168,85,247,.7)':'rgba(140,80,220,.8)'
+  ctx.fillStyle=lc;ctx.font='bold 9px monospace';ctx.textAlign='center'
+  ctx.fillText('|0⟩',cx,cy-R-10);ctx.fillText('|1⟩',cx,cy+R+16);ctx.fillText('+X',cx+R+10,cy+4)
+  ctx.textAlign='left'
+  const bv=sim.blochQ0()
+  const px=cx+R*(bv.x*0.78+bv.y*0.22),py=cy-R*bv.z
+  // Shadow
+  ctx.strokeStyle=dm?'rgba(0,220,255,.12)':'rgba(0,180,220,.18)';ctx.lineWidth=1;ctx.setLineDash([2,3])
+  ctx.beginPath();ctx.moveTo(cx+R*(bv.x*0.78+bv.y*0.22),cy);ctx.lineTo(px,py);ctx.stroke()
+  ctx.setLineDash([])
+  // Vector gradient
+  const vg=ctx.createLinearGradient(cx,cy,px,py)
+  vg.addColorStop(0,'rgba(168,85,247,.15)');vg.addColorStop(.5,'rgba(168,85,247,.8)');vg.addColorStop(1,'rgba(0,220,255,1)')
+  ctx.strokeStyle=vg;ctx.lineWidth=2.5;ctx.lineCap='round'
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.stroke();ctx.lineCap='butt'
+  ctx.fillStyle='#00dcff';ctx.shadowColor='#00dcff';ctx.shadowBlur=14
+  ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0
+  ctx.fillStyle=dm?'rgba(168,85,247,.7)':'rgba(140,80,220,.8)'
+  ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fill()
+  const td=(bv.theta*180/Math.PI).toFixed(1),pd=(bv.phi*180/Math.PI).toFixed(1)
+  document.getElementById('ba-th').textContent=`${td}°`
+  document.getElementById('ba-ph').textContent=`${pd}°`
+}
+
+// ── PROBABILITY CHART ───────────────────────────────────
+function renderProbChart(canvas,sim){
+  const ctx=canvas.getContext('2d'),probs=sim.probs(),n=sim.n,d=sim.dim
+  const dm=!document.body.classList.contains('lm')
+  const W=canvas.offsetWidth||canvas.parentElement?.offsetWidth||250
+  canvas.width=W;canvas.height=100
+  ctx.clearRect(0,0,W,100)
+  ctx.fillStyle=dm?'rgba(0,0,0,.2)':'rgba(0,0,0,.04)';ctx.fillRect(0,0,W,100)
+  const step=(W-20)/d,bw=Math.max(2,step-2)
+  probs.forEach((p,i)=>{
+    const h=Math.round(p*76),x=10+i*step,y=96-h
+    const g=ctx.createLinearGradient(x,y,x,96)
+    g.addColorStop(0,'rgba(0,220,255,.9)');g.addColorStop(1,'rgba(168,85,247,.7)')
+    ctx.fillStyle=p>0.001?g:(dm?'rgba(255,255,255,.03)':'rgba(0,0,0,.04)')
+    ctx.fillRect(x,y,bw,Math.max(h,1))
+    const bits=i.toString(2).padStart(n,'0')
+    if(step>18){
+      ctx.fillStyle=dm?'rgba(255,255,255,.45)':'rgba(0,0,0,.4)'
+      ctx.font=`${Math.min(9,step*.5)}px monospace`;ctx.textAlign='center'
+      if(d>8){ctx.save();ctx.translate(x+bw/2,99);ctx.rotate(-Math.PI/2);ctx.fillText(bits,-2,0);ctx.restore()}
+      else{ctx.textBaseline='bottom';ctx.fillText(bits,x+bw/2,100)}
+    }
+    if(p>0.02&&h>12){
+      ctx.fillStyle=dm?'rgba(255,255,255,.7)':'rgba(0,0,0,.6)'
+      ctx.font='8px monospace';ctx.textAlign='center';ctx.textBaseline='bottom'
+      ctx.fillText(`${(p*100).toFixed(0)}%`,x+bw/2,y-1)
+    }
+  })
+  ctx.textAlign='left';ctx.textBaseline='alphabetic'
+}
+
+// ── AMPLITUDE CHART ─────────────────────────────────────
+function renderAmpChart(canvas,sim){
+  const ctx=canvas.getContext('2d'),d=sim.dim
+  const dm=!document.body.classList.contains('lm')
+  const W=canvas.offsetWidth||250
+  canvas.width=W;canvas.height=120
+  ctx.clearRect(0,0,W,120)
+  ctx.fillStyle=dm?'rgba(0,0,0,.2)':'rgba(0,0,0,.04)';ctx.fillRect(0,0,W,120)
+  const mid=58,step=(W-20)/d,bw=Math.max(2,step/2-1)
+  ctx.strokeStyle=dm?'rgba(255,255,255,.1)':'rgba(0,0,0,.1)';ctx.lineWidth=1
+  ctx.beginPath();ctx.moveTo(10,mid);ctx.lineTo(W-10,mid);ctx.stroke()
+  sim.state.forEach((a,i)=>{
+    const x=10+i*step
+    const rh=a.re*50;ctx.fillStyle='rgba(0,220,255,.8)'
+    if(rh>=0)ctx.fillRect(x,mid-rh,bw,rh);else ctx.fillRect(x,mid,bw,-rh)
+    const ih=a.im*50;ctx.fillStyle='rgba(247,37,133,.8)'
+    if(ih>=0)ctx.fillRect(x+bw,mid-ih,bw,ih);else ctx.fillRect(x+bw,mid,-bw,-ih)
+  })
+  ctx.fillStyle='rgba(0,220,255,.8)';ctx.fillRect(W-70,6,8,8)
+  ctx.fillStyle=dm?'rgba(255,255,255,.6)':'rgba(0,0,0,.5)';ctx.font='8px monospace';ctx.fillText('Re',W-58,14)
+  ctx.fillStyle='rgba(247,37,133,.8)';ctx.fillRect(W-40,6,8,8)
+  ctx.fillStyle=dm?'rgba(255,255,255,.6)':'rgba(0,0,0,.5)';ctx.fillText('Im',W-28,14)
+}
+
+// ── APP CONTROLLER ──────────────────────────────────────
+const Q={
+  C:null,S:null,selId:-1,stepIdx:-1,hist:[],mode:0,
+  pendG:null,activeGate:null,_raf:null,
+
+  init(){
+    this.C=new Circuit(2);this.S=new QSim(2)
+    this.buildPalettes();this.buildExamples();this.buildLearn();this.buildChallenges()
+    this.setupCanvas();this.loadSaved();this.render();this.blochLoop()
+    this.eduTab('theory')
+  },
+
+  buildPalettes(){
+    const mk=(ids,pid)=>{
+      document.getElementById(pid).innerHTML=ids.map(id=>{
+        const g=GATES[id]
+        return `<div class="gc ${g.cls}" draggable="true" data-gate="${id}" id="gp-${id}"
+          title="${g.desc}" ondragstart="Q.dragStart(event,'${id}')" onclick="Q.palClick('${id}')">
+          <span class="gs">${g.sym}</span><span class="gn">${g.lbl}</span></div>`
+      }).join('')
+    }
+    mk(['H','X','Y','Z','S','Sd','T','Td','Rx','Ry','Rz','I'],'gp1')
+    mk(['CX','CZ','SW','iSW'],'gp2')
+    mk(['CC','CCZ'],'gp3')
+    mk(['M','BAR'],'gp4')
+  },
+
+  dragStart(e,gid){e.dataTransfer.setData('gate',gid);this.activeGate=gid},
+
+  palClick(gid){
+    document.querySelectorAll('.gc').forEach(el=>el.classList.remove('sel'))
+    if(this.activeGate===gid){this.activeGate=null}
+    else{this.activeGate=gid;document.getElementById('gp-'+gid)?.classList.add('sel')}
+    this.showGateInfo(gid)
+  },
+
+  setupCanvas(){
+    const wrap=document.getElementById('cw'),canvas=document.getElementById('cc')
+    canvas.addEventListener('contextmenu',e=>{
+      e.preventDefault();const{mx,my}=this.mouse(e)
+      const op=this.hit(mx,my);if(op){this.C.remove(op.id);this.renderAll();this.save()}
+    })
+    canvas.addEventListener('click',e=>{
+      const{mx,my}=this.mouse(e);const op=this.hit(mx,my)
+      if(op){
+        if(e.shiftKey)this.openGateModal(op)
+        else{this.selId=this.selId===op.id?-1:op.id;this.renderCirc();this.showGateInfo(op.gate)}
+        return
+      }
+      if(this.activeGate)this.place(this.activeGate,mx,my)
+    })
+    wrap.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy'})
+    wrap.addEventListener('drop',e=>{
+      e.preventDefault();const gid=e.dataTransfer.getData('gate');if(!gid)return
+      const r=canvas.getBoundingClientRect()
+      this.place(gid,e.clientX-r.left,e.clientY-r.top)
+    })
+  },
+
+  mouse(e){const r=document.getElementById('cc').getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top}},
+  hit(mx,my){for(const op of this.C.ops)if(op._bounds){const b=op._bounds;if(mx>=b.x&&mx<=b.x+b.w&&my>=b.y&&my<=b.y+b.h)return op}return null},
+
+  place(gid,mx,my){
+    const g=GATES[gid];if(!g)return
+    const q=Math.floor((my-PT)/CH),col=Math.max(0,Math.floor((mx-PL)/CW))
+    if(q<0||q>=this.C.n){this.toast('Coloca la puerta sobre una línea de qubit','wa');return}
+    if(g.sp==='barrier'){this.C.add(gid,[0],col);this.renderAll();this.save();return}
+    let qubits
+    if(g.n===1)qubits=[q]
+    else if(g.n===2){
+      const tgt=q+1<this.C.n?q+1:(q-1>=0?q-1:-1)
+      if(tgt<0){this.toast('Necesitas ≥ 2 qubits','er');return}
+      qubits=[q,tgt]
+    } else {
+      if(this.C.n<3){this.toast('Necesitas ≥ 3 qubits','er');return}
+      qubits=[q,Math.min(q+1,this.C.n-1),Math.min(q+2,this.C.n-1)]
+      if(new Set(qubits).size<3)qubits=[0,1,2]
+    }
+    if(g.param){
+      this.pendG={gid,qubits,col}
+      document.getElementById('ang-title').textContent=`${g.lbl} — Ángulo θ`
+      this.setAng(Math.PI/2);this.om('mo-ang');return
+    }
+    this.C.add(gid,qubits,col)
+    this.activeGate=null;document.querySelectorAll('.gc').forEach(e=>e.classList.remove('sel'))
+    this.renderAll();this.simulateFull();this.save();this.updateStats()
+    this.checkChallenges();this.toast(`${g.lbl} → q${q} col${col}`,'in')
+  },
+
+  setAng(v){
+    document.getElementById('ang-sl').value=Math.round(v*100)
+    this.angUpdate(v)
+  },
+  angUpdate(v){
+    const p1=Math.sin(v/2)**2,p0=1-p1
+    document.getElementById('ang-disp').textContent=`θ = ${(v/Math.PI).toFixed(3)}π ≈ ${v.toFixed(4)} rad`
+    document.getElementById('ang-p0').textContent=`${(p0*100).toFixed(1)}%`
+    document.getElementById('ang-p1').textContent=`${(p1*100).toFixed(1)}%`
+  },
+  confirmAngle(){
+    if(!this.pendG)return
+    const t=parseFloat(document.getElementById('ang-sl').value)/100
+    const{gid,qubits,col}=this.pendG
+    this.C.add(gid,qubits,col,t);this.pendG=null;this.cm('mo-ang')
+    this.activeGate=null;document.querySelectorAll('.gc').forEach(e=>e.classList.remove('sel'))
+    this.renderAll();this.simulateFull();this.save();this.updateStats()
+  },
+
+  showGateInfo(gid){
+    const g=GATES[gid];if(!g)return
+    const color=gc(gid)
+    const mat=g.mat?this.fmtMat(g.mat(0)):null
+    document.getElementById('gate-info').innerHTML=`
+      <div class="info-card" style="border-color:${color}55">
+        <div class="it" style="color:${color}">${g.sym} — ${g.lbl}</div>
+        <p>${g.desc}</p>
+        ${mat?`<div class="mat-box">${mat}</div>`:''}
+      </div>`
+  },
+
+  fmtMat(mat){
+    return mat.map(row=>'⎢'+row.map(c=>c.str().padStart(9)).join(' ')+'⎥').join('\n')
+  },
+
+  openGateModal(op){
+    const g=GATES[op.gate];if(!g)return
+    const color=gc(op.gate)
+    const mat=g.mat?this.fmtMat(g.mat(op.param||0)):null
+    document.getElementById('gi-title').textContent=`${g.sym} — ${g.lbl}`
+    document.getElementById('gi-body').innerHTML=`
+      <div style="border-left:3px solid ${color};padding-left:12px;margin-bottom:14px">
+        <p style="font-size:.72rem;color:var(--text2);line-height:1.75">${g.desc}</p>
+      </div>
+      ${op.param!=null?`<div style="font-family:var(--mono);font-size:.7rem;color:var(--ac);margin-bottom:12px">θ = ${op.param.toFixed(4)} rad = ${(op.param/Math.PI).toFixed(3)}π</div>`:''}
+      ${mat?`<div class="sec-title c" style="margin-bottom:6px">Matriz Unitaria</div><div class="mat-box">${mat}</div>`:''}
+      <div style="margin-top:14px;display:flex;gap:6px">
+        <button class="btn m" onclick="Q.C.remove(${op.id});Q.cm('mo-gate');Q.renderAll();Q.simulateFull();Q.save()" style="flex:1;justify-content:center">🗑 Eliminar</button>
+        ${op.param!=null?`<button class="btn c" onclick="Q.reedit(${op.id})" style="flex:1;justify-content:center">✏️ Editar θ</button>`:''}
+      </div>`
+    this.om('mo-gate')
+  },
+
+  reedit(id){
+    const op=this.C.ops.find(o=>o.id===id);if(!op)return
+    this.cm('mo-gate');this.pendG={...op,qubits:[...op.qubits],_eid:id}
+    this.setAng(op.param||Math.PI/2);this.om('mo-ang')
+  },
+
+  renderCirc(hiCol=-1){renderCircuit(document.getElementById('cc'),this.C,this.S,hiCol,this.selId)},
+  renderBloch(){renderBloch(document.getElementById('bcanv'),this.S)},
+
+  renderSV(){
+    const probs=this.S.probs(),n=this.S.n,maxP=Math.max(...probs,.001)
+    document.getElementById('sv').innerHTML=probs.map((p,i)=>{
+      const bits=i.toString(2).padStart(n,'0'),a=this.S.state[i],bar=Math.round(p/maxP*100)
+      return `<div class="sv-row" onclick="Q.toast('|${bits}⟩ amplitude: ${a.str()}, |a|=${a.abs().toFixed(4)}','in')">
+        <div class="sv-ket">|${bits}⟩</div>
+        <div class="sv-bw"><div class="sv-bf" style="width:${bar}%"></div></div>
+        <div class="sv-pct">${(p*100).toFixed(1)}%</div>
+        <div class="sv-amp">${a.short()}</div>
+      </div>`
+    }).join('')
+  },
+
+  renderCharts(){
+    renderProbChart(document.getElementById('prob-chart'),this.S)
+    if(this.mode===3){
+      renderAmpChart(document.getElementById('amp-chart'),this.S)
+      this.renderFullSV();this.renderStateProps()
+    }
+  },
+
+  renderFullSV(){
+    const el=document.getElementById('full-sv');if(!el)return
+    const probs=this.S.probs(),n=this.S.n,maxP=Math.max(...probs,.001)
+    el.innerHTML=probs.map((p,i)=>{
+      const bits=i.toString(2).padStart(n,'0'),a=this.S.state[i],bar=Math.round(p/maxP*100)
+      return `<div class="sv-row"><div class="sv-ket">|${bits}⟩</div>
+        <div class="sv-bw"><div class="sv-bf" style="width:${bar}%"></div></div>
+        <div class="sv-pct">${(p*100).toFixed(1)}%</div>
+        <div class="sv-amp">${a.str()}</div></div>`
+    }).join('')
+  },
+
+  renderStateProps(){
+    const el=document.getElementById('state-props');if(!el)return
+    const bv=this.S.blochQ0(),ent=this.S.isEntangled(),ent2=this.S.entropy()
+    const purity=Math.sqrt(bv.x**2+bv.y**2+bv.z**2)
+    el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-family:var(--mono);font-size:.65rem">
+      <div style="padding:7px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass)">
+       <div style="color:var(--text2);font-size:.55rem;margin-bottom:3px">ENTRELAZADO</div>
+       <div style="color:${ent?'var(--am)':'var(--ag)'}">${ent?'Sí ⚡':'No ○'}</div></div>
+      <div style="padding:7px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass)">
+       <div style="color:var(--text2);font-size:.55rem;margin-bottom:3px">ENTROPÍA (bits)</div>
+       <div style="color:var(--ac)">${ent2.toFixed(3)}</div></div>
+      <div style="padding:7px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass)">
+       <div style="color:var(--text2);font-size:.55rem;margin-bottom:3px">PUREZA q0</div>
+       <div style="color:var(--av)">${purity.toFixed(4)}</div></div>
+      <div style="padding:7px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass)">
+       <div style="color:var(--text2);font-size:.55rem;margin-bottom:3px">ESTADOS ≠ 0</div>
+       <div style="color:var(--ao)">${this.S.probs().filter(p=>p>0.001).length}/${this.S.dim}</div></div>
+    </div>`
+  },
+
+  renderHist(){
+    const el=document.getElementById('mhist');if(!el)return
+    if(!this.hist.length){el.innerHTML='<div style="font-family:var(--mono);font-size:.6rem;color:var(--text3);text-align:center;padding:8px">Sin mediciones</div>';return}
+    const counts={};this.hist.forEach(m=>{counts[m]=(counts[m]||0)+1})
+    const total=this.hist.length,max=Math.max(...Object.values(counts))
+    el.innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([bits,cnt])=>`
+      <div class="mh-bar"><div class="mh-ket">|${bits}⟩</div>
+        <div class="mh-bw"><div class="mh-bf" style="width:${cnt/max*100}%"></div></div>
+        <div class="mh-cnt">${cnt}</div><div class="mh-pct">${(cnt/total*100).toFixed(0)}%</div>
+      </div>`).join('')
+  },
+
+  renderAll(){this.renderCirc();this.renderSV();this.renderCharts();this.renderHist()},
+
+  simulateFull(){
+    this.S=new QSim(this.C.n)
+    for(const op of this.C.sorted())this.S.applyOp(op)
+    this.renderSV();this.renderCharts()
+    if(typeof UV!=='undefined'&&UV.isOpen)UV.syncFromSim()
+  },
+
+  async runCircuit(){
+    const ops=this.C.sorted();if(!ops.length){this.toast('Circuito vacío','wa');return}
+    this.setBusy(true);this.S=new QSim(this.C.n);this.stepIdx=-1
+    const delay=Math.max(40,(11-document.getElementById('sl-sp').value)*70)
+    for(let i=0;i<ops.length;i++){
+      this.renderCirc(ops[i].col);this.S.applyOp(ops[i]);this.spawnGateParticle(ops[i])
+      this.renderSV();this.renderCharts()
+      document.getElementById('step-info').textContent=`Paso ${i+1}/${ops.length}: ${GATES[ops[i].gate]?.lbl||ops[i].gate}`
+      await sleep(delay)
+    }
+    this.renderCirc();document.getElementById('step-info').textContent=`✓ ${ops.length} puertas aplicadas`
+    this.setBusy(false);this.checkChallenges();this.updateStats();this.save()
+    this.toast('Circuito ejecutado','ok')
+  },
+
+  step(){
+    const ops=this.C.sorted();if(!ops.length){this.toast('Circuito vacío','wa');return}
+    if(this.stepIdx===-1)this.S=new QSim(this.C.n)
+    this.stepIdx=Math.min(this.stepIdx+1,ops.length-1)
+    const op=ops[this.stepIdx]
+    this.S.applyOp(op);this.spawnGateParticle(op)
+    this.renderCirc(op.col);this.renderSV();this.renderCharts()
+    document.getElementById('step-info').textContent=`Paso ${this.stepIdx+1}/${ops.length}: ${GATES[op.gate]?.lbl||op.gate}`
+    this.showGateInfo(op.gate)
+    if(this.stepIdx===ops.length-1){this.stepIdx=-1;setTimeout(()=>this.renderCirc(),600)}
+  },
+
+  setBusy(v){['btn-run','btn-run2','btn-step','btn-meas'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=v})},
+  resetState(){this.S=new QSim(this.C.n);this.stepIdx=-1;this.renderAll();document.getElementById('step-info').textContent='';this.toast('Estado → |0…0⟩','ok')},
+
+  setQubits(n){
+    this.C.n=n;this.C.ops=this.C.ops.filter(op=>op.qubits.every(q=>q<n))
+    this.S=new QSim(n);document.getElementById('qb').textContent=`${n} qubit${n>1?'s':''}`
+    this.renderAll();this.save();this.updateStats()
+  },
+
+  measureAll(){
+    const res=this.S.measureAll(),bits=res.join('')
+    this.hist.unshift(bits);if(this.hist.length>2000)this.hist=this.hist.slice(0,2000)
+    this.renderSV();this.renderCharts();this.renderHist()
+    this.collapseAnim();this.checkChallenges()
+    this.toast(`Medición: |${bits}⟩`,'ok');this.save()
+    if(typeof UV!=='undefined'&&UV.isOpen)UV.syncFromSim()
+  },
+
+  measureMany(n){
+    const snap=this.S.clone()
+    for(let i=0;i<n;i++){const s=this.S.clone();this.hist.unshift(s.measureAll().join(''))}
+    this.S=snap;this.hist=this.hist.slice(0,2000);this.renderHist()
+    this.toast(`${n} mediciones realizadas`,'ok')
+  },
+
+  clearHist(){this.hist=[];this.renderHist();this.toast('Historial borrado','in')},
+  exportHist(){
+    const counts={};this.hist.forEach(b=>{counts[b]=(counts[b]||0)+1})
+    const total=this.hist.length
+    const rows=['ket,count,probability',...Object.entries(counts).map(([k,v])=>`|${k}>,${v},${(v/total).toFixed(4)}`)]
+    const blob=new Blob([rows.join('\n')],{type:'text/csv'})
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='measurements.csv';a.click()
+  },
+
+  save(){localStorage.setItem('qsim3',JSON.stringify({n:this.C.n,ops:this.C.ops.map(({gate,qubits,param,col})=>({gate,qubits,param,col}))}))},
+  loadSaved(){
+    const s=localStorage.getItem('qsim3');if(!s)return
+    try{
+      const d=JSON.parse(s);this.C=new Circuit(d.n||2)
+      document.getElementById('sl-q').value=d.n||2
+      document.getElementById('qb').textContent=`${d.n||2} qubits`
+      this.S=new QSim(d.n||2);(d.ops||[]).forEach(o=>this.C.add(o.gate,o.qubits,o.col,o.param))
+      this.simulateFull()
+    }catch(e){console.warn('load err',e)}
+  },
+  exportJSON(){
+    const d={n:this.C.n,ops:this.C.ops.map(({gate,qubits,param,col})=>({gate,qubits,param,col}))}
+    const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'})
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='circuit.json';a.click()
+  },
+  importJSON(e){
+    const f=e.target.files[0];if(!f)return
+    const r=new FileReader();r.onload=ev=>{
+      try{
+        const d=JSON.parse(ev.target.result)
+        this.C=new Circuit(d.n||2);document.getElementById('sl-q').value=d.n||2
+        document.getElementById('qb').textContent=`${d.n||2} qubits`
+        this.S=new QSim(d.n||2);(d.ops||[]).forEach(o=>this.C.add(o.gate,o.qubits,o.col,o.param))
+        this.simulateFull();this.renderAll();this.save();this.toast('Importado','ok')
+      }catch(err){this.toast('Error al importar','er')}
+    };r.readAsText(f);e.target.value=''
+  },
+  newCircuit(){
+    if(!confirm('¿Crear nuevo circuito?'))return
+    this.C=new Circuit(+document.getElementById('sl-q').value);this.S=new QSim(this.C.n)
+    this.selId=-1;this.stepIdx=-1;this.renderAll();this.save();this.toast('Nuevo circuito','ok')
+  },
+  clearCircuit(){this.C.ops=[];this.S=new QSim(this.C.n);this.renderAll();this.save();this.toast('Limpiado','in')},
+  undo(){this.C.undo();this.simulateFull();this.renderAll();this.save();this.toast('Deshacer','in')},
+
+  toggleTheme(){
+    document.body.classList.toggle('lm')
+    document.getElementById('btn-theme').innerHTML=document.body.classList.contains('lm')?'🌙 <span>Tema</span>':'☀️ <span>Tema</span>'
+    this.renderAll();this.renderBloch()
+  },
+
+  setMode(m){
+    this.mode=m;[0,1,2,3,4].forEach(i=>{
+      document.getElementById(`mt-${i}`)?.classList.toggle('on',i===m)
+      document.getElementById(`mode${i}`)?.style && (document.getElementById(`mode${i}`).style.display=i===m?'':'none')
+    })
+    if(m===3){this.renderFullSV();this.renderStateProps();renderAmpChart(document.getElementById('amp-chart'),this.S)}
+    if(m===4){UV.syncFromSim()}
+  },
+
+  updateStats(){
+    document.getElementById('st-q').textContent=this.C.n
+    document.getElementById('st-g').textContent=this.C.ops.filter(o=>GATES[o.gate]?.n>0).length
+    document.getElementById('st-d').textContent=this.C.depth()
+    document.getElementById('st-e').textContent=this.S.isEntangled()?'Sí ⚡':'No'
+  },
+
+  // Examples
+  EX:{
+    bell:{n:2,t:'Estado de Bell |Φ+⟩',d:'Entrelazamiento perfecto: (|00⟩+|11⟩)/√2',
+      ops:[{gate:'H',qubits:[0],col:0},{gate:'CX',qubits:[0,1],col:1}]},
+    bellminus:{n:2,t:'Estado de Bell |Φ-⟩',d:'Variante con fase negativa: (|00⟩-|11⟩)/√2',
+      ops:[{gate:'H',qubits:[0],col:0},{gate:'CX',qubits:[0,1],col:1},{gate:'Z',qubits:[0],col:2}]},
+    uniform2:{n:2,t:'Superposición Uniforme 2Q',d:'H⊗H: 4 estados con 25% cada uno',
+      ops:[{gate:'H',qubits:[0],col:0},{gate:'H',qubits:[1],col:0}]},
+    uniform3:{n:3,t:'Superposición Uniforme 3Q',d:'H³: 8 estados con 12.5% cada uno',
+      ops:[{gate:'H',qubits:[0],col:0},{gate:'H',qubits:[1],col:0},{gate:'H',qubits:[2],col:0}]},
+    grover:{n:2,t:'Grover — Busca |11⟩',d:'Amplificación de amplitud: P(11)→100%',
+      ops:[
+        {gate:'H',qubits:[0],col:0},{gate:'H',qubits:[1],col:0},
+        {gate:'CZ',qubits:[0,1],col:1},
+        {gate:'H',qubits:[0],col:2},{gate:'H',qubits:[1],col:2},
+        {gate:'X',qubits:[0],col:3},{gate:'X',qubits:[1],col:3},
+        {gate:'CZ',qubits:[0,1],col:4},
+        {gate:'X',qubits:[0],col:5},{gate:'X',qubits:[1],col:5},
+        {gate:'H',qubits:[0],col:6},{gate:'H',qubits:[1],col:6}
+      ]},
+    deutsch:{n:2,t:'Deutsch-Jozsa',d:'1 consulta cuántica vs 2^(n-1)+1 clásicas',
+      ops:[{gate:'X',qubits:[1],col:0},{gate:'H',qubits:[0],col:1},{gate:'H',qubits:[1],col:1},
+           {gate:'CX',qubits:[0,1],col:2},{gate:'H',qubits:[0],col:3},{gate:'M',qubits:[0],col:4}]},
+    teleport:{n:3,t:'Teleportación Cuántica',d:'Transfiere |ψ⟩ de q0 a q2 via entrelazamiento',
+      ops:[
+        {gate:'Ry',qubits:[0],col:0,param:Math.PI/3},
+        {gate:'H',qubits:[1],col:1},{gate:'CX',qubits:[1,2],col:2},
+        {gate:'CX',qubits:[0,1],col:3},{gate:'H',qubits:[0],col:4},
+        {gate:'M',qubits:[0],col:5},{gate:'M',qubits:[1],col:5},
+        {gate:'CX',qubits:[1,2],col:6},{gate:'CZ',qubits:[0,2],col:7}
+      ]},
+    qft3:{n:3,t:'QFT — 3 Qubits',d:'Transformada Fourier Cuántica. Base del algoritmo de Shor.',
+      ops:[
+        {gate:'H',qubits:[0],col:0},
+        {gate:'Rz',qubits:[0],col:1,param:Math.PI/2},{gate:'CX',qubits:[1,0],col:1},
+        {gate:'Rz',qubits:[0],col:2,param:Math.PI/4},{gate:'CX',qubits:[2,0],col:2},
+        {gate:'H',qubits:[1],col:3},
+        {gate:'Rz',qubits:[1],col:4,param:Math.PI/2},{gate:'CX',qubits:[2,1],col:4},
+        {gate:'H',qubits:[2],col:5},{gate:'SW',qubits:[0,2],col:6}
+      ]},
+    ghz:{n:3,t:'Estado GHZ',d:'(|000⟩+|111⟩)/√2: entrelazamiento tripartito máximo',
+      ops:[{gate:'H',qubits:[0],col:0},{gate:'CX',qubits:[0,1],col:1},{gate:'CX',qubits:[0,2],col:2}]},
+    toffoli_demo:{n:3,t:'Demostración Toffoli',d:'CCNOT: NOT si ambos controles son |1⟩',
+      ops:[{gate:'X',qubits:[0],col:0},{gate:'X',qubits:[1],col:0},{gate:'CC',qubits:[0,1,2],col:1}]},
+    phase_kickback:{n:2,t:'Phase Kickback',d:'La fase del objetivo "rebota" al control. Truco clave en Shor y estimación de fase.',
+      ops:[{gate:'H',qubits:[0],col:0},{gate:'X',qubits:[1],col:0},{gate:'CX',qubits:[0,1],col:1},{gate:'H',qubits:[0],col:2}]},
+  },
+
+  buildExamples(){
+    document.getElementById('ex-grid').innerHTML=Object.entries(this.EX).map(([id,ex])=>`
+      <div class="ex-card" onclick="Q.loadEx('${id}')">
+        <div class="ext">${ex.t}</div><div class="exd">${ex.d}</div>
+      </div>`).join('')
+  },
+
+  loadEx(id){
+    this.cm('mo-ex');const ex=this.EX[id];if(!ex)return
+    this.C=new Circuit(ex.n);document.getElementById('sl-q').value=ex.n
+    document.getElementById('qb').textContent=`${ex.n} qubit${ex.n>1?'s':''}`
+    this.S=new QSim(ex.n);ex.ops.forEach(o=>this.C.add(o.gate,o.qubits,o.col,o.param||null))
+    this.simulateFull();this.renderAll();this.save();this.updateStats()
+    this.toast(`"${ex.t}" cargado — pulsa ▶ Ejecutar`,'ok')
+  },
+
+  // Learn mode
+  LEARN:[
+    {t:'El Qubit — Estado Inicial',d:'Todo qubit empieza en <strong>|0⟩</strong> (polo norte de la esfera de Bloch). Observa el vector apuntando hacia arriba en la esfera de la derecha.',a:'Ver estado',f:()=>Q.toast('Estado actual: |0⟩ — vector al norte','in')},
+    {t:'Superposición con Hadamard',d:'Arrastra <strong>H</strong> al qubit q0. El vector de Bloch irá al ecuador, indicando 50% de probabilidad para |0⟩ y |1⟩.',a:'Colocar H en q0',f:()=>Q.place('H',PL+CW/2,PT+CH/2)},
+    {t:'Medir — Colapso Cuántico',d:'Pulsa <strong>MEDIR</strong> varias veces. El resultado es aleatorio (50%/50%). Cada medición destruye la superposición.',a:'Medir ahora',f:()=>Q.measureAll()},
+    {t:'Puerta Z — Cambio de Fase',d:'Z no cambia probabilidades pero sí la fase: |1⟩→-|1⟩. Aplica H→Z→H y observa el efecto de interferencia.',a:'Cargar H→Z→H',f:()=>{Q.clearCircuit();Q.place('H',PL+CW/2,PT+CH/2);Q.place('Z',PL+CW+CW/2,PT+CH/2);Q.place('H',PL+2*CW+CW/2,PT+CH/2)}},
+    {t:'Entrelazamiento (Bell)',d:'Carga el estado de Bell: <strong>H + CNOT</strong>. Mide múltiples veces: siempre 00 ó 11, nunca 01 ó 10. Los qubits están correlacionados.',a:'Cargar Estado de Bell',f:()=>Q.loadEx('bell')},
+    {t:'Ejecutar Paso a Paso',d:'Pulsa <strong>⏭ Paso</strong> varias veces para ver la evolución del estado puerta a puerta. Observa el vector de Bloch moverse.',a:'Ejecutar paso',f:()=>Q.step()},
+    {t:'Rotaciones Arbitrarias',d:'Las puertas <strong>Rx, Ry, Rz</strong> son rotaciones continuas. Ry(π/3) da P(|1⟩)≈25%. Fundamental en algoritmos variacionales.',a:'Cargar Ry(π/3)',f:()=>{Q.clearCircuit();Q.C.add('Ry',[0],0,Math.PI/3);Q.simulateFull();Q.renderAll()}},
+    {t:'Búsqueda de Grover',d:'El algoritmo de Grover amplifica la probabilidad del estado |11⟩ de 25% a 100% en una iteración. ¡Ventaja cuadrática!',a:'Cargar Grover',f:()=>Q.loadEx('grover')},
+  ],
+  learnIdx:0,
+  buildLearn(){
+    const prog=document.getElementById('ls-prog'),cont=document.getElementById('ls-cont')
+    prog.innerHTML=this.LEARN.map((_,i)=>`<div class="ls-dot" id="lsd-${i}"></div>`).join('')
+    cont.innerHTML=this.LEARN.map((s,i)=>`
+      <div class="ls ${i===0?'on':''}" id="ls-${i}">
+        <div class="ls-hdr"><div class="ls-num">${i+1}</div><div class="ls-title">${s.t}</div></div>
+        <div class="ls-desc">${s.d}</div>
+        <div class="ls-nav">
+          ${i>0?`<button class="btn" onclick="Q.learnNav(${i-1})">← Ant</button>`:''}
+          <button class="btn c" onclick="Q.LEARN[${i}].f()" style="flex:1;justify-content:center">${s.a}</button>
+          ${i<this.LEARN.length-1?`<button class="btn" onclick="Q.learnNav(${i+1})">Sig →</button>`:''}
+        </div>
+      </div>`).join('')
+    this.learnNav(0)
+  },
+  learnNav(i){
+    document.querySelectorAll('.ls').forEach(e=>e.classList.remove('on'))
+    document.getElementById(`ls-${i}`)?.classList.add('on')
+    this.LEARN.forEach((_,j)=>{
+      const d=document.getElementById(`lsd-${j}`)
+      if(d){d.classList.toggle('on',j===i);d.classList.toggle('done',j<i)}
+    });this.learnIdx=i
+  },
+
+  // Challenges
+  CHS:[
+    {id:'c1',t:'NOT cuántico',d:'Lleva q0 de |0⟩ a |1⟩ con probabilidad ≥ 98%.', done:false,
+     chk:s=>s.probs()[s.dim>>1]>.98||s.n===1&&s.probs()[1]>.98},
+    {id:'c2',t:'Estado de Bell',d:'Crea (|00⟩+|11⟩)/√2: P(00)≈P(11)≈50%, P(01)≈P(10)≈0.', done:false,
+     chk:s=>s.n>=2&&Math.abs(s.probs()[0]-.5)<.04&&Math.abs(s.probs()[3]-.5)<.04&&s.probs()[1]<.04},
+    {id:'c3',t:'Superposición 3Q',d:'3 qubits, todos los 8 estados con ~12.5%.', done:false,
+     chk:s=>s.n===3&&s.probs().every(p=>Math.abs(p-1/8)<.04)},
+    {id:'c4',t:'Estado GHZ',d:'3 qubits: P(000)≈P(111)≈50%, resto ≈0.', done:false,
+     chk:s=>s.n>=3&&Math.abs(s.probs()[0]-.5)<.04&&Math.abs(s.probs()[7]-.5)<.04&&s.probs()[1]<.02},
+    {id:'c5',t:'Identidad oculta',d:'Aplica puertas que al final no cambien el estado: P(00…0)=100%.', done:false,
+     chk:s=>s.probs()[0]>.999},
+    {id:'c6',t:'Rotación exacta',d:'Obtén P(|1⟩)≈75% en q0 (usa Ry o Rx).', done:false,
+     chk:s=>s.n>=1&&Math.abs(s.probs()[s.dim>>1]-.75)<.03},
+    {id:'c7',t:'iSWAP',d:'Usa la puerta iSWAP entre dos qubits en superposición.', done:false,
+     chk:s=>s.n>=2&&Q.C.ops.some(o=>o.gate==='iSW')&&s.probs()[1]>.01},
+  ],
+  buildChallenges(){
+    document.getElementById('ch-list').innerHTML=this.CHS.map((c,i)=>`
+      <div class="ch-card ${c.done?'done':''}" id="chc-${c.id}">
+        <span class="ch-badge ${c.done?'done':'pending'}">${c.done?'✓ Hecho':'Pendiente'}</span>
+        <div class="ch-title">${c.t}</div>
+        <div class="ch-desc">${c.d}</div>
+        <button class="btn c" onclick="Q.checkOne('${c.id}')" style="font-size:.58rem;margin-top:6px">🔍 Verificar</button>
+      </div>`).join('')
+  },
+  checkChallenges(){
+    this.CHS.forEach(c=>{
+      if(!c.done&&c.chk(this.S)){
+        c.done=true
+        const el=document.getElementById('chc-'+c.id)
+        if(el){el.classList.add('done');el.querySelector('.ch-badge').className='ch-badge done';el.querySelector('.ch-badge').textContent='✓ Hecho'}
+        this.toast(`🏆 Reto: ${c.t}`,'ok');this.spawnParticles('#39ff8e',null,null,50)
+      }
+    })
+  },
+  checkOne(id){
+    const c=this.CHS.find(x=>x.id===id);if(!c)return
+    if(c.chk(this.S))this.checkChallenges()
+    else this.toast(`✗ Aún no. ${c.d}`,'wa')
+  },
+
+  // Edu tabs
+  eduTab(tab){
+    ['theory','gates','algos','glos'].forEach(t=>{
+      const el=document.getElementById(`etab-${t}`),btn=document.getElementById(`et-${t}`)
+      if(el)el.style.display=t===tab?'':'none'
+      if(btn)btn.classList.toggle('c',t===tab)
+    })
+  },
+
+  // Bloch loop
+  blochLoop(){const l=()=>{this.renderBloch();this._raf=requestAnimationFrame(l)};l()},
+
+  // Particles
+  spawnGateParticle(op){
+    const canvas=document.getElementById('cc');if(!op._bounds)return
+    const r=canvas.getBoundingClientRect(),b=op._bounds
+    this.spawnParticles(gc(op.gate),r.left+b.x+b.w/2,r.top+b.y+b.h/2,18)
+  },
+  spawnParticles(color='#a855f7',cx=null,cy=null,count=30){
+    const cont=document.getElementById('ptcls')
+    cx=cx??window.innerWidth/2;cy=cy??window.innerHeight/2
+    for(let i=0;i<count;i++){
+      const p=document.createElement('div'),sz=1.5+Math.random()*5
+      const tx=(Math.random()-.5)*180,ty=-50-Math.random()*140,dur=.8+Math.random()*1.2
+      p.className='pt'
+      p.style.cssText=`width:${sz}px;height:${sz}px;background:${color};box-shadow:0 0 ${sz*2}px ${color};left:${cx}px;top:${cy}px;--tx:${tx}px;--ty:${ty}px;--d:${dur}s`
+      cont.appendChild(p);setTimeout(()=>p.remove(),dur*1000)
+    }
+  },
+  collapseAnim(){
+    const el=document.getElementById('sv');el.style.transition='background .1s'
+    el.style.background='rgba(247,37,133,.12)';setTimeout(()=>{el.style.background=''},350)
+    this.spawnParticles('#f72585',null,null,22)
+  },
+
+  om(id){document.getElementById(id).classList.add('open')},
+  cm(id){document.getElementById(id).classList.remove('open')},
+
+  toast(msg,t='in'){
+    const c=document.getElementById('toasts'),el=document.createElement('div')
+    el.className=`toast ${t}`;const icons={ok:'✓',er:'✕',in:'ℹ',wa:'⚠'}
+    el.innerHTML=`<span>${icons[t]||'ℹ'}</span><span>${msg}</span>`
+    c.appendChild(el);setTimeout(()=>el.remove(),4200)
+  },
+
+  render(){this.renderAll();this.updateStats()},
+}
+
+
+/* ============================================================
+   QUANTUM UNIVERSE 3D — Integrated Engine
+   Reads live state from Q.S (the simulator's QSim instance).
+   All rendering is independent; syncs on open + after each op.
+   ============================================================ */
+const UV = {
+  isOpen: false,
+  canvas: null, ctx: null,
+  W: 0, H: 0,
+  camTheta: 0.45, camPhi: -0.55, camDist: 480,
+  velTheta: 0, velPhi: 0,
+  autoRotate: true, pulsarMode: false, showGrid: true,
+  mouseDown: false, lastMX: 0, lastMY: 0, hasDragged: false,
+  dragSX: 0, dragSY: 0,
+  hoveredIdx: -1,
+  particles: [],
+  totalShots: 0,
+  measHistory: {},
+  raf: null,
+  // Live copy of state for rendering (never measured directly here)
+  simState: null,
+  simN: 2,
+
+  // Stars (generated once)
+  stars: Array.from({length:240},()=>({
+    x:Math.random(),y:Math.random(),
+    r:Math.random()*.9+.15,
+    b:Math.random()*.5+.25,
+    t:Math.random()*Math.PI*2,
+    s:Math.random()*.025+.004
+  })),
+
+  open(){
+    this.isOpen=true
+    const ov=document.getElementById('universe-overlay')
+    ov.classList.add('open')
+    this.canvas=document.getElementById('uv-canvas')
+    this.ctx=this.canvas.getContext('2d')
+    this.resize()
+    this.syncFromSim()
+    this.bindEvents()
+    if(!this.raf) this.loop()
+    document.addEventListener('keydown',this._keyFn=(e)=>{if(e.key==='Escape')this.close()})
+  },
+
+  close(){
+    this.isOpen=false
+    document.getElementById('universe-overlay').classList.remove('open')
+    document.removeEventListener('keydown',this._keyFn)
+    if(this.raf){cancelAnimationFrame(this.raf);this.raf=null}
+    // Deselect tab
+    Q.setMode(0)
+  },
+
+  resize(){
+    this.W=this.canvas.width=this.canvas.offsetWidth||window.innerWidth
+    this.H=this.canvas.height=this.canvas.offsetHeight||window.innerHeight
+  },
+
+  syncFromSim(){
+    // Deep-copy state from Q.S
+    if(!Q||!Q.S) return
+    const s=Q.S
+    this.simN=s.n
+    this.simState=s.state.map(c=>({re:c.re,im:c.im}))
+    this.updateInfoPanel()
+  },
+
+  // Convenience accessors that work on our local copy
+  probs(){
+    if(!this.simState) return [1]
+    return this.simState.map(a=>a.re*a.re+a.im*a.im)
+  },
+  stateAbs(i){ const a=this.simState[i]; return Math.sqrt(a.re*a.re+a.im*a.im) },
+  stateArg(i){ return Math.atan2(this.simState[i].im,this.simState[i].re) },
+
+  // ── 3D geometry ────────────────────────────────────────
+  statePos(idx,n,dim,scale){
+    if(n===1) return idx===0?{x:0,y:scale*.7,z:0}:{x:0,y:-scale*.7,z:0}
+    if(n===2){const cx=[0,1,0,1],cy=[0,0,1,1];return{x:(cx[idx]-.5)*scale*1.35,y:0,z:(cy[idx]-.5)*scale*1.35}}
+    if(n===3){const bx=(idx>>2)&1,by=(idx>>1)&1,bz=idx&1;return{x:(bx-.5)*scale*1.35,y:(by-.5)*scale*1.35,z:(bz-.5)*scale*1.35}}
+    // 4-5 qubits: golden spiral on sphere
+    const t=idx/(dim-1)
+    const phi=Math.acos(1-2*t),theta=Math.PI*(1+Math.sqrt(5))*idx
+    return{x:scale*Math.sin(phi)*Math.cos(theta),y:scale*Math.sin(phi)*Math.sin(theta),z:scale*Math.cos(phi)}
+  },
+
+  project(x,y,z){
+    const cT=Math.cos(this.camTheta),sT=Math.sin(this.camTheta)
+    const cP=Math.cos(this.camPhi), sP=Math.sin(this.camPhi)
+    const rx=x*cT+z*sT, ry=y, rz=-x*sT+z*cT
+    const ry2=ry*cP-rz*sP, rz2=ry*sP+rz*cP
+    const fov=this.camDist
+    const zd=Math.max(fov*.01,fov+rz2)
+    return{px:this.W/2+rx*fov/zd, py:this.H/2-ry2*fov/zd,
+           scale:Math.max(.001,fov/zd), depth:rz2}
+  },
+
+  // ── Rendering helpers ───────────────────────────────────
+  hslRgb(h,s,l){
+    const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q
+    const hue2=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<.5)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p}
+    return{r:Math.round(hue2(p,q,h+1/3)*255),g:Math.round(hue2(p,q,h)*255),b:Math.round(hue2(p,q,h-1/3)*255)}
+  },
+
+  stateColor(prob,phase){
+    if(prob>0.55) return{r:247,g:37,b:133}
+    if(prob>0.22) return{r:0,g:220,b:255}
+    return{r:168,g:85,b:247}
+  },
+
+  drawStars(t){
+    this.stars.forEach(s=>{
+      const x=s.x*this.W,y=s.y*this.H
+      const b=s.b*(.65+.35*Math.sin(t*s.s+s.t))
+      this.ctx.beginPath();this.ctx.arc(x,y,s.r,0,Math.PI*2)
+      this.ctx.fillStyle=`rgba(200,215,255,${b})`;this.ctx.fill()
+    })
+  },
+
+  drawNebula(t){
+    const c=this.ctx
+    const cx=this.W*.38+Math.sin(t*.4)*this.W*.06
+    const cy=this.H*.42+Math.cos(t*.3)*this.H*.05
+    const g=c.createRadialGradient(cx,cy,0,cx,cy,Math.min(this.W,this.H)*.55)
+    g.addColorStop(0,'rgba(168,85,247,0.05)');g.addColorStop(.45,'rgba(0,100,180,0.03)')
+    g.addColorStop(.8,'rgba(247,37,133,0.025)');g.addColorStop(1,'rgba(0,0,0,0)')
+    c.fillStyle=g;c.fillRect(0,0,this.W,this.H)
+  },
+
+  drawConnections(spheres){
+    const probs=this.probs()
+    const c=this.ctx,t=Date.now()*.001
+    for(let i=0;i<spheres.length;i++){
+      for(let j=i+1;j<spheres.length;j++){
+        const pi=probs[i],pj=probs[j]
+        if(pi<.015||pj<.015)continue
+        const strength=Math.sqrt(pi*pj)
+        if(strength<.04)continue
+        const si=spheres[i],sj=spheres[j],alpha=Math.min(.9,strength*.85)
+        c.save();c.setLineDash([6,8]);c.lineDashOffset=-t*18
+        const g2=c.createLinearGradient(si.px,si.py,sj.px,sj.py)
+        g2.addColorStop(0,`rgba(168,85,247,${alpha})`)
+        g2.addColorStop(.5,`rgba(0,220,255,${alpha*.55})`)
+        g2.addColorStop(1,`rgba(247,37,133,${alpha})`)
+        c.strokeStyle=g2;c.lineWidth=Math.max(.5,1+strength*2.5)
+        c.shadowColor='rgba(0,220,255,.5)';c.shadowBlur=6
+        c.beginPath();c.moveTo(si.px,si.py);c.lineTo(sj.px,sj.py);c.stroke()
+        c.shadowBlur=0;c.restore()
+      }
+    }
+  },
+
+  drawPhaseRing(px,py,r,phase,prob,sc,t){
+    if(prob<.015)return
+    const c=this.ctx,ringR=Math.max(.1,r+5*sc),segs=32
+    for(let i=0;i<segs;i++){
+      const a0=(i/segs)*Math.PI*2,a1=((i+1)/segs)*Math.PI*2
+      const hue=(phase*180/Math.PI+i/segs*360+t*55)%360
+      const cl=this.hslRgb(hue/360,.9,.6)
+      c.beginPath();c.arc(px,py,ringR,a0,a1)
+      c.strokeStyle=`rgba(${cl.r},${cl.g},${cl.b},${prob*.75})`
+      c.lineWidth=Math.max(.3,2*sc*prob);c.stroke()
+    }
+  },
+
+  drawGridEdges(n,scale){
+    if(!this.showGrid)return
+    const dim=1<<n,c=this.ctx
+    c.save();c.globalAlpha=.07;c.strokeStyle='#a855f7';c.lineWidth=.5
+    for(let i=0;i<dim;i++){
+      for(let bit=0;bit<n;bit++){
+        const j=i^(1<<bit)
+        if(j>i){
+          const pi2=this.statePos(i,n,dim,scale),pj=this.statePos(j,n,dim,scale)
+          const a=this.project(pi2.x,pi2.y,pi2.z),b=this.project(pj.x,pj.y,pj.z)
+          c.beginPath();c.moveTo(a.px,a.py);c.lineTo(b.px,b.py);c.stroke()
+        }
+      }
+    }
+    c.restore()
+  },
+
+  drawAxes(){
+    const len=38,ox=this.W-65,oy=this.H-65,c=this.ctx
+    [{v:[.001,0,0],col:'#f72585',l:'X'},{v:[0,.001,0],col:'#39ff8e',l:'Y'},{v:[0,0,.001],col:'#00dcff',l:'Z'}]
+    .forEach(a=>{
+      const s=this.project(0,0,0),e=this.project(...a.v)
+      const dx=e.px-s.px,dy=e.py-s.py,nm=Math.sqrt(dx*dx+dy*dy)
+      if(nm<.001)return
+      const ex=ox+dx/nm*len,ey=oy+dy/nm*len
+      c.beginPath();c.moveTo(ox,oy);c.lineTo(ex,ey)
+      c.strokeStyle=a.col;c.lineWidth=1.5;c.stroke()
+      c.fillStyle=a.col;c.font='10px monospace';c.fillText(a.l,ex+4,ey+4)
+    })
+  },
+
+  updateParticles(){
+    const c=this.ctx
+    this.particles=this.particles.filter(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.vy+=.055;p.vx*=.98;p.vy*=.98;p.life-=p.decay
+      if(p.life<=0)return false
+      c.globalAlpha=p.life
+      c.beginPath();c.arc(p.x,p.y,Math.max(.1,p.r*p.life),0,Math.PI*2)
+      c.fillStyle=p.color;c.shadowColor=p.color;c.shadowBlur=p.r*3;c.fill()
+      c.shadowBlur=0;c.globalAlpha=1
+      return true
+    })
+  },
+
+  spawnParticles(px,py,color,count=40){
+    for(let i=0;i<count;i++){
+      const ang=Math.random()*Math.PI*2,spd=1.2+Math.random()*5.5
+      this.particles.push({x:px,y:py,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,
+        r:1.5+Math.random()*4.5,color,life:1,decay:.014+Math.random()*.022})
+    }
+  },
+
+  // ── Main loop ───────────────────────────────────────────
+  loop(){
+    this.raf=requestAnimationFrame(()=>this.loop())
+    if(!this.isOpen)return
+    const t=Date.now()*.001
+
+    // Camera inertia / auto-rotate
+    if(this.autoRotate&&!this.mouseDown) this.camTheta+=.0025
+    if(!this.mouseDown){this.velTheta*=.91;this.velPhi*=.91;this.camTheta+=this.velTheta;this.camPhi+=this.velPhi}
+    this.camPhi=Math.max(-Math.PI/2+.05,Math.min(Math.PI/2-.05,this.camPhi))
+
+    const c=this.ctx
+    c.fillStyle='rgba(0,0,8,1)';c.fillRect(0,0,this.W,this.H)
+    this.drawNebula(t);this.drawStars(t)
+
+    if(!this.simState){c.fillStyle='rgba(168,85,247,.4)';c.font='14px monospace';c.textAlign='center';c.fillText('Ejecuta un circuito para ver el universo cuántico',this.W/2,this.H/2);c.textAlign='left';return}
+
+    const n=this.simN,dim=1<<n,probs=this.probs()
+    const scale=Math.min(this.W,this.H)*.22
+    this.drawGridEdges(n,scale)
+
+    // Build + sort spheres
+    const spheres=[]
+    for(let i=0;i<dim;i++){
+      const pos3=this.statePos(i,n,dim,scale)
+      const proj=this.project(pos3.x,pos3.y,pos3.z)
+      spheres.push({idx:i,px:proj.px,py:proj.py,sc:proj.scale,depth:proj.depth,
+        prob:probs[i],phase:this.stateArg(i),col:this.stateColor(probs[i],this.stateArg(i))})
+    }
+    spheres.sort((a,b)=>a.depth-b.depth)
+    this.drawConnections(spheres)
+
+    spheres.forEach(sp=>{
+      const{idx,px,py,sc,prob,phase,col}=sp
+      const hov=idx===this.hoveredIdx
+      if(prob<.001){
+        c.beginPath();c.arc(px,py,Math.max(.5,8*sc),0,Math.PI*2)
+        c.fillStyle=`rgba(35,45,75,${.14*sc})`;c.fill()
+        return
+      }
+      const pf=this.pulsarMode?(1+.28*Math.sin(t*3+idx)):1
+      const r=Math.max(5,(8+prob*30)*sc*pf)
+
+      this.drawPhaseRing(px,py,r,phase,prob,sc,t)
+
+      // Glow
+      for(let l=5;l>=1;l--){
+        c.beginPath();c.arc(px,py,Math.max(.1,r*(1+l*.5)),0,Math.PI*2)
+        c.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob*.35*(1-l/6)*.5})`;c.fill()
+      }
+
+      // Main sphere
+      const sg=c.createRadialGradient(px-r*.3,py-r*.3,r*.08,px,py,r)
+      sg.addColorStop(0,`rgba(255,255,255,${prob*.65})`)
+      sg.addColorStop(.32,`rgba(${col.r},${col.g},${col.b},${prob*.9})`)
+      sg.addColorStop(1,`rgba(${Math.round(col.r*.28)},${Math.round(col.g*.28)},${Math.round(col.b*.28)},${prob*.95})`)
+      c.beginPath();c.arc(px,py,r,0,Math.PI*2);c.fillStyle=sg;c.fill()
+
+      // Specular
+      c.beginPath();c.arc(px-r*.3,py-r*.3,Math.max(.1,r*.24),0,Math.PI*2)
+      c.fillStyle=`rgba(255,255,255,${prob*.32})`;c.fill()
+
+      // Orbit ring
+      if(prob>.08){
+        const oa=phase+t*1.4*prob,rx2=r*1.4,ry2=Math.max(.1,r*.34)
+        c.save();c.translate(px,py);c.rotate(oa)
+        c.beginPath();c.ellipse(0,0,rx2,ry2,0,0,Math.PI*2)
+        c.strokeStyle=`rgba(${col.r},${col.g},${col.b},${prob*.48})`;c.lineWidth=Math.max(.3,1.5*sc);c.stroke()
+        c.restore()
+        // Orbital dot
+        const odx=Math.cos(t*2+phase)*rx2,ody=Math.sin(t*2+phase)*ry2*Math.cos(oa)
+        c.beginPath();c.arc(px+odx,py+ody,Math.max(.1,3*sc),0,Math.PI*2)
+        c.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob})`;c.fill()
+      }
+
+      // Hover ring
+      if(hov){c.beginPath();c.arc(px,py,Math.max(.1,r+8*sc),0,Math.PI*2);c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=2*sc;c.stroke()}
+
+      // Labels
+      const bits=idx.toString(2).padStart(n,'0')
+      const labelAlpha=prob>.28?Math.min(prob*1.4,.92):.35
+      c.fillStyle=`rgba(200,220,255,${labelAlpha})`;c.font=`${Math.max(9,10*sc)}px 'Courier New'`;c.textAlign='center';c.textBaseline='top'
+      c.fillText(`|${bits}⟩`,px,py+r+5*sc)
+      if(prob>.04){
+        c.fillStyle=`rgba(100,200,255,${prob*.75})`;c.font=`${Math.max(7,8*sc)}px 'Courier New'`
+        c.fillText(`${(prob*100).toFixed(1)}%`,px,py+r+18*sc)
+      }
+      c.textAlign='left';c.textBaseline='alphabetic'
+    })
+
+    this.updateParticles()
+    this.drawAxes()
+  },
+
+  // ── Interaction ─────────────────────────────────────────
+  bindEvents(){
+    const canvas=this.canvas
+    const onDown=e=>{
+      this.mouseDown=true
+      const x=e.touches?e.touches[0].clientX:e.clientX
+      const y=e.touches?e.touches[0].clientY:e.clientY
+      this.lastMX=x;this.lastMY=y;this.dragSX=x;this.dragSY=y;this.hasDragged=false
+    }
+    const onMove=e=>{
+      e.preventDefault()
+      const x=e.touches?e.touches[0].clientX:e.clientX
+      const y=e.touches?e.touches[0].clientY:e.clientY
+      if(this.mouseDown){
+        const dx=x-this.lastMX,dy=y-this.lastMY
+        this.velTheta=dx*.005;this.velPhi=dy*.005
+        this.camTheta+=dx*.005;this.camPhi+=dy*.005
+        this.lastMX=x;this.lastMY=y
+        if(Math.abs(x-this.dragSX)+Math.abs(y-this.dragSY)>5)this.hasDragged=true
+      }
+      // Hover
+      if(!this.simState)return
+      const n=this.simN,dim=1<<n,scale=Math.min(this.W,this.H)*.22,probs=this.probs()
+      let best=-1,bestD=Infinity
+      for(let i=0;i<dim;i++){
+        const pos3=this.statePos(i,n,dim,scale),proj=this.project(pos3.x,pos3.y,pos3.z)
+        const prob=probs[i],r=Math.max(1,(8+prob*30)*Math.max(.001,proj.scale))
+        const dx=x-proj.px,dy2=y-proj.py,d=Math.sqrt(dx*dx+dy2*dy2)
+        if(d<r*1.6+14&&d<bestD){bestD=d;best=i}
+      }
+      this.hoveredIdx=best
+      const tt=document.getElementById('uv-tooltip')
+      if(best>=0&&this.simState){
+        const bits=best.toString(2).padStart(n,'0'),prob=probs[best],a=this.simState[best]
+        tt.style.display='block';tt.style.left=(x+15)+'px';tt.style.top=(y-10)+'px'
+        tt.innerHTML=`<div style="color:#a855f7;margin-bottom:4px;font-size:.65rem">Estado |${bits}⟩</div>
+          <div>P: <span class="tv">${(prob*100).toFixed(2)}%</span></div>
+          <div>Amp: <span class="tv">${a.re.toFixed(3)}${a.im>=0?'+':''}${a.im.toFixed(3)}i</span></div>
+          <div>|a|: <span class="tv">${Math.sqrt(a.re*a.re+a.im*a.im).toFixed(4)}</span> · φ: <span class="tv">${(Math.atan2(a.im,a.re)*180/Math.PI).toFixed(1)}°</span></div>
+          <div style="color:#334055;font-size:.55rem;margin-top:3px">⇧+clic para colapsar</div>`
+      } else tt.style.display='none'
+    }
+    const onUp=e=>{
+      if(!this.hasDragged){
+        const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX
+        const y=e.changedTouches?e.changedTouches[0].clientY:e.clientY
+        if((e.shiftKey||e.touches)&&this.hoveredIdx>=0) this.collapseToState(this.hoveredIdx)
+      }
+      this.mouseDown=false
+    }
+    const onWheel=e=>{
+      e.preventDefault()
+      const d=Math.sign(e.deltaY)*Math.min(Math.abs(e.deltaY*.5),30)
+      this.camDist=Math.max(150,Math.min(900,this.camDist+d))
+    }
+    // Store refs to remove later if needed
+    canvas.addEventListener('mousedown',onDown)
+    canvas.addEventListener('mousemove',onMove)
+    canvas.addEventListener('mouseup',onUp)
+    canvas.addEventListener('wheel',onWheel,{passive:false})
+    canvas.addEventListener('touchstart',onDown,{passive:false})
+    canvas.addEventListener('touchmove',onMove,{passive:false})
+    canvas.addEventListener('touchend',onUp)
+    window.addEventListener('resize',()=>{if(this.isOpen)this.resize()})
+  },
+
+  collapseToState(idx){
+    if(!this.simState)return
+    // Collapse Q.S to this state
+    const n=Q.S.n,dim=Q.S.dim
+    for(let i=0;i<dim;i++) Q.S.state[i]=i===idx?{re:1,im:0}:{re:0,im:0}
+    // Use proper C objects
+    Q.S.state=Q.S.state.map((a,i)=>i===idx?new C(1,0):new C(0,0))
+    const bits=idx.toString(2).padStart(n,'0')
+    Q.totalShots=(Q.hist.length)||0
+    Q.hist.unshift(bits);Q.renderSV();Q.renderCharts();Q.renderHist()
+    this.syncFromSim()
+    // Burst particles
+    const scale=Math.min(this.W,this.H)*.22
+    const pos3=this.statePos(idx,n,dim,scale),proj=this.project(pos3.x,pos3.y,pos3.z)
+    this.spawnParticles(proj.px,proj.py,'#39ff8e',70)
+    this.spawnParticles(proj.px,proj.py,'#a855f7',40)
+    this.spawnParticles(proj.px,proj.py,'#00dcff',30)
+    const mr=document.getElementById('uv-meas')
+    mr.textContent=`→ |${bits}⟩`;mr.style.color='#39ff8e';mr.style.opacity='1'
+    setTimeout(()=>{mr.style.opacity='0'},1800)
+    this.totalShots++;this.measHistory[bits]=(this.measHistory[bits]||0)+1
+    this.updateInfoPanel()
+    Q.toast(`⚛ Colapso cuántico: |${bits}⟩`,'ok')
+  },
+
+  measure(){
+    if(!Q||!Q.S)return
+    const res=Q.S.measureAll(),bits=res.join('')
+    Q.hist.unshift(bits);Q.renderSV();Q.renderCharts();Q.renderHist()
+    this.totalShots++;this.measHistory[bits]=(this.measHistory[bits]||0)+1
+    this.syncFromSim()
+    // Burst at collapsed state
+    const idx=parseInt(bits,2),n=this.simN,dim=1<<n
+    const scale=Math.min(this.W,this.H)*.22
+    const pos3=this.statePos(idx,n,dim,scale),proj=this.project(pos3.x,pos3.y,pos3.z)
+    this.spawnParticles(proj.px,proj.py,'#f72585',60)
+    this.spawnParticles(proj.px,proj.py,'#a855f7',35)
+    this.spawnParticles(proj.px,proj.py,'#00dcff',25)
+    const mr=document.getElementById('uv-meas')
+    mr.textContent=`|${bits}⟩`;mr.style.color='#39ff8e';mr.style.opacity='1'
+    setTimeout(()=>{mr.style.opacity='0'},1800)
+    this.updateInfoPanel()
+    Q.toast(`📏 Medición: |${bits}⟩`,'ok')
+  },
+
+  measure100(){
+    if(!Q||!Q.S)return
+    const snap=Q.S.probs(),n=Q.S.n,dim=Q.S.dim
+    let cum=0;const cdf=snap.map(p=>(cum+=p,cum))
+    for(let i=0;i<100;i++){
+      const r=Math.random(),idx=Math.max(0,cdf.findIndex(c=>c>=r))
+      const bits=idx.toString(2).padStart(n,'0')
+      this.measHistory[bits]=(this.measHistory[bits]||0)+1;this.totalShots++
+    }
+    // Burst at active states
+    const scale=Math.min(this.W,this.H)*.22
+    for(let i=0;i<dim;i++){
+      if(snap[i]>.015){
+        const p3=this.statePos(i,n,dim,scale),pr=this.project(p3.x,p3.y,p3.z)
+        this.spawnParticles(pr.px,pr.py,'#00dcff',Math.round(snap[i]*28))
+      }
+    }
+    this.updateInfoPanel()
+    Q.toast('× 100 shots realizados','ok')
+  },
+
+  updateInfoPanel(){
+    if(!this.simState)return
+    const probs=this.probs(),n=this.simN,maxP=Math.max(...probs,.001)
+    const top=probs.map((p,i)=>({p,i})).filter(x=>x.p>.01).sort((a,b)=>b.p-a.p).slice(0,3)
+    const svStr=top.map(x=>`|${x.i.toString(2).padStart(n,'0')}⟩:${(x.p*100).toFixed(1)}%`).join(' + ')||'|0…0⟩'
+    document.getElementById('uv-sv').textContent=svStr
+    // Entropy
+    let ent=0;probs.forEach(p=>{if(p>1e-9)ent-=p*Math.log2(p)})
+    document.getElementById('uv-ent').textContent=ent.toFixed(3)
+    // Entanglement (bloch vector purity)
+    const nd=this.simN,dd=1<<nd;let a0re=0,a0im=0,a1re=0,a1im=0
+    for(let i=0;i<dd;i++){const a=this.simState[i];if((i>>(nd-1))&1){a1re+=a.re;a1im+=a.im}else{a0re+=a.re;a0im+=a.im}}
+    const norm=Math.sqrt(a0re*a0re+a0im*a0im+a1re*a1re+a1im*a1im)||1
+    a0re/=norm;a0im/=norm;a1re/=norm;a1im/=norm
+    const theta=2*Math.acos(Math.min(Math.sqrt(a0re*a0re+a0im*a0im),1))
+    const phi=(Math.atan2(a1im,a1re))-(Math.atan2(a0im,a0re))
+    const bx=Math.sin(theta)*Math.cos(phi),by=Math.sin(theta)*Math.sin(phi),bz=Math.cos(theta)
+    const entg=nd>=2&&Math.sqrt(bx*bx+by*by+bz*bz)<0.99
+    document.getElementById('uv-entg').textContent=entg?'Sí ⚡':'No'
+    document.getElementById('uv-shots').textContent=this.totalShots
+    // Shots bar
+    const bar=document.getElementById('uv-shots-bar')
+    const entries=Object.entries(this.measHistory).sort((a,b)=>b[1]-a[1]).slice(0,5)
+    const maxC=entries[0]?.[1]||1
+    bar.innerHTML=entries.map(([bits,cnt])=>`
+      <div class="uv-sh"><div class="uv-sh-ket">|${bits}⟩</div>
+        <div class="uv-sh-bw"><div class="uv-sh-bf" style="width:${cnt/maxC*100}%"></div></div>
+        <div class="uv-sh-n">${cnt}</div></div>`).join('')
+  },
+
+  // ── Controls ────────────────────────────────────────────
+  togglePulsar(){
+    this.pulsarMode=!this.pulsarMode
+    const b=document.getElementById('uv-btn-pulsar')
+    if(b){b.style.background=this.pulsarMode?'rgba(168,85,247,.35)':'rgba(168,85,247,.1)'}
+  },
+  toggleGrid(){
+    this.showGrid=!this.showGrid
+    const b=document.getElementById('uv-btn-grid')
+    if(b){b.style.background=this.showGrid?'rgba(57,255,142,.25)':'rgba(57,255,142,.1)'}
+  },
+  toggleAuto(){
+    this.autoRotate=!this.autoRotate;this.velTheta=this.velPhi=0
+    const b=document.getElementById('uv-btn-auto')
+    if(b){b.style.background=this.autoRotate?'rgba(168,85,247,.25)':'rgba(168,85,247,.1)'}
+  },
+  resetView(){this.camTheta=0.45;this.camPhi=-0.55;this.camDist=480;this.velTheta=this.velPhi=0},
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')['mo-exp','mo-ex','mo-ang','mo-gate'].forEach(id=>Q.cm(id))
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();Q.runCircuit()}
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();Q.undo()}
+  if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();Q.newCircuit()}
+  if((e.ctrlKey||e.metaKey)&&e.key==='r'){e.preventDefault();Q.resetState()}
+  if((e.ctrlKey||e.metaKey)&&e.key==='.'){e.preventDefault();Q.step()}
+  if((e.ctrlKey||e.metaKey)&&e.key==='m'){e.preventDefault();Q.measureAll()}
+})
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}))
+window.addEventListener('resize',()=>{renderProbChart(document.getElementById('prob-chart'),Q.S);Q.renderCirc()})
+
+Q.init()
+</script>
+</body>
+</html>

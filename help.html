@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayuda — Quantum Simulator</title>
+<style>
+:root {
+  --bg: #060910;
+  --bg2: #0b0e1c;
+  --bg3: #101428;
+  --panel: rgba(10,13,28,0.98);
+  --border: rgba(130,60,255,0.2);
+  --borderc: rgba(0,220,255,0.18);
+  --av: #a855f7;
+  --ac: #00dcff;
+  --am: #f72585;
+  --ag: #39ff8e;
+  --ao: #ffaa00;
+  --text: #d8e8f8;
+  --text2: #5a7090;
+  --text3: #2a3a55;
+  --mono: 'Courier New', monospace;
+  --ui: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --r: 10px;
+  --rs: 6px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: var(--ui);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 55% 40% at 15% 15%, rgba(168,85,247,.06) 0, transparent 70%),
+    radial-gradient(ellipse 45% 35% at 85% 85%, rgba(0,220,255,.05) 0, transparent 70%),
+    radial-gradient(ellipse 35% 25% at 55% 35%, rgba(247,37,133,.04) 0, transparent 70%);
+}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+.wrapper {
+  position: relative; z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR NAV ─────────────────────────────────────── */
+nav {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 28px 16px;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-orb {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--av);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--av);
+  box-shadow: 0 0 14px rgba(168,85,247,.45);
+  animation: orb 5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes orb {
+  0%,100% { box-shadow: 0 0 14px rgba(168,85,247,.45); }
+  50%      { box-shadow: 0 0 28px rgba(168,85,247,.75); }
+}
+
+.nav-title { font-family: var(--mono); font-size: .72rem; color: var(--av); letter-spacing: 2px; text-transform: uppercase; line-height: 1.2; }
+.nav-ver   { font-size: .55rem; color: var(--text2); letter-spacing: 1px; }
+
+.nav-section { margin-bottom: 6px; }
+
+.nav-section-label {
+  font-family: var(--mono);
+  font-size: .55rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 6px 8px 3px;
+}
+
+nav a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: var(--rs);
+  color: var(--text2);
+  text-decoration: none;
+  font-size: .72rem;
+  font-family: var(--mono);
+  transition: all .18s;
+  border-left: 2px solid transparent;
+}
+nav a:hover {
+  color: var(--av);
+  background: rgba(168,85,247,.08);
+  border-left-color: var(--av);
+}
+nav a.active {
+  color: var(--av);
+  background: rgba(168,85,247,.1);
+  border-left-color: var(--av);
+}
+nav a .icon { width: 14px; flex-shrink: 0; text-align: center; font-size: .8rem; }
+
+/* ── CONTENT ─────────────────────────────────────────── */
+main {
+  padding: 40px 48px 80px;
+  overflow-x: hidden;
+}
+
+/* ── HEADINGS ────────────────────────────────────────── */
+.doc-header {
+  margin-bottom: 48px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-header h1 {
+  font-family: var(--mono);
+  font-size: 2rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #a855f7, #00dcff, #f72585);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.doc-header .subtitle {
+  font-family: var(--mono);
+  font-size: .75rem;
+  color: var(--text2);
+  letter-spacing: 2px;
+}
+
+.doc-header .badges {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: .6rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.badge.v { border-color: var(--av); color: var(--av); background: rgba(168,85,247,.1); }
+.badge.c { border-color: var(--ac); color: var(--ac); background: rgba(0,220,255,.1); }
+.badge.m { border-color: var(--am); color: var(--am); background: rgba(247,37,133,.1); }
+.badge.g { border-color: var(--ag); color: var(--ag); background: rgba(57,255,142,.1); }
+
+section { margin-bottom: 56px; scroll-margin-top: 24px; }
+
+h2 {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  color: var(--av);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h2::before {
+  content: '';
+  width: 4px; height: 18px;
+  background: linear-gradient(180deg, var(--av), var(--ac));
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(168,85,247,.5);
+  flex-shrink: 0;
+}
+
+h3 {
+  font-family: var(--mono);
+  font-size: .82rem;
+  color: var(--ac);
+  letter-spacing: 1px;
+  margin: 24px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+h3::before {
+  content: '▸';
+  color: var(--ac);
+  font-size: .7rem;
+}
+
+h4 {
+  font-family: var(--mono);
+  font-size: .75rem;
+  color: var(--ag);
+  margin: 16px 0 8px;
+}
+
+p { color: var(--text2); font-size: .88rem; margin-bottom: 12px; line-height: 1.8; }
+p strong { color: var(--text); }
+p .hl  { color: var(--av); font-family: var(--mono); }
+p .hc  { color: var(--ac); font-family: var(--mono); }
+p .hm  { color: var(--am); font-family: var(--mono); }
+p .hg  { color: var(--ag); font-family: var(--mono); }
+p .ho  { color: var(--ao); font-family: var(--mono); }
+
+/* ── CARDS ───────────────────────────────────────────── */
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  background: rgba(130,60,255,.05);
+  margin-bottom: 14px;
+}
+
+.card.c { border-color: var(--borderc); background: rgba(0,220,255,.04); }
+.card.m { border-color: rgba(247,37,133,.25); background: rgba(247,37,133,.04); }
+.card.g { border-color: rgba(57,255,142,.2); background: rgba(57,255,142,.04); }
+.card.o { border-color: rgba(255,170,0,.25); background: rgba(255,170,0,.04); }
+
+.card-title {
+  font-family: var(--mono);
+  font-size: .72rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: .8px;
+}
+
+.card.default .card-title { color: var(--av); }
+.card.c .card-title { color: var(--ac); }
+.card.m .card-title { color: var(--am); }
+.card.g .card-title { color: var(--ag); }
+.card.o .card-title { color: var(--ao); }
+
+/* ── GATE TABLE ──────────────────────────────────────── */
+.gate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+  margin-bottom: 20px;
+}
+
+.gate-table th {
+  font-family: var(--mono);
+  font-size: .6rem;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  background: rgba(130,60,255,.05);
+}
+
+.gate-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: top;
+  color: var(--text2);
+  font-size: .78rem;
+  line-height: 1.6;
+}
+
+.gate-table tr:hover td { background: rgba(255,255,255,.02); }
+
+.gate-chip-inline {
+  font-family: var(--mono);
+  font-size: .72rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  display: inline-block;
+}
+
+.gci-h  { color: #00dcff; border-color: rgba(0,220,255,.4);  background: rgba(0,220,255,.08); }
+.gci-x  { color: #f72585; border-color: rgba(247,37,133,.4); background: rgba(247,37,133,.08); }
+.gci-z  { color: #39ff8e; border-color: rgba(57,255,142,.4); background: rgba(57,255,142,.08); }
+.gci-s  { color: #ffaa00; border-color: rgba(255,170,0,.4);  background: rgba(255,170,0,.08); }
+.gci-v  { color: #a855f7; border-color: rgba(168,85,247,.4); background: rgba(168,85,247,.08); }
+.gci-m  { color: #ffaa00; border-color: rgba(255,170,0,.5);  background: rgba(255,170,0,.1); }
+
+/* ── SHORTCUTS TABLE ─────────────────────────────────── */
+.kb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+  margin-bottom: 20px;
+}
+.kb-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  color: var(--text2);
+  vertical-align: middle;
+}
+kbd {
+  font-family: var(--mono);
+  font-size: .68rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(168,85,247,.4);
+  background: rgba(168,85,247,.1);
+  color: var(--av);
+  white-space: nowrap;
+}
+
+/* ── STEPS ───────────────────────────────────────────── */
+.steps { counter-reset: step; list-style: none; }
+.steps li {
+  counter-increment: step;
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.steps li::before {
+  content: counter(step);
+  min-width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--av);
+  color: var(--av);
+  font-family: var(--mono);
+  font-size: .68rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  box-shadow: 0 0 8px rgba(168,85,247,.3);
+}
+.steps li p { margin: 0; }
+
+/* ── TIP / WARNING BOXES ─────────────────────────────── */
+.tip {
+  border-left: 3px solid var(--ac);
+  padding: 10px 16px;
+  border-radius: 0 var(--rs) var(--rs) 0;
+  background: rgba(0,220,255,.05);
+  margin: 14px 0;
+  font-size: .8rem;
+  color: var(--text2);
+}
+.tip strong { color: var(--ac); font-family: var(--mono); }
+
+.warn {
+  border-left: 3px solid var(--ao);
+  padding: 10px 16px;
+  border-radius: 0 var(--rs) var(--rs) 0;
+  background: rgba(255,170,0,.05);
+  margin: 14px 0;
+  font-size: .8rem;
+  color: var(--text2);
+}
+.warn strong { color: var(--ao); font-family: var(--mono); }
+
+.note {
+  border-left: 3px solid var(--am);
+  padding: 10px 16px;
+  border-radius: 0 var(--rs) var(--rs) 0;
+  background: rgba(247,37,133,.05);
+  margin: 14px 0;
+  font-size: .8rem;
+  color: var(--text2);
+}
+.note strong { color: var(--am); font-family: var(--mono); }
+
+/* ── FORMULA BOX ─────────────────────────────────────── */
+.formula {
+  font-family: var(--mono);
+  font-size: .82rem;
+  background: rgba(0,0,0,.3);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  padding: 12px 16px;
+  margin: 12px 0;
+  color: var(--ac);
+  line-height: 2;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ── FLOW DIAGRAM ────────────────────────────────────── */
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.flow-box {
+  font-family: var(--mono);
+  font-size: .68rem;
+  padding: 8px 14px;
+  border-radius: var(--rs);
+  border: 1px solid var(--border);
+  background: rgba(130,60,255,.08);
+  color: var(--av);
+  text-align: center;
+  white-space: nowrap;
+}
+.flow-arrow {
+  font-size: 1rem;
+  color: var(--text3);
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+/* ── EXAMPLE CIRCUIT ─────────────────────────────────── */
+.circuit-ascii {
+  font-family: var(--mono);
+  font-size: .72rem;
+  line-height: 2;
+  background: rgba(0,0,0,.3);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  padding: 14px 18px;
+  color: var(--text2);
+  overflow-x: auto;
+  white-space: pre;
+  margin: 12px 0;
+}
+.circuit-ascii .gate-H  { color: #00dcff; }
+.circuit-ascii .gate-X  { color: #f72585; }
+.circuit-ascii .gate-V  { color: #a855f7; }
+.circuit-ascii .gate-M  { color: #ffaa00; }
+
+/* ── COLUMNS ─────────────────────────────────────────── */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 14px 0; }
+
+/* ── TOC ─────────────────────────────────────────────── */
+.toc {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px 24px;
+  background: rgba(130,60,255,.05);
+  margin-bottom: 40px;
+}
+.toc-title { font-family: var(--mono); font-size: .65rem; color: var(--text2); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; }
+.toc-list { list-style: none; columns: 2; gap: 20px; }
+.toc-list li { margin-bottom: 5px; break-inside: avoid; }
+.toc-list a { color: var(--text2); text-decoration: none; font-size: .78rem; transition: color .15s; display: flex; align-items: center; gap: 6px; }
+.toc-list a:hover { color: var(--av); }
+.toc-list a .toc-num { font-family: var(--mono); font-size: .6rem; color: var(--text3); width: 20px; flex-shrink: 0; }
+
+/* ── SCROLLBAR ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--av); }
+
+/* ── PRINT ───────────────────────────────────────────── */
+@media print {
+  body { background: white; color: #111; }
+  nav { display: none; }
+  .wrapper { grid-template-columns: 1fr; }
+  h2 { color: #5020a0; }
+  h3 { color: #0080aa; }
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media (max-width: 860px) {
+  .wrapper { grid-template-columns: 1fr; }
+  nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  main { padding: 24px 20px 60px; }
+  .cols, .cols3 { grid-template-columns: 1fr; }
+  .toc-list { columns: 1; }
+}
+
+.nav-back {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-radius: var(--rs);
+  border: 1px solid var(--borderc);
+  background: rgba(0,220,255,.07);
+  color: var(--ac);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: .68rem;
+  letter-spacing: .8px;
+  margin-bottom: 18px;
+  transition: all .2s;
+}
+.nav-back:hover {
+  background: rgba(0,220,255,.15);
+  box-shadow: 0 0 12px rgba(0,220,255,.3);
+  transform: translateX(-2px);
+}
+
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- ── NAVIGATION ──────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-orb">ψ</div>
+    <div>
+      <div class="nav-title">Quantum<br>Simulator</div>
+      <div class="nav-ver">Manual v1.0</div>
+    </div>
+  </div>
+
+  <a href="index.html" class="nav-back" title="Volver al simulador">
+    ← Volver al Simulador
+  </a>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Introducción</div>
+    <a href="#intro"><span class="icon">🔭</span>¿Qué es?</a>
+    <a href="#quickstart"><span class="icon">⚡</span>Inicio rápido</a>
+    <a href="#interface"><span class="icon">🖥</span>Interfaz</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Circuito</div>
+    <a href="#circuit-editor"><span class="icon">✏️</span>Editor de circuitos</a>
+    <a href="#gates"><span class="icon">⬛</span>Puertas cuánticas</a>
+    <a href="#qubits"><span class="icon">○</span>Gestión de qubits</a>
+    <a href="#execution"><span class="icon">▶</span>Ejecución</a>
+    <a href="#measurement"><span class="icon">📏</span>Medición</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Visualizaciones</div>
+    <a href="#bloch"><span class="icon">🌐</span>Esfera de Bloch</a>
+    <a href="#statevector"><span class="icon">📊</span>Vector de estado</a>
+    <a href="#charts"><span class="icon">📈</span>Gráficas</a>
+    <a href="#universe"><span class="icon">🌌</span>Quantum Universe 3D</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Modos</div>
+    <a href="#mode-free"><span class="icon">🔬</span>Modo Libre</a>
+    <a href="#mode-learn"><span class="icon">🎓</span>Modo Guiado</a>
+    <a href="#mode-challenge"><span class="icon">🏆</span>Retos</a>
+    <a href="#mode-state"><span class="icon">📐</span>Inspector de Estado</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Ejemplos</div>
+    <a href="#examples"><span class="icon">⚡</span>Circuitos de ejemplo</a>
+    <a href="#algorithms"><span class="icon">🔬</span>Algoritmos cuánticos</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Avanzado</div>
+    <a href="#io"><span class="icon">💾</span>Import / Export</a>
+    <a href="#shortcuts"><span class="icon">⌨️</span>Atajos de teclado</a>
+    <a href="#math"><span class="icon">∑</span>Motor matemático</a>
+    <a href="#glossary"><span class="icon">📖</span>Glosario</a>
+    <a href="#faq"><span class="icon">❓</span>FAQ</a>
+  </div>
+</nav>
+
+<!-- ── CONTENT ──────────────────────────────────────────── -->
+<main>
+
+<!-- HEADER -->
+<div class="doc-header">
+  <h1>⚛ Quantum Simulator</h1>
+  <div class="subtitle">Manual de Usuario Completo · Versión 1.0</div>
+  <div class="badges">
+    <span class="badge v">HTML5 Vanilla</span>
+    <span class="badge c">Simulación Real 2ⁿ</span>
+    <span class="badge m">Hasta 5 Qubits</span>
+    <span class="badge g">Open Source</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Tabla de Contenidos</div>
+  <ul class="toc-list">
+    <li><a href="#intro"><span class="toc-num">01</span>¿Qué es el Quantum Simulator?</a></li>
+    <li><a href="#quickstart"><span class="toc-num">02</span>Inicio rápido</a></li>
+    <li><a href="#interface"><span class="toc-num">03</span>Descripción de la interfaz</a></li>
+    <li><a href="#circuit-editor"><span class="toc-num">04</span>Editor de circuitos</a></li>
+    <li><a href="#gates"><span class="toc-num">05</span>Puertas cuánticas</a></li>
+    <li><a href="#qubits"><span class="toc-num">06</span>Gestión de qubits</a></li>
+    <li><a href="#execution"><span class="toc-num">07</span>Ejecución del circuito</a></li>
+    <li><a href="#measurement"><span class="toc-num">08</span>Medición y colapso</a></li>
+    <li><a href="#bloch"><span class="toc-num">09</span>Esfera de Bloch</a></li>
+    <li><a href="#statevector"><span class="toc-num">10</span>Vector de estado</a></li>
+    <li><a href="#charts"><span class="toc-num">11</span>Gráficas de probabilidad</a></li>
+    <li><a href="#universe"><span class="toc-num">12</span>Quantum Universe 3D</a></li>
+    <li><a href="#mode-free"><span class="toc-num">13</span>Modo Libre</a></li>
+    <li><a href="#mode-learn"><span class="toc-num">14</span>Modo Guiado</a></li>
+    <li><a href="#mode-challenge"><span class="toc-num">15</span>Retos</a></li>
+    <li><a href="#mode-state"><span class="toc-num">16</span>Inspector de Estado</a></li>
+    <li><a href="#examples"><span class="toc-num">17</span>Circuitos de ejemplo</a></li>
+    <li><a href="#algorithms"><span class="toc-num">18</span>Algoritmos cuánticos</a></li>
+    <li><a href="#io"><span class="toc-num">19</span>Import / Export</a></li>
+    <li><a href="#shortcuts"><span class="toc-num">20</span>Atajos de teclado</a></li>
+    <li><a href="#math"><span class="toc-num">21</span>Motor matemático</a></li>
+    <li><a href="#glossary"><span class="toc-num">22</span>Glosario</a></li>
+    <li><a href="#faq"><span class="toc-num">23</span>FAQ</a></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="intro">
+  <h2>01 · ¿Qué es el Quantum Simulator?</h2>
+
+  <p>El <strong>Quantum Simulator</strong> es una aplicación web completa para aprender, experimentar y visualizar la computación cuántica directamente en el navegador, sin instalación, sin dependencias externas y con <strong>simulación matemática real</strong>.</p>
+
+  <div class="cols">
+    <div class="card">
+      <div class="card-title">⚛ Simulación Auténtica</div>
+      <p style="margin:0;font-size:.78rem">Implementa un <span class="hc">vector de estado de 2ⁿ amplitudes complejas</span>. Cada puerta aplica multiplicación de matrices unitarias. No es una aproximación: es la física cuántica real.</p>
+    </div>
+    <div class="card c">
+      <div class="card-title">🎨 Visualización Inmersiva</div>
+      <p style="margin:0;font-size:.78rem">Esfera de Bloch 3D animada, gráficas de probabilidad en tiempo real y el <span class="hc">Quantum Universe</span>: una visualización espectacular del espacio de Hilbert en 3D.</p>
+    </div>
+    <div class="card g">
+      <div class="card-title">🎓 Educativo</div>
+      <p style="margin:0;font-size:.78rem">Modo Guiado con 8 lecciones progresivas, 7 retos con validación automática, panel de información dinámica y 11 algoritmos cuánticos pre-construidos.</p>
+    </div>
+    <div class="card m">
+      <div class="card-title">🔬 Para Todos</div>
+      <p style="margin:0;font-size:.78rem">Desde estudiantes que ven el qubit por primera vez hasta programadores cuánticos que quieren prototipar circuitos. Sin conocimientos previos requeridos para empezar.</p>
+    </div>
+  </div>
+
+  <h3>Capacidades técnicas</h3>
+  <ul class="steps">
+    <li><p>Hasta <strong>5 qubits</strong> (32 estados base) con rendimiento fluido en tiempo real.</p></li>
+    <li><p><strong>16 puertas cuánticas</strong>: H, X, Y, Z, S, S†, T, T†, Rx(θ), Ry(θ), Rz(θ), I, CNOT, CZ, SWAP, iSWAP, Toffoli, CCZ, Medición y Barrera.</p></li>
+    <li><p>Aritmética de <strong>números complejos</strong> completa: suma, multiplicación, módulo, fase, conjugado.</p></li>
+    <li><p>Cálculo de <strong>entropía de Von Neumann</strong>, pureza del estado y detección de entrelazamiento.</p></li>
+    <li><p>Historial de mediciones con estadísticas, exportación CSV y <strong>hasta 1000 shots simulados</strong>.</p></li>
+    <li><p>Persistencia automática en <strong>localStorage</strong>: el circuito se guarda al cerrar la pestaña.</p></li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="quickstart">
+  <h2>02 · Inicio Rápido</h2>
+  <p>En menos de 2 minutos puedes crear tu primer circuito cuántico con entrelazamiento:</p>
+
+  <ul class="steps">
+    <li><p>Abre el archivo <span class="hc">quantum-simulator.html</span> en cualquier navegador moderno (Chrome, Firefox, Edge, Safari). No requiere servidor ni instalación.</p></li>
+    <li><p>En el panel izquierdo verás las puertas disponibles. <strong>Arrastra la puerta H</strong> (Hadamard, color cian) y suéltala sobre la línea <span class="hl">q0</span> en la columna 0 del circuito.</p></li>
+    <li><p>Arrastra la puerta <strong>CX</strong> (CNOT, color violeta) y suéltala sobre <span class="hl">q0</span> en la columna 1. Observa cómo aparece la conexión entre q0 y q1.</p></li>
+    <li><p>Pulsa el botón <strong>▶ Ejecutar</strong> en la barra de herramientas del circuito. Verás la animación puerta a puerta con partículas de energía.</p></li>
+    <li><p>Pulsa <strong>📏 MEDIR TODOS LOS QUBITS</strong> en el panel derecho. El resultado siempre será <span class="hc">|00⟩</span> o <span class="hc">|11⟩</span>, nunca <span class="hm">|01⟩</span> ni <span class="hm">|10⟩</span>. ¡Has creado entrelazamiento cuántico!</p></li>
+    <li><p>Pulsa la pestaña <strong>🌌 Universo</strong> y abre el Quantum Universe para ver el estado entrelazado en 3D.</p></li>
+  </ul>
+
+  <div class="tip">
+    <strong>💡 Atajo rápido:</strong> En vez de arrastrar, haz clic en una puerta de la paleta (queda seleccionada en azul) y luego clic en cualquier punto del circuito para colocarla.
+  </div>
+
+  <div class="circuit-ascii">q0 ──[H]──●──────
+           │
+q1 ────────⊕──────
+  </div>
+  <p style="font-size:.75rem;color:var(--text2);margin-top:-8px">↑ Circuito del estado de Bell: H en q0 + CNOT(0→1)</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="interface">
+  <h2>03 · Descripción de la Interfaz</h2>
+
+  <p>La interfaz se divide en cinco zonas principales:</p>
+
+  <div class="card">
+    <div class="card-title">① Header (barra superior)</div>
+    <p style="margin:0;font-size:.8rem">Contiene el logo animado, el título y los botones de acción global: <span class="hc">Nuevo circuito</span>, <span class="hl">Reiniciar estado</span>, <span class="hl">Teoría</span>, <span class="hl">Ejemplos</span>, cambio de tema, exportar e importar.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">② Barra de estadísticas</div>
+    <p style="margin:0;font-size:.8rem">Muestra en tiempo real: número de <span class="hc">qubits</span>, <span class="hg">puertas</span> en el circuito, <span class="ho">profundidad</span> del circuito (longitud del camino crítico) y si el estado actual está <span class="hm">entrelazado</span>.</p>
+  </div>
+
+  <div class="card c">
+    <div class="card-title">③ Panel izquierdo — Paleta de puertas</div>
+    <p style="margin:0;font-size:.8rem">Todas las puertas disponibles organizadas por categoría: un qubit, dos qubits, tres qubits, medición y misc. Cada chip muestra el símbolo y el nombre. Pasa el ratón para ver la descripción rápida.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">④ Área central — Editor de circuito</div>
+    <p style="margin:0;font-size:.8rem">El corazón del simulador. Muestra las líneas de qubits con puertas colocadas. Incluye la barra de herramientas (slider de qubits, velocidad, botones ejecutar/paso/deshacer/limpiar).</p>
+  </div>
+
+  <div class="card m">
+    <div class="card-title">⑤ Panel derecho — Control y visualización</div>
+    <p style="margin:0;font-size:.8rem">Contiene cuatro pestañas: <span class="hm">🔬 Libre</span> (botones de medición, esfera de Bloch, vector de estado, historial), <span class="hl">🎓 Guiado</span>, <span class="hg">🏆 Retos</span> y <span class="ho">📊 Estado</span>. Más la pestaña <span class="hc">🌌 Universo</span>.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="circuit-editor">
+  <h2>04 · Editor de Circuitos</h2>
+
+  <h3>Añadir una puerta</h3>
+  <p>Hay dos formas equivalentes:</p>
+  <div class="cols">
+    <div class="card c">
+      <div class="card-title">Arrastrar y soltar</div>
+      <p style="margin:0;font-size:.78rem">Haz clic y <strong>arrastra</strong> cualquier puerta desde la paleta izquierda. Suéltala sobre la línea del qubit destino en la columna deseada del lienzo del circuito.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Clic en dos pasos</div>
+      <p style="margin:0;font-size:.78rem"><strong>Clic</strong> en la puerta de la paleta (queda resaltada). Luego <strong>clic</strong> en el área del circuito sobre el qubit y columna donde quieres colocarla.</p>
+    </div>
+  </div>
+
+  <h3>Seleccionar una puerta</h3>
+  <p>Haz <strong>clic normal</strong> sobre cualquier puerta en el circuito para seleccionarla (se resalta con halo brillante). Al seleccionarla, el panel derecho muestra su descripción completa y matriz unitaria.</p>
+
+  <h3>Eliminar una puerta</h3>
+  <p>Tres métodos disponibles:</p>
+  <ul class="steps">
+    <li><p><strong>Clic derecho</strong> sobre la puerta en el circuito → eliminación inmediata.</p></li>
+    <li><p><strong>⇧+clic</strong> (Shift + clic) sobre la puerta → abre el inspector detallado con botón "🗑 Eliminar".</p></li>
+    <li><p>Botón <strong>↩ Deshacer</strong> (<kbd>Ctrl+Z</kbd>) para deshacer la última operación.</p></li>
+  </ul>
+
+  <h3>Inspector de puerta (⇧+clic)</h3>
+  <p>Al hacer <strong>Shift + clic</strong> en cualquier puerta del circuito se abre un modal con:</p>
+  <ul class="steps">
+    <li><p>Descripción pedagógica de la puerta y su efecto cuántico.</p></li>
+    <li><p>Valor del parámetro θ si es una puerta rotacional (Rx, Ry, Rz).</p></li>
+    <li><p>Matriz unitaria 2×2 con los valores numéricos actuales.</p></li>
+    <li><p>Botones para <strong>eliminar</strong> la puerta o <strong>editar el ángulo θ</strong>.</p></li>
+  </ul>
+
+  <h3>Puertas de dos y tres qubits</h3>
+  <p>Al colocar CNOT, CZ, SWAP o Toffoli sobre un qubit <span class="hc">q</span>, el simulador asigna automáticamente:</p>
+  <ul class="steps">
+    <li><p>El qubit de <strong>control</strong> es el qubit sobre el que soltaste la puerta.</p></li>
+    <li><p>El qubit <strong>objetivo</strong> es <span class="hc">q+1</span> (o <span class="hc">q-1</span> si estás en el último qubit).</p></li>
+    <li><p>Para Toffoli: control0=q, control1=q+1, objetivo=q+2.</p></li>
+  </ul>
+  <div class="tip">
+    <strong>💡 Consejo:</strong> Para controlar exactamente qué qubits usa una puerta de 2 qubits, colócala sobre el qubit de control deseado. La conexión visual (línea + punto) te indica siempre cuál es el control y cuál el objetivo.
+  </div>
+
+  <h3>Barrera visual</h3>
+  <p>La puerta <span class="gci-v gci-s gate-chip-inline">|</span> <strong>Barrera</strong> inserta una línea vertical discontinua en el circuito. No afecta la simulación pero ayuda a separar visualmente secciones del algoritmo (por ejemplo, la preparación del estado, el oráculo y la difusión en Grover).</p>
+
+  <h3>Botón 🗑 Limpiar</h3>
+  <p>Elimina <strong>todas las puertas</strong> del circuito y reinicia el estado cuántico a |0…0⟩. El número de qubits no cambia. Esta acción <strong>no se puede deshacer</strong> con Ctrl+Z.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="gates">
+  <h2>05 · Puertas Cuánticas</h2>
+
+  <h3>Puertas de un qubit</h3>
+  <table class="gate-table">
+    <thead>
+      <tr><th>Puerta</th><th>Símbolo</th><th>Efecto cuántico</th><th>Matriz 2×2</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="gate-chip-inline gci-h">H</span> Hadamard</td><td>H</td><td>Superposición perfecta: |0⟩→(|0⟩+|1⟩)/√2 · |1⟩→(|0⟩-|1⟩)/√2 · H²=I</td><td>(1/√2)[[1,1],[1,-1]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-x">X</span> Pauli-X</td><td>X</td><td>NOT cuántico: invierte |0⟩↔|1⟩. Rotación π en eje X de la esfera de Bloch.</td><td>[[0,1],[1,0]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-x">Y</span> Pauli-Y</td><td>Y</td><td>Rotación π en eje Y. Y|0⟩=i|1⟩, Y|1⟩=-i|0⟩. Combina X y Z con fase.</td><td>[[0,-i],[i,0]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-z">Z</span> Pauli-Z</td><td>Z</td><td>Cambia fase de |1⟩→-|1⟩. No altera probabilidades. Rotación π en eje Z.</td><td>[[1,0],[0,-1]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-s">S</span> Phase S</td><td>S</td><td>S=√Z. Aplica fase i a |1⟩: |1⟩→i|1⟩. S²=Z.</td><td>[[1,0],[0,i]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-s">S†</span> S dagger</td><td>S†</td><td>Inversa de S. Aplica fase -i a |1⟩: |1⟩→-i|1⟩.</td><td>[[1,0],[0,-i]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-s">T</span> Phase T</td><td>T</td><td>T=⁴√Z. Fase e^(iπ/4). Con {H,T,CNOT} forma conjunto universal.</td><td>[[1,0],[0,e^(iπ/4)]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-s">T†</span> T dagger</td><td>T†</td><td>Inversa de T. Fase e^(-iπ/4).</td><td>[[1,0],[0,e^(-iπ/4)]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-z">Rx</span> Rotación X</td><td>Rx(θ)</td><td>Rotación de θ radianes alrededor del eje X. Rx(π)=iX. Esencial en VQE.</td><td>[[cos θ/2, -i·sin θ/2],[-i·sin θ/2, cos θ/2]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-z">Ry</span> Rotación Y</td><td>Ry(θ)</td><td>Rotación de θ radianes alrededor del eje Y. Ry(π)=iY. Muy usada en QAOA.</td><td>[[cos θ/2, -sin θ/2],[sin θ/2, cos θ/2]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-z">Rz</span> Rotación Z</td><td>Rz(θ)</td><td>Rotación de θ en eje Z. Solo cambia fases relativas, no probabilidades.</td><td>[[e^(-iθ/2), 0],[0, e^(iθ/2)]]</td></tr>
+      <tr><td><span class="gate-chip-inline gci-v" style="color:var(--text2)">I</span> Identidad</td><td>I</td><td>No hace nada. Útil como separador en columnas multi-qubit.</td><td>[[1,0],[0,1]]</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Puertas de dos qubits</h3>
+  <table class="gate-table">
+    <thead>
+      <tr><th>Puerta</th><th>Control → Objetivo</th><th>Efecto</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="gate-chip-inline gci-v">CX</span> CNOT</td><td>q_ctrl → q_tgt</td><td>Si control=|1⟩ aplica X al objetivo. Principal generador de entrelazamiento. CNOT+H = estado de Bell.</td></tr>
+      <tr><td><span class="gate-chip-inline gci-v">CZ</span></td><td>q_ctrl → q_tgt</td><td>Si control=|1⟩ aplica Z al objetivo. Simétrica: el control y objetivo son intercambiables.</td></tr>
+      <tr><td><span class="gate-chip-inline gci-v">↔</span> SWAP</td><td>q₀ ↔ q₁</td><td>Intercambia estados de dos qubits. Equivale a tres CNOTs. Necesario al final de la QFT.</td></tr>
+      <tr><td><span class="gate-chip-inline gci-v">iSW</span> iSWAP</td><td>q₀ ↔ q₁</td><td>SWAP con fase i en los estados intercambiados. Nativo en procesadores superconductores.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Puertas de tres qubits</h3>
+  <table class="gate-table">
+    <thead>
+      <tr><th>Puerta</th><th>Controles → Objetivo</th><th>Efecto</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="gate-chip-inline gci-x">CC</span> Toffoli</td><td>q₀, q₁ → q₂</td><td>NOT si ambos controles son |1⟩. Equivalente a un NAND cuántico. Universal para computación clásica reversible.</td></tr>
+      <tr><td><span class="gate-chip-inline gci-x">CCZ</span></td><td>q₀, q₁ → q₂</td><td>Z condicionada a dos controles en |1⟩. Usada como oráculo en el algoritmo de Grover.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Puertas de medición y misc</h3>
+  <table class="gate-table">
+    <thead><tr><th>Puerta</th><th>Efecto</th></tr></thead>
+    <tbody>
+      <tr><td><span class="gate-chip-inline gci-m">M</span> Medir</td><td>Medición proyectiva en la base computacional. Colapsa el qubit a |0⟩ ó |1⟩ con probabilidades |α|² y |β|². El resultado se registra y el estado del sistema se actualiza.</td></tr>
+      <tr><td><span class="gate-chip-inline gci-v" style="color:var(--text3);border-style:dashed">|</span> Barrera</td><td>Separador visual. No afecta la simulación. Ayuda a organizar visualmente el circuito en secciones.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Puertas rotacionales (Rx, Ry, Rz) — Diálogo de ángulo</h3>
+  <p>Al colocar cualquier puerta con parámetro, se abre automáticamente el <strong>diálogo de ángulo</strong>:</p>
+  <ul class="steps">
+    <li><p>Un <strong>slider</strong> que recorre de -2π a +2π. Al moverlo actualiza en tiempo real las probabilidades P(|0⟩) y P(|1⟩).</p></li>
+    <li><p>Botones de <strong>presets rápidos</strong>: π/6, π/4, π/3, π/2, π, 2π.</p></li>
+    <li><p>Al pulsar <strong>"✓ Aplicar Puerta"</strong> la puerta se añade al circuito con el ángulo elegido. El ángulo se muestra en la propia puerta dentro del circuito.</p></li>
+  </ul>
+  <div class="warn">
+    <strong>⚠ Nota:</strong> Para editar el ángulo de una puerta ya colocada, usa <kbd>⇧+clic</kbd> sobre ella y pulsa "✏️ Editar θ".
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="qubits">
+  <h2>06 · Gestión de Qubits</h2>
+
+  <h3>Slider de qubits</h3>
+  <p>El slider en la barra de herramientas del circuito controla el número de qubits (1 a 5). El valor actual se muestra en la etiqueta violeta.</p>
+
+  <div class="cols">
+    <div class="card">
+      <div class="card-title">1 qubit = 2 estados</div>
+      <p style="margin:0;font-size:.78rem">|0⟩ y |1⟩. Ideal para explorar superposición y las puertas de un qubit.</p>
+    </div>
+    <div class="card c">
+      <div class="card-title">2 qubits = 4 estados</div>
+      <p style="margin:0;font-size:.78rem">|00⟩, |01⟩, |10⟩, |11⟩. Permite entrelazamiento y todos los algoritmos básicos.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">3 qubits = 8 estados</div>
+      <p style="margin:0;font-size:.78rem">Necesario para GHZ, Toffoli, teleportación y QFT de 3 qubits.</p>
+    </div>
+    <div class="card m">
+      <div class="card-title">4-5 qubits = 16/32 estados</div>
+      <p style="margin:0;font-size:.78rem">Para algoritmos más complejos. La Esfera de Bloch sigue siendo de q0. El Universo usa espiral de Fibonacci para posicionar los estados.</p>
+    </div>
+  </div>
+
+  <div class="warn">
+    <strong>⚠ Reducción de qubits:</strong> Si reduces el número de qubits, las puertas que usen qubits fuera del rango se eliminan automáticamente del circuito.
+  </div>
+
+  <h3>Estado inicial</h3>
+  <p>Todos los qubits inician siempre en <span class="hl">|0⟩</span> (polo norte de la esfera de Bloch). El estado inicial del sistema de n qubits es siempre <span class="hc">|0…0⟩</span> con amplitud 1. Para cambiar el estado inicial de un qubit a |1⟩, coloca una puerta <span class="hm">X</span> en la primera columna.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="execution">
+  <h2>07 · Ejecución del Circuito</h2>
+
+  <h3>▶ Ejecutar (animación completa)</h3>
+  <p>El botón <strong>▶ Ejecutar</strong> (también en el panel derecho como <strong>▶ EJECUTAR CIRCUITO</strong>) aplica todas las puertas del circuito en orden de izquierda a derecha, con animación:</p>
+  <ul class="steps">
+    <li><p>La columna activa se <strong>resalta visualmente</strong> con un destello cian.</p></li>
+    <li><p>La puerta emite <strong>partículas de energía</strong> de su color característico.</p></li>
+    <li><p>El <strong>vector de estado</strong> y las <strong>probabilidades</strong> se actualizan en tiempo real.</p></li>
+    <li><p>La <strong>esfera de Bloch</strong> se anima continuamente mostrando la evolución de q0.</p></li>
+    <li><p>Al terminar, la barra de estado muestra "✓ N puertas aplicadas".</p></li>
+  </ul>
+
+  <h3>⏭ Paso a paso</h3>
+  <p>El botón <strong>⏭ Paso</strong> (<kbd>Ctrl+.</kbd>) aplica <strong>una puerta por pulsación</strong>. Ideal para entender exactamente qué hace cada puerta. La columna activa permanece resaltada hasta el siguiente paso. El panel derecho muestra automáticamente la info de la puerta recién aplicada.</p>
+
+  <h3>Slider de velocidad</h3>
+  <p>Controla el <strong>tiempo entre puertas</strong> durante la ejecución animada. Rango de 1× (muy lento, ~700ms por puerta) a 10× (muy rápido, ~40ms). Para circuitos de aprendizaje usa velocidad 3-4; para producciones rápidas usa 8-10.</p>
+
+  <h3>↩ Deshacer</h3>
+  <p>El botón <strong>↩ Deshacer</strong> (<kbd>Ctrl+Z</kbd>) elimina la <strong>última puerta añadida o eliminada</strong>. Funciona para múltiples niveles de deshacer durante la sesión.</p>
+
+  <h3>↺ Reiniciar estado</h3>
+  <p>El botón <strong>↺ Reiniciar</strong> en el header devuelve el vector de estado a <span class="hl">|0…0⟩</span> sin modificar el circuito. Útil para volver a ejecutar el circuito desde cero o para explorar el mismo circuito con diferentes condiciones.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="measurement">
+  <h2>08 · Medición y Colapso</h2>
+
+  <h3>📏 Medir todos los qubits</h3>
+  <p>El botón <strong>📏 MEDIR TODOS LOS QUBITS</strong> realiza una medición proyectiva completa del sistema. El proceso es:</p>
+
+  <div class="flow">
+    <div class="flow-box">Estado ψ en superposición</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">P(|k⟩) = |αₖ|² calculada</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Nº aleatorio ponderado</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Colapso a |k⟩</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Renormalización</div>
+  </div>
+
+  <p>El resultado se muestra como flash de color <span class="hm">magenta</span> en el vector de estado, junto con un resultado grande centrado en pantalla. El estado colapsado se registra en el historial.</p>
+
+  <h3>Puerta M (medición en circuito)</h3>
+  <p>La puerta <span class="gci-m gate-chip-inline">M</span> en el circuito mide un qubit específico <strong>dentro de la secuencia del circuito</strong>. Útil para simular protocolos como la teleportación cuántica donde se mide en mitad del circuito.</p>
+
+  <h3>× 100 y × 1000 shots</h3>
+  <p>Simulan <strong>múltiples mediciones independientes</strong> del estado actual sin colapsar el simulador. Ideal para estimar la distribución de probabilidades experimentalmente. Los resultados se acumulan en el historial.</p>
+
+  <div class="tip">
+    <strong>💡 Diferencia clave:</strong> "× 100 shots" clona el estado actual y mide 100 veces independientes. El estado del simulador no cambia. "📏 Medir" sí colapsa el estado y lo modifica.
+  </div>
+
+  <h3>Historial de mediciones</h3>
+  <p>El panel inferior del modo Libre muestra:</p>
+  <ul class="steps">
+    <li><p><strong>Barras de frecuencia</strong> para cada resultado observado, ordenadas de mayor a menor frecuencia.</p></li>
+    <li><p>El <strong>conteo absoluto</strong> y el <strong>porcentaje</strong> de cada estado.</p></li>
+    <li><p>Botón <strong>🗑 Borrar</strong> para limpiar el historial.</p></li>
+    <li><p>Botón <strong>↓ CSV</strong> para exportar el historial como archivo CSV con ket, count y probability.</p></li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="bloch">
+  <h2>09 · Esfera de Bloch</h2>
+
+  <p>La <strong>Esfera de Bloch</strong> es la representación geométrica del estado de un qubit puro. Cualquier estado <span class="hc">|ψ⟩ = cos(θ/2)|0⟩ + e^(iφ)sin(θ/2)|1⟩</span> corresponde a un punto único en la superficie de la esfera.</p>
+
+  <div class="cols">
+    <div>
+      <h4>Puntos especiales</h4>
+      <table class="gate-table">
+        <thead><tr><th>Estado</th><th>Posición</th></tr></thead>
+        <tbody>
+          <tr><td>|0⟩</td><td>Polo norte</td></tr>
+          <tr><td>|1⟩</td><td>Polo sur</td></tr>
+          <tr><td>(|0⟩+|1⟩)/√2</td><td>Ecuador (+X)</td></tr>
+          <tr><td>(|0⟩-|1⟩)/√2</td><td>Ecuador (-X)</td></tr>
+          <tr><td>(|0⟩+i|1⟩)/√2</td><td>Ecuador (+Y)</td></tr>
+          <tr><td>(|0⟩-i|1⟩)/√2</td><td>Ecuador (-Y)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h4>Efecto de cada puerta</h4>
+      <table class="gate-table">
+        <thead><tr><th>Puerta</th><th>Rotación en esfera</th></tr></thead>
+        <tbody>
+          <tr><td>H</td><td>Rot π en eje (X+Z)/√2</td></tr>
+          <tr><td>X</td><td>Rot π en eje X</td></tr>
+          <tr><td>Y</td><td>Rot π en eje Y</td></tr>
+          <tr><td>Z</td><td>Rot π en eje Z</td></tr>
+          <tr><td>S</td><td>Rot π/2 en eje Z</td></tr>
+          <tr><td>T</td><td>Rot π/4 en eje Z</td></tr>
+          <tr><td>Rx(θ)</td><td>Rot θ en eje X</td></tr>
+          <tr><td>Ry(θ)</td><td>Rot θ en eje Y</td></tr>
+          <tr><td>Rz(θ)</td><td>Rot θ en eje Z</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p>La esfera se actualiza <strong>continuamente en tiempo real</strong> (60 fps). Muestra los ángulos θ (polar, 0°=|0⟩, 180°=|1⟩) y φ (azimutal, 0°-360°) del estado actual del qubit q0.</p>
+
+  <div class="note">
+    <strong>⚠ Nota importante:</strong> La esfera de Bloch representa fielmente el estado solo si el sistema tiene <strong>1 qubit</strong> o si q0 no está entrelazado con otros qubits. En estados entrelazados, la esfera muestra la traza parcial de q0 — el vector puede quedar dentro de la esfera (estado mixto efectivo), indicando entrelazamiento.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="statevector">
+  <h2>10 · Vector de Estado</h2>
+
+  <p>El <strong>vector de estado</strong> muestra todas las amplitudes complejas del sistema. Para n qubits hay 2ⁿ filas, una por estado base.</p>
+
+  <h3>Lectura de cada fila</h3>
+  <table class="gate-table">
+    <thead><tr><th>Columna</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td><span class="hc">|bits⟩</span></td><td>El estado base en notación ket. Los bits se ordenan q0 (más significativo) a q(n-1).</td></tr>
+      <tr><td>Barra violeta</td><td>Longitud proporcional a la probabilidad de ese estado normalizada respecto al máximo.</td></tr>
+      <tr><td><span class="hg">XX.X%</span></td><td>Probabilidad de medir ese estado: |amplitud|²×100.</td></tr>
+      <tr><td>Ángulo polar</td><td>Representación polar de la amplitud: módulo∠fase°. Por ejemplo "0.707∠0.0°".</td></tr>
+    </tbody>
+  </table>
+
+  <p>Haz <strong>clic en cualquier fila</strong> para ver la amplitud completa en notación cartesiana (Re+Im·i) en un toast informativo.</p>
+
+  <div class="formula">Estado de Bell:
+|00⟩: 0.707∠0.0°   → P=50.0%  ████████████
+|01⟩: 0.000∠0.0°   → P=0.0%   
+|10⟩: 0.000∠0.0°   → P=0.0%   
+|11⟩: 0.707∠0.0°   → P=50.0%  ████████████</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="charts">
+  <h2>11 · Gráficas de Probabilidad</h2>
+
+  <h3>Distribución de probabilidades</h3>
+  <p>Gráfico de barras animado en Canvas. Cada barra representa un estado base |k⟩. La altura es proporcional a su probabilidad (eje Y va de 0% a 100%). Las barras muestran:</p>
+  <ul class="steps">
+    <li><p><strong>Etiqueta del estado</strong> en la base (si hay suficiente espacio). En 4+ qubits las etiquetas rotan 90°.</p></li>
+    <li><p><strong>Porcentaje</strong> encima de la barra para probabilidades > 2%.</p></li>
+    <li><p><strong>Gradiente violeta-cian</strong> de abajo hacia arriba. Las barras con 0% aparecen casi transparentes.</p></li>
+  </ul>
+
+  <h3>Gráfica de amplitudes Re + Im (Inspector de Estado)</h3>
+  <p>Disponible en la pestaña <strong>📊 Estado</strong>. Muestra para cada estado base dos barras verticales:</p>
+  <ul class="steps">
+    <li><p>Barra <span class="hc">cian</span>: parte <strong>real</strong> de la amplitud. Hacia arriba = positivo, hacia abajo = negativo.</p></li>
+    <li><p>Barra <span class="hm">magenta</span>: parte <strong>imaginaria</strong> de la amplitud.</p></li>
+  </ul>
+  <p>La línea central representa amplitud 0. Esta gráfica es especialmente útil para ver el efecto de las puertas de fase (Z, S, T, Rz) que no cambian las probabilidades pero sí las amplitudes imaginarias.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="universe">
+  <h2>12 · Quantum Universe 3D</h2>
+
+  <p>El <strong>Quantum Universe</strong> es la visualización más espectacular del simulador. Representa el <strong>espacio de Hilbert completo</strong> como un universo tridimensional interactivo donde cada estado base |k⟩ es un planeta viviente.</p>
+
+  <h3>Cómo abrir el Universo</h3>
+  <ul class="steps">
+    <li><p>En el panel derecho, haz clic en la pestaña <strong>🌌 Universo</strong>.</p></li>
+    <li><p>Pulsa el botón <strong>"🌌 Abrir Quantum Universe (Pantalla Completa)"</strong>.</p></li>
+    <li><p>El Universo se abre sobre toda la pantalla y comienza a rotar automáticamente.</p></li>
+    <li><p>Para cerrar: botón <strong>✕ Cerrar</strong> o tecla <kbd>Esc</kbd>.</p></li>
+  </ul>
+
+  <h3>Posicionamiento de los estados</h3>
+  <table class="gate-table">
+    <thead><tr><th>N° qubits</th><th>Geometría</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td>1 qubit</td><td>Eje vertical</td><td>|0⟩ arriba, |1⟩ abajo. Dos planetas opuestos.</td></tr>
+      <tr><td>2 qubits</td><td>Cuadrado</td><td>4 estados en los vértices de un cuadrado en el plano XZ.</td></tr>
+      <tr><td>3 qubits</td><td>Cubo</td><td>8 estados en los vértices de un cubo 3D. Se ve el hipercubo completo.</td></tr>
+      <tr><td>4-5 qubits</td><td>Espiral de Fibonacci</td><td>16/32 estados distribuidos en una espiral dorada en la esfera.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Visual de cada esfera (estado)</h3>
+  <ul class="steps">
+    <li><p><strong>Tamaño:</strong> proporcional a la probabilidad. Estados con probabilidad 0 aparecen como fantasmas translúcidos.</p></li>
+    <li><p><strong>Color:</strong> magenta (prob > 55%), cian (prob 22-55%), violeta (prob < 22%).</p></li>
+    <li><p><strong>Capas de glow:</strong> halos concéntricos que dan efecto de energía plasma.</p></li>
+    <li><p><strong>Anillo orbital animado:</strong> gira a velocidad proporcional a la probabilidad. Un punto orbital circunda la esfera.</p></li>
+    <li><p><strong>Anillo de fase:</strong> los segmentos del anillo exterior cambian de color según la fase compleja de la amplitud.</p></li>
+    <li><p><strong>Punto especular:</strong> reflejo de luz que da aspecto tridimensional real.</p></li>
+  </ul>
+
+  <h3>Conexiones de entrelazamiento</h3>
+  <p>Cuando dos estados tienen probabilidades significativas simultáneamente (correlación cuántica), aparecen <strong>líneas de luz animadas</strong> entre ellos con efecto de dash viajante. El grosor y la opacidad son proporcionales a la intensidad de la correlación (√(P₁×P₂)).</p>
+
+  <h3>Controles del Universo</h3>
+  <table class="gate-table">
+    <thead><tr><th>Control</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td>Arrastrar ratón</td><td>Rotar el universo libremente en 3D. Al soltar, la rotación continúa con inercia.</td></tr>
+      <tr><td>Rueda del ratón</td><td>Zoom in/out. Rango: 150 (muy cerca) a 900 (panorámica).</td></tr>
+      <tr><td>Hover sobre esfera</td><td>Tooltip con: estado |bits⟩, probabilidad exacta, amplitud compleja (Re+Im·i), módulo y fase.</td></tr>
+      <tr><td>⇧+clic en esfera</td><td>Colapsa todo el sistema cuántico a ese estado específico. Sincroniza el simulador. Explosión de partículas.</td></tr>
+      <tr><td>📏 Medir</td><td>Mide el sistema (igual que el botón del simulador). El estado colapsado tiene explosión de partículas en el Universo.</td></tr>
+      <tr><td>× 100 shots</td><td>Simula 100 mediciones sin colapsar. Partículas en todos los estados activos.</td></tr>
+      <tr><td>💫 Pulsar</td><td>Activa modo pulsar: las esferas laten sinusoidalmente como estrellas de neutrones.</td></tr>
+      <tr><td>⊞ Grid</td><td>Muestra/oculta las aristas del hipercubo (estructura geométrica de fondo).</td></tr>
+      <tr><td>↻ Auto</td><td>Activa/desactiva la rotación automática cinematográfica.</td></tr>
+      <tr><td>⟳ Vista</td><td>Resetea la cámara a la posición inicial óptima.</td></tr>
+      <tr><td>Esc</td><td>Cierra el Universo y vuelve al simulador.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Panel de información inferior</h3>
+  <p>El borde inferior del Universo muestra: estado dominante del sistema, entropía en bits, si hay entrelazamiento, número total de mediciones y las 5 mediciones más frecuentes con barras de frecuencia.</p>
+
+  <h3>Sincronización con el simulador</h3>
+  <p>El Universo se sincroniza automáticamente con el simulador en estos momentos:</p>
+  <ul class="steps">
+    <li><p>Al abrir el Universo (carga el estado actual).</p></li>
+    <li><p>Después de <strong>ejecutar el circuito</strong> (▶ Ejecutar).</p></li>
+    <li><p>Después de <strong>cada medición</strong> en el simulador.</p></li>
+    <li><p>Al cargar cualquier <strong>ejemplo</strong> o importar un circuito.</p></li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="mode-free">
+  <h2>13 · Modo Libre (🔬)</h2>
+  <p>El modo por defecto. Acceso completo a todas las funcionalidades sin restricciones. Ideal para experimentación y para usuarios con conocimientos previos. Contiene:</p>
+  <div class="cols">
+    <div class="card c"><div class="card-title">▶ Botones de ejecución</div><p style="margin:0;font-size:.78rem">Ejecutar completo y paso a paso, directamente en el panel derecho para mayor comodidad.</p></div>
+    <div class="card m"><div class="card-title">📏 Medición</div><p style="margin:0;font-size:.78rem">Botón principal de medición, shots múltiples y acumulación de historial.</p></div>
+    <div class="card"><div class="card-title">🌐 Esfera de Bloch</div><p style="margin:0;font-size:.78rem">Animada en tiempo real con ángulos θ y φ del estado de q0.</p></div>
+    <div class="card g"><div class="card-title">📊 Vector + Gráficas</div><p style="margin:0;font-size:.78rem">Estado completo, distribución de probabilidades y historial de mediciones con exportación CSV.</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="mode-learn">
+  <h2>14 · Modo Guiado (🎓)</h2>
+  <p>Tutorial progresivo de 8 lecciones que llevan al usuario desde cero hasta el algoritmo de Grover. Cada lección incluye:</p>
+  <ul class="steps">
+    <li><p><strong>Título</strong> y <strong>descripción didáctica</strong> con los conceptos clave resaltados.</p></li>
+    <li><p>Un <strong>botón de acción</strong> que ejecuta automáticamente la operación descrita (coloca puertas, carga ejemplos, ejecuta mediciones).</p></li>
+    <li><p>Botones de navegación <strong>← Anterior</strong> y <strong>Sig →</strong>.</p></li>
+    <li><p><strong>Barra de progreso</strong> en la parte superior con un punto por lección (gris = pendiente, violeta = actual, difuminado = completada).</p></li>
+  </ul>
+
+  <h3>Las 8 lecciones del modo guiado</h3>
+  <table class="gate-table">
+    <thead><tr><th>#</th><th>Lección</th><th>Concepto</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>El Qubit — Estado Inicial</td><td>Todo qubit empieza en |0⟩. Observar la esfera de Bloch en el polo norte.</td></tr>
+      <tr><td>2</td><td>Superposición con Hadamard</td><td>H lleva el vector al ecuador. P(0)=P(1)=50%.</td></tr>
+      <tr><td>3</td><td>Medir — Colapso Cuántico</td><td>La medición es aleatoria e irreversible.</td></tr>
+      <tr><td>4</td><td>Puerta Z — Cambio de Fase</td><td>Z no cambia probabilidades pero sí la fase. H→Z→H lo evidencia.</td></tr>
+      <tr><td>5</td><td>Entrelazamiento (Bell)</td><td>H+CNOT crea correlaciones perfectas: siempre |00⟩ o |11⟩.</td></tr>
+      <tr><td>6</td><td>Ejecutar Paso a Paso</td><td>Observar la evolución puerta a puerta con ⏭ Paso.</td></tr>
+      <tr><td>7</td><td>Rotaciones Arbitrarias</td><td>Ry(π/3) da P(|1⟩)≈25%. Base de algoritmos variacionales.</td></tr>
+      <tr><td>8</td><td>Búsqueda de Grover</td><td>Amplificación de amplitud: P(|11⟩) pasa de 25% a ~100%.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="mode-challenge">
+  <h2>15 · Retos (🏆)</h2>
+  <p>Siete mini-retos con validación automática en tiempo real. El simulador comprueba el estado del sistema después de cada operación y marca el reto como completado con una explosión de partículas verdes.</p>
+
+  <table class="gate-table">
+    <thead><tr><th>Reto</th><th>Objetivo</th><th>Pista</th></tr></thead>
+    <tbody>
+      <tr><td>NOT cuántico</td><td>P(|1⟩) ≥ 98% en q0</td><td>Usa la puerta X</td></tr>
+      <tr><td>Estado de Bell</td><td>P(|00⟩)≈P(|11⟩)≈50%, P(|01⟩)≈P(|10⟩)≈0</td><td>H + CNOT</td></tr>
+      <tr><td>Superposición uniforme 3Q</td><td>Los 8 estados con ~12.5% cada uno</td><td>H en los 3 qubits</td></tr>
+      <tr><td>Estado GHZ</td><td>P(|000⟩)≈P(|111⟩)≈50%, resto≈0 con 3 qubits</td><td>H + CNOT(0→1) + CNOT(0→2)</td></tr>
+      <tr><td>Identidad oculta</td><td>P(|00…0⟩) = 100% tras aplicar puertas</td><td>H→H=I o X→X=I</td></tr>
+      <tr><td>Rotación exacta</td><td>P(|1⟩) ≈ 75% en q0</td><td>Ry con θ=2·arcsin(√0.75)≈2.094</td></tr>
+      <tr><td>iSWAP</td><td>Usar la puerta iSWAP con estados en superposición</td><td>H en q0 + q1, luego iSWAP</td></tr>
+    </tbody>
+  </table>
+
+  <p>Cada reto tiene un botón <strong>"🔍 Verificar"</strong> para forzar la comprobación manual además de la validación automática.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="mode-state">
+  <h2>16 · Inspector de Estado (📊)</h2>
+  <p>Panel avanzado con cuatro secciones para análisis profundo del estado cuántico:</p>
+
+  <div class="cols">
+    <div class="card c">
+      <div class="card-title">Vector de Estado Completo</div>
+      <p style="margin:0;font-size:.78rem">Igual que en el modo Libre pero siempre visible aquí. Barras, porcentajes y amplitudes en notación polar para todos los 2ⁿ estados.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Propiedades del Estado</div>
+      <p style="margin:0;font-size:.78rem"><strong>Entrelazado</strong> (Sí/No), <strong>Entropía</strong> de Von Neumann en bits, <strong>Pureza</strong> del estado reducido de q0 (1=puro, <1=entrelazado), <strong>Estados ≠ 0</strong> (cuántos tienen prob > 0.1%).</p>
+    </div>
+    <div class="card m">
+      <div class="card-title">Amplitudes Re + Im</div>
+      <p style="margin:0;font-size:.78rem">Gráfica de barras dobles: cian (parte real) y magenta (parte imaginaria) de cada amplitud. La línea central es 0. Esencial para ver el efecto de puertas de fase.</p>
+    </div>
+    <div class="card o">
+      <div class="card-title">Matriz del Circuito</div>
+      <p style="margin:0;font-size:.78rem">Muestra un recordatorio de ejecutar el circuito. Tras la ejecución muestra información del estado actual del sistema.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="examples">
+  <h2>17 · Circuitos de Ejemplo</h2>
+  <p>Accede vía el botón <strong>⚡ Ejemplos</strong> en el header. Hay 11 circuitos pre-construidos:</p>
+
+  <table class="gate-table">
+    <thead><tr><th>Ejemplo</th><th>Qubits</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td>Estado de Bell |Φ+⟩</td><td>2</td><td>H+CNOT. Entrelazamiento perfecto. Estado base del 90% de los protocolos cuánticos.</td></tr>
+      <tr><td>Estado de Bell |Φ-⟩</td><td>2</td><td>Variante con fase negativa: (|00⟩-|11⟩)/√2. Diferente fase, mismas probabilidades.</td></tr>
+      <tr><td>Superposición Uniforme 2Q</td><td>2</td><td>H⊗H: todos los estados con 25%.</td></tr>
+      <tr><td>Superposición Uniforme 3Q</td><td>3</td><td>H³: ocho estados con 12.5% cada uno.</td></tr>
+      <tr><td>Grover (busca |11⟩)</td><td>2</td><td>Una iteración completa. Amplifica |11⟩ de 25% a ~100%.</td></tr>
+      <tr><td>Deutsch-Jozsa</td><td>2</td><td>1 consulta cuántica vs 2ⁿ⁻¹+1 clásicas. Función balanceada.</td></tr>
+      <tr><td>Teleportación Cuántica</td><td>3</td><td>Protocolo completo: preparación del estado, par de Bell, operaciones de Alice, correcciones de Bob.</td></tr>
+      <tr><td>QFT 3 qubits</td><td>3</td><td>Transformada de Fourier Cuántica. Base del algoritmo de Shor y estimación de fase.</td></tr>
+      <tr><td>Estado GHZ</td><td>3</td><td>(|000⟩+|111⟩)/√2. Entrelazamiento tripartito máximo.</td></tr>
+      <tr><td>Demostración Toffoli</td><td>3</td><td>q0=q1=|1⟩ + Toffoli → q2 se invierte. Demuestra la universalidad clásica.</td></tr>
+      <tr><td>Phase Kickback</td><td>2</td><td>La fase del objetivo "rebota" al control. Truco fundamental de Shor y estimación de fase.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="tip">
+    <strong>💡 Consejo:</strong> Carga cualquier ejemplo y usa <strong>⏭ Paso</strong> para ver la evolución puerta a puerta. Es la forma más didáctica de entender cada algoritmo.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="algorithms">
+  <h2>18 · Algoritmos Cuánticos Incluidos</h2>
+
+  <h3>Estado de Bell</h3>
+  <p>El circuito más fundamental. <span class="hc">H + CNOT</span> genera el estado <span class="hl">(|00⟩+|11⟩)/√2</span>. Al medir, siempre se obtiene |00⟩ ó |11⟩ con exactamente 50% de probabilidad cada uno, nunca |01⟩ ni |10⟩. Esto demuestra correlaciones más fuertes que cualquier teoría clásica de variables ocultas (desigualdad de Bell).</p>
+
+  <h3>Deutsch-Jozsa</h3>
+  <p>Primer algoritmo que demuestra <strong>ventaja cuántica exponencial</strong>. El problema: dada una función f:{0,1}ⁿ→{0,1}, determinar si es constante (siempre 0 ó siempre 1) o balanceada (50% ceros, 50% unos). Un ordenador clásico necesita hasta 2ⁿ⁻¹+1 consultas. El algoritmo cuántico lo resuelve en <strong>1 consulta</strong> usando interferencia cuántica. Si al medir q0 obtienes |0⟩, la función es constante; si es |1⟩, es balanceada.</p>
+
+  <h3>Grover (Búsqueda)</h3>
+  <p>Búsqueda en una base de datos no ordenada en <span class="hg">O(√N)</span> pasos (clásico: O(N)). La ventaja es cuadrática. El algoritmo: (1) superposición uniforme con H, (2) el oráculo marca el objetivo con fase -1, (3) el operador de difusión amplifica la amplitud del objetivo. Para 2 qubits, una sola iteración amplifica |11⟩ de 25% a 100%.</p>
+
+  <h3>Teleportación Cuántica</h3>
+  <p>Transfiere el estado cuántico desconocido de q0 a q2 usando un par de Bell compartido entre Alice (tiene q0, q1) y Bob (tiene q2). Alice mide sus dos qubits y envía 2 bits clásicos a Bob, quien aplica correcciones. Al final, q2 tiene exactamente el estado que tenía q0 originalmente. <strong>No viola relatividad</strong>: requiere canal clásico.</p>
+
+  <h3>QFT (Transformada de Fourier Cuántica)</h3>
+  <p>La DFT cuántica en O(n²) puertas (vs O(N log N) clásico, donde N=2ⁿ → ventaja exponencial). Base del <strong>algoritmo de Shor</strong> (factorización) y de la estimación de fase cuántica. Implementa la transformación: <span class="hc">|j⟩ → (1/√N) Σ e^(2πijk/N)|k⟩</span>.</p>
+
+  <h3>Phase Kickback</h3>
+  <p>Truco cuántico donde la fase adquirida por el qubit objetivo "rebota" al qubit de control. Fundamental en Shor, Grover y estimación de fase. Se ve con: |+⟩ en control, |1⟩ en objetivo, CNOT → el control adquiere fase -1, convirtiéndose en |-⟩.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="io">
+  <h2>19 · Import / Export</h2>
+
+  <h3>Exportar circuito (JSON)</h3>
+  <p>El botón <strong>↓ Export</strong> en el header descarga el circuito actual como un archivo <span class="hc">circuit.json</span> con la siguiente estructura:</p>
+  <div class="formula">{
+  "n": 2,
+  "ops": [
+    {"gate": "H",  "qubits": [0],    "col": 0, "param": null},
+    {"gate": "CX", "qubits": [0, 1], "col": 1, "param": null},
+    {"gate": "Ry", "qubits": [0],    "col": 2, "param": 1.5708}
+  ]
+}</div>
+
+  <h3>Importar circuito (JSON)</h3>
+  <p>El botón <strong>↑ Import</strong> abre el selector de archivos. Acepta archivos <span class="hc">.json</span> con el formato anterior. El circuito importado reemplaza al actual y se simula automáticamente.</p>
+
+  <h3>Exportar mediciones (CSV)</h3>
+  <p>El botón <strong>↓ CSV</strong> en el historial de mediciones descarga un archivo <span class="hc">measurements.csv</span>:</p>
+  <div class="formula">ket,count,probability
+|00>,42,0.4200
+|11>,58,0.5800</div>
+
+  <h3>Persistencia automática</h3>
+  <p>El simulador guarda automáticamente el circuito en <strong>localStorage</strong> del navegador con cada cambio. Al reabrir la página, el circuito se restaura exactamente como estaba. Para borrar el estado guardado, usa el botón <strong>✦ Nuevo</strong> (confirmación requerida).</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="shortcuts">
+  <h2>20 · Atajos de Teclado</h2>
+
+  <table class="kb-table">
+    <tbody>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>Enter</kbd></td><td>Ejecutar circuito completo con animación</td></tr>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>.</kbd></td><td>Avanzar un paso (ejecución paso a paso)</td></tr>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>M</kbd></td><td>Medir todos los qubits</td></tr>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Deshacer última operación en el circuito</td></tr>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>N</kbd></td><td>Nuevo circuito (pide confirmación)</td></tr>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>R</kbd></td><td>Reiniciar estado cuántico a |0…0⟩</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Cerrar modal abierto / Cerrar Quantum Universe</td></tr>
+      <tr><td><kbd>⇧</kbd> + clic en puerta</td><td>Abrir inspector detallado de la puerta</td></tr>
+      <tr><td>Clic derecho en puerta</td><td>Eliminar puerta directamente</td></tr>
+      <tr><td><kbd>⇧</kbd> + clic en esfera (Universo)</td><td>Colapsar sistema a ese estado</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="math">
+  <h2>21 · Motor Matemático</h2>
+
+  <h3>Representación del estado</h3>
+  <p>El estado de n qubits se representa como un <strong>vector complejo de 2ⁿ componentes</strong>:</p>
+  <div class="formula">|ψ⟩ = α₀|00…0⟩ + α₁|00…1⟩ + … + α_{2ⁿ-1}|11…1⟩
+
+donde αᵢ ∈ ℂ  y  Σᵢ |αᵢ|² = 1</div>
+
+  <h3>Aplicación de puertas de un qubit</h3>
+  <p>Para aplicar la matriz U al qubit t del sistema de n qubits, el simulador itera sobre todos los 2ⁿ estados y actualiza las amplitudes:</p>
+  <div class="formula">Para cada par (|…0…⟩, |…1…⟩) que difieren solo en el bit t:
+  α'_{j₀} = U[0][0]·α_{j₀} + U[0][1]·α_{j₁}
+  α'_{j₁} = U[1][0]·α_{j₀} + U[1][1]·α_{j₁}</div>
+  <p>Esto evita construir la matriz 2ⁿ×2ⁿ completa, logrando complejidad O(2ⁿ) en espacio y tiempo.</p>
+
+  <h3>CNOT optimizado</h3>
+  <p>En vez de multiplicar matrices 4×4 para cada par de qubits, se intercambian directamente las amplitudes de estados que satisfacen: el bit de control es 1 y los estados difieren solo en el bit del objetivo.</p>
+
+  <h3>Medición</h3>
+  <div class="formula">P(resultado = 1 en qubit q) = Σᵢ (bit q de i = 1) |αᵢ|²
+
+Tras obtener resultado r:
+  αᵢ → 0 si bit q de i ≠ r
+  αᵢ → αᵢ / √(Σⱼ (bit q de j = r) |αⱼ|²)  si bit q de i = r</div>
+
+  <h3>Entropía y entrelazamiento</h3>
+  <div class="formula">Entropía de Shannon (approx Von Neumann):
+  S = -Σᵢ pᵢ · log₂(pᵢ)    donde pᵢ = |αᵢ|²
+
+Pureza del estado reducido de q0 (traza parcial):
+  |Bloch vector| = √(x²+y²+z²)
+  Si |Bloch| < 0.99 → q0 está entrelazado con el resto</div>
+
+  <h3>Números complejos</h3>
+  <p>La clase <span class="hc">C</span> implementa: suma, resta, multiplicación, escalar, conjugado, módulo, argumento (fase) y constructor polar. Toda la aritmética usa precisión double de JavaScript (float64, ~15 dígitos significativos).</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="glossary">
+  <h2>22 · Glosario</h2>
+
+  <div class="card"><div class="card-title">Amplitud de probabilidad (αᵢ)</div><p style="margin:0;font-size:.8rem">Número complejo asociado a cada estado base. La probabilidad de ese estado es |αᵢ|². Las amplitudes pueden interferir constructiva o destructivamente — algo sin análogo clásico.</p></div>
+  <div class="card c"><div class="card-title">Base computacional</div><p style="margin:0;font-size:.8rem">El conjunto de estados {|0⟩,|1⟩} (1 qubit) o {|00⟩,|01⟩,|10⟩,|11⟩} (2 qubits), etc. La medición siempre produce un estado de la base.</p></div>
+  <div class="card"><div class="card-title">Colapso cuántico</div><p style="margin:0;font-size:.8rem">Al medir, la superposición se reduce irreversiblemente a un único estado base. La información de la superposición se pierde. La aleatoriedad es fundamental, no debida a desconocimiento.</p></div>
+  <div class="card c"><div class="card-title">Decoherencia</div><p style="margin:0;font-size:.8rem">En hardware real, los qubits pierden coherencia cuántica al interactuar con el entorno (fonones, fotones, campos EM). El simulador no modela decoherencia — trabaja con qubits ideales.</p></div>
+  <div class="card"><div class="card-title">Entrelazamiento cuántico</div><p style="margin:0;font-size:.8rem">Estado de múltiples qubits que no puede escribirse como producto de estados individuales. Medir un qubit afecta instantáneamente la descripción del otro, independientemente de la distancia.</p></div>
+  <div class="card m"><div class="card-title">Esfera de Bloch</div><p style="margin:0;font-size:.8rem">Representación geométrica del estado de 1 qubit. El estado α|0⟩+β|1⟩ se mapea al punto (sin θ·cos φ, sin θ·sin φ, cos θ). Las puertas son rotaciones de la esfera.</p></div>
+  <div class="card"><div class="card-title">Espacio de Hilbert</div><p style="margin:0;font-size:.8rem">El espacio vectorial complejo donde viven los estados cuánticos. Para n qubits es ℂ^(2ⁿ). El Quantum Universe visualiza este espacio.</p></div>
+  <div class="card c"><div class="card-title">Interferencia cuántica</div><p style="margin:0;font-size:.8rem">Las amplitudes complejas de distintos caminos se suman vectorialmente. Los caminos que conducen a la respuesta correcta interfieren constructivamente; los que no, destructivamente. Base de todos los algoritmos.</p></div>
+  <div class="card"><div class="card-title">Notación Dirac (bra-ket)</div><p style="margin:0;font-size:.8rem">|ψ⟩ = ket (vector de estado). ⟨ψ| = bra (conjugado transpuesto). ⟨φ|ψ⟩ = producto interno. |0⟩ y |1⟩ son los vectores base de 1 qubit.</p></div>
+  <div class="card m"><div class="card-title">Proof of Work cuántico / Oracle</div><p style="margin:0;font-size:.8rem">En el contexto de Grover: una función que aplica fase -1 al estado buscado sin revelar cuál es. Permite buscar sin leer directamente.</p></div>
+  <div class="card"><div class="card-title">Qubit</div><p style="margin:0;font-size:.8rem">Quantum bit. Sistema de dos niveles en superposición. Físicamente puede ser: spin de electrón, polarización de fotón, nivel de energía de átomo, corriente en superconductor, etc.</p></div>
+  <div class="card c"><div class="card-title">Superposición</div><p style="margin:0;font-size:.8rem">Un qubit en superposición no está ni en |0⟩ ni en |1⟩: está en una combinación lineal de ambos. La superposición colapsa al medir. Es la fuente del paralelismo cuántico.</p></div>
+  <div class="card"><div class="card-title">Unitariedad</div><p style="margin:0;font-size:.8rem">Toda puerta cuántica es una matriz unitaria (U†U=I). Esto garantiza conservación de la norma (probabilidades suman 1) y reversibilidad de la evolución. La medición no es unitaria.</p></div>
+  <div class="card m"><div class="card-title">Ventaja cuántica</div><p style="margin:0;font-size:.8rem">Cuando un algoritmo cuántico resuelve un problema más eficientemente que cualquier algoritmo clásico conocido. Grover: O(√N) vs O(N). Shor: O(poly(n)) vs O(exp(n)).</p></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="faq">
+  <h2>23 · Preguntas Frecuentes (FAQ)</h2>
+
+  <div class="card o">
+    <div class="card-title">¿Necesito instalar algo?</div>
+    <p style="margin:0;font-size:.8rem">No. El simulador es un único archivo HTML con CSS y JavaScript. Ábrelo directamente en Chrome, Firefox, Edge o Safari. No requiere servidor web, ni Node.js, ni Python, ni ninguna dependencia.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">¿Por qué el resultado de medir es diferente cada vez?</div>
+    <p style="margin:0;font-size:.8rem">La medición cuántica es fundamentalmente aleatoria (no pseudoaleatoria por desconocimiento: es la naturaleza de la mecánica cuántica). Si el qubit está en superposición 50/50, el simulador usa Math.random() ponderado por las probabilidades, lo que refleja fielmente la aleatoriedad cuántica real.</p>
+  </div>
+
+  <div class="card c">
+    <div class="card-title">¿Por qué no puedo poner una puerta de 2 qubits si solo tengo 1?</div>
+    <p style="margin:0;font-size:.8rem">Las puertas CNOT, CZ, SWAP, etc. requieren mínimo 2 qubits. Aumenta el número de qubits con el slider. El simulador te avisará con un mensaje si intentas usar una puerta multi-qubit con qubits insuficientes.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">¿La esfera de Bloch funciona con más de 1 qubit?</div>
+    <p style="margin:0;font-size:.8rem">Muestra siempre el estado del qubit q0. En sistemas entrelazados, el vector puede quedar dentro de la esfera (longitud < 1), lo que indica que q0 está "mezclado" con el resto del sistema. Esto es físicamente correcto: no existe una representación de Bloch para un qubit entrelazado.</p>
+  </div>
+
+  <div class="card m">
+    <div class="card-title">¿Por qué Toffoli necesita exactamente 3 qubits distintos?</div>
+    <p style="margin:0;font-size:.8rem">La puerta Toffoli opera en tres qubits distintos: dos de control y uno objetivo. El simulador asigna automáticamente q, q+1, q+2. Si hay colisiones (p.ej. con 2 qubits), el simulador usa qubits 0, 1, 2 por defecto. Con ≥ 3 qubits siempre funciona correctamente.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">¿El Quantum Universe funciona en móvil?</div>
+    <p style="margin:0;font-size:.8rem">Sí. En móvil, usa un dedo para rotar y dos dedos (pellizco) para hacer zoom. La interfaz completa es responsiva. En pantallas pequeñas el panel izquierdo se convierte en una barra horizontal de puertas.</p>
+  </div>
+
+  <div class="card c">
+    <div class="card-title">¿Con 5 qubits el simulador es lento?</div>
+    <p style="margin:0;font-size:.8rem">Con 5 qubits hay 32 estados. La simulación es prácticamente instantánea para cualquier número de puertas. La animación puede necesitar ajustar la velocidad del slider. Para el Quantum Universe con 5 qubits (espiral de 32 esferas), el rendimiento depende de la GPU del dispositivo.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">¿Puedo importar circuitos de Qiskit o Cirq?</div>
+    <p style="margin:0;font-size:.8rem">No directamente. El formato JSON del simulador es propio. Sin embargo, es sencillo convertir un circuito de Qiskit a JSON manualmente: identifica las puertas, qubits y columnas. En el futuro podría implementarse un conversor QASM.</p>
+  </div>
+
+  <div class="card m">
+    <div class="card-title">¿El simulador modela ruido cuántico o decoherencia?</div>
+    <p style="margin:0;font-size:.8rem">No. El simulador trabaja con qubits perfectos (coherentes). No hay canales de ruido, errores de compuerta ni tiempos de decoherencia. Es un simulador de estado puro ideal, equivalente a un ordenador cuántico perfecto.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">¿Puedo usar el simulador sin conexión a internet?</div>
+    <p style="margin:0;font-size:.8rem">Sí, completamente. Todo el código está en el archivo HTML. Funciona 100% offline. El localStorage tampoco requiere conexión.</p>
+  </div>
+</section>
+
+<!-- ── FOOTER ───────────────────────────────────────────── -->
+<div style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:.6rem;color:var(--text3);line-height:1.9;">
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      ⚛ Quantum Simulator — Manual v1.0<br>
+      Motor: aritmética de números complejos · álgebra lineal · canvas 2D<br>
+      Sin dependencias externas · Funciona 100% offline
+    </div>
+    <div style="text-align:right">
+      HTML5 + CSS3 + JavaScript Vanilla<br>
+      localStorage · Web Crypto API<br>
+      1 archivo · ~110 KB
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// Active nav link highlighting on scroll
+const sections = document.querySelectorAll('section[id]')
+const navLinks = document.querySelectorAll('nav a')
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(link => link.classList.remove('active'))
+      const active = document.querySelector(`nav a[href="#${entry.target.id}"]`)
+      if (active) active.classList.add('active')
+    }
+  })
+}, { rootMargin: '-20% 0px -75% 0px' })
+
+sections.forEach(s => observer.observe(s))
+
+// Smooth scroll with offset for sticky nav
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'))
+    if (target) {
+      e.preventDefault()
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  })
+})
+</script>
+</body>
+</html>
