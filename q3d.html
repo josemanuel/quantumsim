@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Universe — Visualizador 3D</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;overflow:hidden;font-family:'Courier New',monospace;user-select:none}
+#c{display:block;cursor:grab}
+#c:active{cursor:grabbing}
+#ui{position:fixed;top:0;left:0;right:0;z-index:10;padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  background:linear-gradient(180deg,rgba(0,0,10,.95) 0%,transparent 100%)}
+.title{font-size:1rem;letter-spacing:4px;text-transform:uppercase;
+  background:linear-gradient(90deg,#a855f7,#00dcff,#f72585);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{font-size:.55rem;color:#5a7090;letter-spacing:3px;text-transform:uppercase;margin-top:2px}
+.controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{padding:6px 14px;border-radius:20px;border:1px solid rgba(168,85,247,.4);
+  background:rgba(168,85,247,.1);color:#a855f7;font-family:'Courier New',monospace;
+  font-size:.65rem;cursor:pointer;transition:all .2s;letter-spacing:1px}
+.btn:hover{background:rgba(168,85,247,.25);border-color:rgba(168,85,247,.8);
+  box-shadow:0 0 14px rgba(168,85,247,.4)}
+.btn.c{border-color:rgba(0,220,255,.4);background:rgba(0,220,255,.1);color:#00dcff}
+.btn.c:hover{background:rgba(0,220,255,.25);border-color:var(--ac);box-shadow:0 0 14px rgba(0,220,255,.4)}
+.btn.m{border-color:rgba(247,37,133,.4);background:rgba(247,37,133,.1);color:#f72585}
+.btn.m:hover{background:rgba(247,37,133,.25);box-shadow:0 0 14px rgba(247,37,133,.4)}
+.btn.g{border-color:rgba(57,255,142,.4);background:rgba(57,255,142,.1);color:#39ff8e}
+.btn.g:hover{background:rgba(57,255,142,.25);box-shadow:0 0 14px rgba(57,255,142,.4)}
+select{padding:6px 12px;border-radius:20px;border:1px solid rgba(168,85,247,.4);
+  background:rgba(0,0,10,.8);color:#a855f7;font-family:'Courier New',monospace;
+  font-size:.65rem;cursor:pointer;outline:none;letter-spacing:1px}
+#bottom{position:fixed;bottom:0;left:0;right:0;z-index:10;padding:12px 20px;
+  display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  background:linear-gradient(0deg,rgba(0,0,10,.95) 0%,transparent 100%)}
+#info-panel{font-size:.62rem;color:#5a7090;line-height:1.8;max-width:340px}
+#info-panel .val{color:#00dcff}
+#info-panel .val2{color:#a855f7}
+#info-panel .val3{color:#f72585}
+#legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.leg{display:flex;align-items:center;gap:5px;font-size:.58rem;color:#5a7090;letter-spacing:1px}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+#meas-result{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Courier New',monospace;font-size:2rem;font-weight:bold;
+  text-align:center;pointer-events:none;z-index:20;opacity:0;
+  transition:opacity .3s;text-shadow:0 0 30px currentColor}
+#tooltip{position:fixed;background:rgba(0,0,10,.9);border:1px solid rgba(168,85,247,.4);
+  padding:8px 14px;border-radius:8px;font-size:.65rem;font-family:'Courier New',monospace;
+  pointer-events:none;z-index:30;display:none;line-height:1.8}
+#tooltip .tval{color:#00dcff}
+#help{position:fixed;bottom:70px;right:20px;font-size:.58rem;color:#334055;
+  text-align:right;line-height:1.9;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <div>
+    <div class="title">⚛ Quantum Universe</div>
+    <div class="sub">Visualizador 3D del Espacio de Hilbert</div>
+  </div>
+  <div class="controls">
+    <select id="ex-sel" onchange="loadExample(this.value)">
+      <option value="">— Elegir circuito —</option>
+      <option value="bell">Estado de Bell |Φ+⟩</option>
+      <option value="ghz">Estado GHZ (3 qubits)</option>
+      <option value="uniform2">Superposición uniforme 2Q</option>
+      <option value="uniform3">Superposición uniforme 3Q</option>
+      <option value="grover">Grover (busca |11⟩)</option>
+      <option value="custom1">Superposición parcial</option>
+      <option value="w_state">Estado W</option>
+      <option value="qft2">QFT 2 qubits</option>
+    </select>
+    <button class="btn m" onclick="measure()">📏 Medir</button>
+    <button class="btn c" onclick="measure100()">× 100 shots</button>
+    <button class="btn" onclick="togglePulsar()">💫 Modo Pulsar</button>
+    <button class="btn g" onclick="toggleGrid()">⊞ Grid</button>
+    <button class="btn" onclick="resetView()">⟳ Vista</button>
+    <button class="btn" onclick="toggleAutoRotate()">↻ Auto</button>
+  </div>
+</div>
+
+<div id="meas-result"></div>
+<div id="tooltip"></div>
+
+<div id="bottom">
+  <div id="info-panel">
+    <div>Vector de estado: <span class="val" id="sv-text">|0⟩</span></div>
+    <div>Entropía: <span class="val2" id="ent-text">0.000</span> bits · Entrelazado: <span class="val3" id="ent2-text">No</span></div>
+    <div>Total mediciones: <span class="val" id="shots-text">0</span></div>
+  </div>
+  <div id="legend">
+    <div class="leg"><div class="leg-dot" style="background:#a855f7;box-shadow:0 0 6px #a855f7"></div>Estado |0…0⟩</div>
+    <div class="leg"><div class="leg-dot" style="background:#00dcff;box-shadow:0 0 6px #00dcff"></div>Amplitud alta</div>
+    <div class="leg"><div class="leg-dot" style="background:#f72585;box-shadow:0 0 6px #f72585"></div>Entrelazado</div>
+    <div class="leg"><div class="leg-dot" style="background:#39ff8e;box-shadow:0 0 6px #39ff8e"></div>Medido</div>
+  </div>
+</div>
+
+<div id="help">
+  Arrastrar → rotar · Rueda → zoom<br>
+  Clic en esfera → info · Shift+clic → medir ese estado<br>
+  Doble clic → centrar en estado
+</div>
+
+<script>
+/* ============================================================
+   QUANTUM UNIVERSE — 3D State Space Visualizer
+   Renderiza cada estado base |i⟩ como una esfera en el espacio
+   usando proyección 3D propia (sin WebGL), con:
+   - Posición determinada por bits del índice (coordenadas en hipercubo)
+   - Radio y brillo proporcionales a |amplitud|²
+   - Conexiones de luz entre estados entrelazados (correlaciones)
+   - Anillo orbital animado en estados en superposición
+   - Sistema de partículas en colisiones/mediciones
+   - Rotación libre con inercia
+   ============================================================ */
+
+// ── Complex number ──────────────────────────────────────
+class C {
+  constructor(re=0,im=0){this.re=re;this.im=im}
+  add(b){return new C(this.re+b.re,this.im+b.im)}
+  mul(b){return new C(this.re*b.re-this.im*b.im,this.re*b.im+this.im*b.re)}
+  scale(s){return new C(this.re*s,this.im*s)}
+  abs2(){return this.re*this.re+this.im*this.im}
+  abs(){return Math.sqrt(this.abs2())}
+  arg(){return Math.atan2(this.im,this.re)}
+  static Z(){return new C(0,0)}
+  static O(){return new C(1,0)}
+  static polar(r,a){return new C(r*Math.cos(a),r*Math.sin(a))}
+}
+
+// ── Quantum Simulator ───────────────────────────────────
+class QSim {
+  constructor(n=2){
+    this.n=n;this.dim=1<<n
+    this.state=Array.from({length:1<<n},(_,i)=>i===0?C.O():C.Z())
+  }
+  reset(){this.state=Array.from({length:this.dim},(_,i)=>i===0?C.O():C.Z())}
+  apply1(mat,t){
+    const n=this.n,d=this.dim,ns=Array.from({length:d},()=>C.Z())
+    for(let i=0;i<d;i++){
+      if(this.state[i].abs2()<1e-15)continue
+      const b=(i>>(n-1-t))&1,j0=i&~(1<<(n-1-t)),j1=j0|(1<<(n-1-t))
+      for(let r=0;r<2;r++)ns[r?j1:j0]=ns[r?j1:j0].add(mat[r][b].mul(this.state[i]))
+    }
+    this.state=ns
+  }
+  h(t){const s=1/Math.sqrt(2);this.apply1([[new C(s),new C(s)],[new C(s),new C(-s)]],t)}
+  x(t){this.apply1([[C.Z(),C.O()],[C.O(),C.Z()]],t)}
+  y(t){this.apply1([[C.Z(),new C(0,-1)],[new C(0,1),C.Z()]],t)}
+  z(t){this.apply1([[C.O(),C.Z()],[C.Z(),new C(-1,0)]],t)}
+  s(t){this.apply1([[C.O(),C.Z()],[C.Z(),new C(0,1)]],t)}
+  rz(t,θ){this.apply1([[C.polar(1,-θ/2),C.Z()],[C.Z(),C.polar(1,θ/2)]],t)}
+  ry(t,θ){this.apply1([[new C(Math.cos(θ/2)),new C(-Math.sin(θ/2))],[new C(Math.sin(θ/2)),new C(Math.cos(θ/2))]],t)}
+  cnot(c,t){
+    const n=this.n,d=this.dim,ns=this.state.slice()
+    for(let i=0;i<d;i++){if(!((i>>(n-1-c))&1))continue;const j=i^(1<<(n-1-t));if(j>i){const tmp=ns[i];ns[i]=ns[j];ns[j]=tmp}}
+    this.state=ns
+  }
+  cz(c,t){const n=this.n,d=this.dim;for(let i=0;i<d;i++)if(((i>>(n-1-c))&1)&&((i>>(n-1-t))&1))this.state[i]=this.state[i].scale(-1)}
+  measure(q){
+    const n=this.n,d=this.dim;let p1=0
+    for(let i=0;i<d;i++)if((i>>(n-1-q))&1)p1+=this.state[i].abs2()
+    const res=Math.random()<p1?1:0;let nr2=0
+    for(let i=0;i<d;i++){if(((i>>(n-1-q))&1)!==res)this.state[i]=C.Z();else nr2+=this.state[i].abs2()}
+    const nr=Math.sqrt(nr2);if(nr>1e-12)for(let i=0;i<d;i++)this.state[i]=this.state[i].scale(1/nr)
+    return res
+  }
+  measureAll(){const r=[];for(let q=0;q<this.n;q++)r.push(this.measure(q));return r}
+  probs(){return this.state.map(a=>a.abs2())}
+  entropy(){let e=0;this.probs().forEach(p=>{if(p>1e-9)e-=p*Math.log2(p)});return e}
+  isEntangled(){
+    if(this.n<2)return false
+    const n=this.n,d=this.dim;let a0=C.Z(),a1=C.Z()
+    for(let i=0;i<d;i++){if((i>>(n-1))&1)a1=a1.add(this.state[i]);else a0=a0.add(this.state[i])}
+    const norm=Math.sqrt(a0.abs2()+a1.abs2());if(norm<1e-12)return false
+    a0=a0.scale(1/norm);a1=a1.scale(1/norm)
+    const theta=2*Math.acos(Math.min(a0.abs(),1))
+    const bx=Math.sin(theta)*Math.cos(a1.arg()-a0.arg()),by=Math.sin(theta)*Math.sin(a1.arg()-a0.arg()),bz=Math.cos(theta)
+    return Math.sqrt(bx*bx+by*by+bz*bz)<0.99
+  }
+}
+
+// ── Pre-built examples ───────────────────────────────────
+function buildSim(name){
+  let s
+  switch(name){
+    case'bell':   s=new QSim(2);s.h(0);s.cnot(0,1);break
+    case'ghz':    s=new QSim(3);s.h(0);s.cnot(0,1);s.cnot(0,2);break
+    case'uniform2':s=new QSim(2);s.h(0);s.h(1);break
+    case'uniform3':s=new QSim(3);s.h(0);s.h(1);s.h(2);break
+    case'grover': s=new QSim(2);s.h(0);s.h(1);s.cz(0,1);s.h(0);s.h(1);s.x(0);s.x(1);s.cz(0,1);s.x(0);s.x(1);s.h(0);s.h(1);break
+    case'custom1':s=new QSim(2);s.ry(0,Math.PI/3);s.h(1);break
+    case'w_state':
+      s=new QSim(3)
+      // Approx W state: (|001⟩+|010⟩+|100⟩)/√3
+      s.ry(0,2*Math.acos(Math.sqrt(2/3)))
+      s.cnot(0,1);s.h(0);s.cnot(1,2)
+      break
+    case'qft2':
+      s=new QSim(2);s.h(0);s.rz(0,Math.PI/2);s.cnot(1,0);s.h(1)
+      break
+    default: s=new QSim(2)
+  }
+  return s
+}
+
+// ── 3D Renderer ─────────────────────────────────────────
+const canvas=document.getElementById('c')
+const ctx=canvas.getContext('2d')
+let W=canvas.width=window.innerWidth
+let H=canvas.height=window.innerHeight
+window.addEventListener('resize',()=>{W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight})
+
+// Camera state
+let camTheta=0.4,camPhi=-0.6  // rotation angles (spherical)
+let camDist=480                 // zoom
+let autoRotate=true
+let autoSpeed=0.003
+// Inertia
+let velTheta=0,velPhi=0
+
+// Interaction
+let mouseDown=false,lastMX=0,lastMY=0,hasDragged=false
+let dragSX=0,dragSY=0
+
+// Modes
+let pulsarMode=false
+let showGrid=true
+let totalShots=0
+let measHistory={}
+
+// State
+let sim=new QSim(2)
+let hoveredIdx=-1
+
+// Particles
+let particles=[]
+
+// Sphere layout in 3D
+// For n qubits, 2^n states. Map each state to a vertex of an n-dim hypercube
+// projected into 3D. For n<=3, use the natural hypercube corners.
+// For n>3, use a spiral layout.
+function statePos(idx,n,dim,scale){
+  if(n===1){
+    // Two poles
+    return idx===0?{x:0,y:scale*.7,z:0}:{x:0,y:-scale*.7,z:0}
+  }
+  if(n===2){
+    // 4 corners of a square in XY plane
+    const cx=[0,1,0,1],cy=[0,0,1,1]
+    return{x:(cx[idx]-.5)*scale*1.4,y:0,z:(cy[idx]-.5)*scale*1.4}
+  }
+  if(n===3){
+    // 8 corners of a cube
+    const bx=(idx>>2)&1,by=(idx>>1)&1,bz=idx&1
+    return{x:(bx-.5)*scale*1.4,y:(by-.5)*scale*1.4,z:(bz-.5)*scale*1.4}
+  }
+  // n>=4: spiral on sphere
+  const t=idx/(dim-1)
+  const phi2=Math.acos(1-2*t)
+  const theta2=Math.PI*(1+Math.sqrt(5))*idx
+  return{x:scale*Math.sin(phi2)*Math.cos(theta2),y:scale*Math.sin(phi2)*Math.sin(theta2),z:scale*Math.cos(phi2)}
+}
+
+// 3D → 2D projection (perspective)
+function project(x,y,z){
+  // Apply camera rotation
+  const cosT=Math.cos(camTheta),sinT=Math.sin(camTheta)
+  const cosP=Math.cos(camPhi),sinP=Math.sin(camPhi)
+  // Rotate around Y axis (theta)
+  const rx=x*cosT+z*sinT
+  const ry=y
+  const rz=-x*sinT+z*cosT
+  // Rotate around X axis (phi)
+  const rx2=rx
+  const ry2=ry*cosP-rz*sinP
+  const rz2=ry*sinP+rz*cosP
+  // Perspective
+  const fov=camDist
+  const zDist=Math.max(fov*0.01, fov+rz2)  // clamp: never zero or negative
+  const px=W/2+rx2*fov/zDist
+  const py=H/2-ry2*fov/zDist
+  const scale=Math.max(0.001, fov/zDist)   // scale always positive
+  return{px,py,scale,depth:rz2}
+}
+
+// ── Draw a glow circle ───────────────────────────────────
+function drawGlowCircle(x,y,r,color,alpha,layers=4){
+  for(let i=layers;i>=1;i--){
+    const a=alpha*(1-i/layers*.7)*(1/layers)
+    const gr=Math.max(0.1,r*(1+i*.6))
+    ctx.beginPath();ctx.arc(x,y,gr,0,Math.PI*2)
+    ctx.fillStyle=`${color}${Math.round(a*255).toString(16).padStart(2,'0')}`;ctx.fill()
+  }
+  ctx.beginPath();ctx.arc(x,y,Math.max(0.1,r),0,Math.PI*2)
+  ctx.fillStyle=color;ctx.globalAlpha=alpha;ctx.fill();ctx.globalAlpha=1
+}
+
+// ── State color based on amplitude ─────────────────────
+function stateColor(prob,phase,idx,n){
+  if(prob<0.001) return{r:40,g:50,b:80}
+  // Hue from phase angle, saturation from probability
+  const hue=(phase*180/Math.PI+360)%360
+  const s=0.5+prob*0.5
+  // Gradient: violet (low) → cyan (mid) → magenta (high)
+  if(prob>0.6) return{r:247,g:37,b:133}   // magenta
+  if(prob>0.25) return{r:0,g:220,b:255}   // cyan
+  return{r:168,g:85,b:247}                 // violet
+}
+
+function colStr(c,a=1){return`rgba(${c.r},${c.g},${c.b},${a})`}
+
+// ── Starfield background ────────────────────────────────
+const STARS=Array.from({length:220},()=>({
+  x:Math.random()*2-1,y:Math.random()*2-1,
+  r:Math.random()*.8+.2,
+  b:Math.random()*.6+.2,
+  t:Math.random()*Math.PI*2,
+  s:Math.random()*.02+.005
+}))
+
+function drawStars(){
+  const t=Date.now()*.001
+  STARS.forEach(s=>{
+    const x=((s.x+1)/2)*W,y=((s.y+1)/2)*H
+    const b=s.b*(.7+.3*Math.sin(t*s.s+s.t))
+    ctx.beginPath();ctx.arc(x,y,s.r,0,Math.PI*2)
+    ctx.fillStyle=`rgba(200,210,255,${b})`;ctx.fill()
+  })
+}
+
+// ── Nebula background ───────────────────────────────────
+function drawNebula(){
+  const t=Date.now()*.0003
+  const cx=W*.35+Math.sin(t)*W*.05,cy=H*.4+Math.cos(t*.7)*H*.04
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.min(W,H)*.6)
+  g.addColorStop(0,'rgba(168,85,247,0.04)')
+  g.addColorStop(.4,'rgba(0,100,180,0.03)')
+  g.addColorStop(.8,'rgba(247,37,133,0.02)')
+  g.addColorStop(1,'rgba(0,0,0,0)')
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H)
+}
+
+// ── Particles ───────────────────────────────────────────
+function spawnParticles(px,py,color,count=40){
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2
+    const speed=1+Math.random()*5
+    particles.push({
+      x:px,y:py,
+      vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      r:1+Math.random()*4,
+      color,life:1,decay:.015+Math.random()*.025
+    })
+  }
+}
+
+function updateParticles(){
+  particles=particles.filter(p=>{
+    p.x+=p.vx;p.y+=p.vy
+    p.vy+=.05;p.vx*=.98;p.vy*=.98
+    p.life-=p.decay
+    if(p.life<=0)return false
+    ctx.globalAlpha=p.life
+    ctx.beginPath();ctx.arc(p.x,p.y,Math.max(0.1,p.r*p.life),0,Math.PI*2)
+    ctx.fillStyle=p.color
+    // Glow
+    ctx.shadowColor=p.color;ctx.shadowBlur=p.r*4;ctx.fill();ctx.shadowBlur=0
+    ctx.globalAlpha=1
+    return true
+  })
+}
+
+// ── Entanglement connections ────────────────────────────
+function drawConnections(spheres){
+  const probs=sim.probs()
+  const maxP=Math.max(...probs,.001)
+  // Draw lines between states with significant correlated amplitude
+  for(let i=0;i<spheres.length;i++){
+    for(let j=i+1;j<spheres.length;j++){
+      const pi=probs[i],pj=probs[j]
+      if(pi<.01||pj<.01)continue
+      // Correlation: states connected if both non-zero and share bit patterns
+      const xorBits=i^j
+      const sharedBits=spheres.length-1-xorBits  // simplified
+      const strength=Math.sqrt(pi*pj)
+      if(strength<.04)continue
+      const si=spheres[i],sj=spheres[j]
+      const alpha=strength*.8
+      // Animated dashes
+      const t=Date.now()*.001
+      ctx.save()
+      ctx.setLineDash([6,8])
+      ctx.lineDashOffset=-t*20
+      const grd=ctx.createLinearGradient(si.px,si.py,sj.px,sj.py)
+      grd.addColorStop(0,`rgba(168,85,247,${alpha})`)
+      grd.addColorStop(.5,`rgba(0,220,255,${alpha*.6})`)
+      grd.addColorStop(1,`rgba(247,37,133,${alpha})`)
+      ctx.strokeStyle=grd;ctx.lineWidth=1+strength*2
+      ctx.shadowColor='rgba(0,220,255,.6)';ctx.shadowBlur=8
+      ctx.beginPath();ctx.moveTo(si.px,si.py);ctx.lineTo(sj.px,sj.py);ctx.stroke()
+      ctx.shadowBlur=0;ctx.restore()
+    }
+  }
+}
+
+// ── Phase rings ─────────────────────────────────────────
+function drawPhaseRing(px,py,r,phase,prob,scale){
+  if(prob<.01)return
+  const t=Date.now()*.001
+  const ringR=Math.max(0.1,r+6*scale)
+  const segments=32
+  for(let i=0;i<segments;i++){
+    const a0=(i/segments)*Math.PI*2,a1=((i+1)/segments)*Math.PI*2
+    const hue=(phase*180/Math.PI+i/segments*360+t*60)%360
+    const c=hslToRgb(hue/360,.9,.6)
+    ctx.beginPath()
+    ctx.arc(px,py,ringR,a0,a1)
+    ctx.strokeStyle=`rgba(${c.r},${c.g},${c.b},${prob*.8})`
+    ctx.lineWidth=2*scale*prob;ctx.stroke()
+  }
+}
+
+function hslToRgb(h,s,l){
+  let r,g,b
+  if(s===0){r=g=b=l}else{
+    const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q
+    r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)
+  }
+  return{r:Math.round(r*255),g:Math.round(g*255),b:Math.round(b*255)}
+}
+function hue2rgb(p,q,t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p}
+
+// ── Grid (hypercube edges) ───────────────────────────────
+function drawGridEdges(n,scale){
+  if(!showGrid)return
+  const dim=1<<n
+  ctx.save()
+  ctx.globalAlpha=.07
+  ctx.strokeStyle='#a855f7';ctx.lineWidth=.5
+  for(let i=0;i<dim;i++){
+    for(let bit=0;bit<n;bit++){
+      const j=i^(1<<bit)
+      if(j>i){
+        const pi2=statePos(i,n,dim,scale),pj=statePos(j,n,dim,scale)
+        const a=project(pi2.x,pi2.y,pi2.z)
+        const b=project(pj.x,pj.y,pj.z)
+        ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);ctx.stroke()
+      }
+    }
+  }
+  ctx.restore()
+}
+
+// ── Axis indicator ───────────────────────────────────────
+function drawAxes(){
+  const len=40,ox=W-70,oy=H-70
+  const axes=[{v:[1,0,0],c:'#f72585',l:'X'},{v:[0,1,0],c:'#39ff8e',l:'Y'},{v:[0,0,1],c:'#00dcff',l:'Z'}]
+  axes.forEach(a=>{
+    const s=.001
+    const end=project(a.v[0]*s,a.v[1]*s,a.v[2]*s)
+    const start=project(0,0,0)
+    const dx=end.px-start.px,dy=end.py-start.py
+    const norm=Math.sqrt(dx*dx+dy*dy)
+    if(norm<.001)return
+    const ex=ox+dx/norm*len,ey=oy+dy/norm*len
+    ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(ex,ey)
+    ctx.strokeStyle=a.c;ctx.lineWidth=1.5;ctx.stroke()
+    ctx.fillStyle=a.c;ctx.font='10px monospace'
+    ctx.fillText(a.l,ex+4,ey+4)
+  })
+}
+
+// ── Main render loop ─────────────────────────────────────
+let frame=0
+function render(){
+  frame++
+  const t=Date.now()*.001
+
+  // Auto rotate
+  if(autoRotate&&!mouseDown){
+    camTheta+=autoSpeed
+    velTheta*=.95;velPhi*=.95
+    camTheta+=velTheta;camPhi+=velPhi
+  } else if(!mouseDown){
+    velTheta*=.92;velPhi*=.92
+    camTheta+=velTheta;camPhi+=velPhi
+  }
+  camPhi=Math.max(-Math.PI/2+.05,Math.min(Math.PI/2-.05,camPhi))
+
+  // Clear
+  ctx.fillStyle='rgba(0,0,8,1)';ctx.fillRect(0,0,W,H)
+  drawNebula()
+  drawStars()
+
+  const n=sim.n,dim=sim.dim
+  const probs=sim.probs()
+  const maxP=Math.max(...probs,.001)
+  const scale=Math.min(W,H)*.22
+
+  // Draw grid edges
+  drawGridEdges(n,scale)
+
+  // Collect spheres for depth-sorted rendering
+  const spheres=[]
+  for(let i=0;i<dim;i++){
+    const pos3=statePos(i,n,dim,scale)
+    const proj=project(pos3.x,pos3.y,pos3.z)
+    const prob=probs[i]
+    const amp=sim.state[i]
+    const phase=amp.arg()
+    const col=stateColor(prob,phase,i,n)
+    spheres.push({idx:i,px:proj.px,py:proj.py,scale:proj.scale,depth:proj.depth,prob,phase,col,amp,pos3})
+  }
+  // Sort back to front
+  spheres.sort((a,b)=>a.depth-b.depth)
+
+  // Draw connections (entanglement)
+  drawConnections(spheres)
+
+  // Draw spheres
+  spheres.forEach(sp=>{
+    const{idx,px,py,scale:sc,prob,phase,col,amp}=sp
+    const n2=sim.n
+    const isHovered=idx===hoveredIdx
+
+    if(prob<.001){
+      // Ghost sphere
+      ctx.beginPath();ctx.arc(px,py,Math.max(0.5,8*sc),0,Math.PI*2)
+      ctx.fillStyle=`rgba(40,50,80,${.15*sc})`;ctx.fill()
+      ctx.strokeStyle='rgba(60,70,110,.15)';ctx.lineWidth=.5*sc;ctx.stroke()
+      return
+    }
+
+    const pulseFactor=pulsarMode?(1+.3*Math.sin(t*3+idx)):1
+    const r=Math.max(6,(8+prob*28)*sc*pulseFactor)
+
+    // Phase ring
+    drawPhaseRing(px,py,r,phase,prob,sc)
+
+    // Glow layers
+    const glowR=r*(isHovered?2.2:1.8)
+    for(let layer=5;layer>=1;layer--){
+      const a=prob*.4*(1-layer/6)*.5
+      ctx.beginPath();ctx.arc(px,py,Math.max(0.1,r*(1+layer*.5)),0,Math.PI*2)
+      ctx.fillStyle=`rgba(${col.r},${col.g},${col.b},${a})`;ctx.fill()
+    }
+
+    // Main sphere with radial gradient
+    const sg=ctx.createRadialGradient(px-r*.3,py-r*.3,r*.1,px,py,r)
+    sg.addColorStop(0,`rgba(255,255,255,${prob*.7})`)
+    sg.addColorStop(.3,`rgba(${col.r},${col.g},${col.b},${prob*.9})`)
+    sg.addColorStop(1,`rgba(${Math.round(col.r*.3)},${Math.round(col.g*.3)},${Math.round(col.b*.3)},${prob*.95})`)
+    ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2)
+    ctx.fillStyle=sg;ctx.fill()
+
+    // Specular highlight
+    ctx.beginPath();ctx.arc(px-r*.3,py-r*.3,Math.max(0.1,r*.25),0,Math.PI*2)
+    ctx.fillStyle=`rgba(255,255,255,${prob*.35})`;ctx.fill()
+
+    // Orbit ring (rotates with phase)
+    if(prob>.1){
+      const oa=phase+t*1.5*prob
+      const rx2=r*1.4,ry2=r*.35
+      ctx.save();ctx.translate(px,py);ctx.rotate(oa)
+      ctx.beginPath();ctx.ellipse(0,0,rx2,ry2,0,0,Math.PI*2)
+      ctx.strokeStyle=`rgba(${col.r},${col.g},${col.b},${prob*.5})`
+      ctx.lineWidth=1.5*sc;ctx.stroke();ctx.restore()
+      // Orbital dot
+      const odx=Math.cos(t*2+phase)*rx2,ody=Math.sin(t*2+phase)*ry2*Math.cos(oa)
+      ctx.beginPath();ctx.arc(px+odx,py+ody,Math.max(0.1,3*sc),0,Math.PI*2)
+      ctx.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob})`;ctx.fill()
+    }
+
+    // Hover ring
+    if(isHovered){
+      ctx.beginPath();ctx.arc(px,py,Math.max(0.1,r+8*sc),0,Math.PI*2)
+      ctx.strokeStyle=`rgba(255,255,255,.6)`;ctx.lineWidth=2*sc;ctx.stroke()
+    }
+
+    // Label
+    const bits=idx.toString(2).padStart(n2,'0')
+    ctx.fillStyle=`rgba(200,220,255,${prob>.3?Math.min(prob*1.5,.95):.4})`
+    ctx.font=`${Math.max(9,10*sc)}px 'Courier New'`
+    ctx.textAlign='center';ctx.textBaseline='top'
+    ctx.fillText(`|${bits}⟩`,px,py+r+5*sc)
+    if(prob>.05){
+      ctx.fillStyle=`rgba(100,200,255,${prob*.8})`
+      ctx.font=`${Math.max(8,8*sc)}px 'Courier New'`
+      ctx.fillText(`${(prob*100).toFixed(1)}%`,px,py+r+18*sc)
+    }
+    ctx.textAlign='left';ctx.textBaseline='alphabetic'
+  })
+
+  // Particles
+  updateParticles()
+
+  // Axes indicator
+  drawAxes()
+
+  requestAnimationFrame(render)
+}
+
+// ── Mouse & Touch ────────────────────────────────────────
+canvas.addEventListener('mousedown',e=>{
+  mouseDown=true;lastMX=e.clientX;lastMY=e.clientY
+  dragSX=e.clientX;dragSY=e.clientY;hasDragged=false
+})
+canvas.addEventListener('mousemove',e=>{
+  if(mouseDown){
+    const dx=e.clientX-lastMX,dy=e.clientY-lastMY
+    velTheta=dx*.005;velPhi=dy*.005
+    camTheta+=dx*.005;camPhi+=dy*.005
+    lastMX=e.clientX;lastMY=e.clientY
+    if(Math.abs(e.clientX-dragSX)+Math.abs(e.clientY-dragSY)>5)hasDragged=true
+  }
+  // Hover detection
+  const probs=sim.probs(),n=sim.n,dim=sim.dim
+  const scale=Math.min(W,H)*.22
+  let best=-1,bestDist=Infinity
+  for(let i=0;i<dim;i++){
+    const pos3=statePos(i,n,dim,scale),proj=project(pos3.x,pos3.y,pos3.z)
+    const prob=probs[i]
+    const r=Math.max(1,(8+prob*28)*Math.max(0.001,proj.scale))
+    const dx=e.clientX-proj.px,dy=e.clientY-proj.py
+    const d=Math.sqrt(dx*dx+dy*dy)
+    if(d<r*1.5+15&&d<bestDist){bestDist=d;best=i}
+  }
+  hoveredIdx=best
+  if(best>=0){
+    const bits=best.toString(2).padStart(n,'0')
+    const prob=probs[best],amp=sim.state[best]
+    const tt=document.getElementById('tooltip')
+    tt.style.display='block';tt.style.left=(e.clientX+15)+'px';tt.style.top=(e.clientY-10)+'px'
+    tt.innerHTML=`<div style="color:#a855f7;margin-bottom:4px">Estado |${bits}⟩</div>
+      <div>Probabilidad: <span class="tval">${(prob*100).toFixed(2)}%</span></div>
+      <div>Amplitud: <span class="tval">${amp.re.toFixed(3)}${amp.im>=0?'+':''}${amp.im.toFixed(3)}i</span></div>
+      <div>|amp|: <span class="tval">${amp.abs().toFixed(4)}</span> · fase: <span class="tval">${(amp.arg()*180/Math.PI).toFixed(1)}°</span></div>
+      <div style="color:#5a7090;margin-top:3px;font-size:.58rem">⇧+clic para medir este estado</div>`
+  } else {
+    document.getElementById('tooltip').style.display='none'
+  }
+})
+canvas.addEventListener('mouseup',e=>{
+  if(!hasDragged){
+    // Click action
+    if(e.shiftKey&&hoveredIdx>=0){
+      measureState(hoveredIdx)
+    }
+  }
+  mouseDown=false
+})
+canvas.addEventListener('dblclick',e=>{
+  if(hoveredIdx>=0) resetView()
+})
+canvas.addEventListener('wheel',e=>{
+  const delta=Math.sign(e.deltaY)*Math.min(Math.abs(e.deltaY*.5),30)
+  camDist=Math.max(150,Math.min(900,camDist+delta))
+  e.preventDefault()
+},{passive:false})
+
+// Touch support
+let lastTouchDist=0
+canvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===1){mouseDown=true;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;hasDragged=false;dragSX=lastMX;dragSY=lastMY}
+  if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);lastTouchDist=d}
+})
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault()
+  if(e.touches.length===1&&mouseDown){
+    const dx=e.touches[0].clientX-lastMX,dy=e.touches[0].clientY-lastMY
+    camTheta+=dx*.005;camPhi+=dy*.005;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY
+    if(Math.abs(dx)+Math.abs(dy)>5)hasDragged=true
+  }
+  if(e.touches.length===2){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)
+    camDist=Math.max(100,Math.min(900,camDist-(d-lastTouchDist)*1.5));lastTouchDist=d
+  }
+},{passive:false})
+canvas.addEventListener('touchend',()=>{mouseDown=false})
+
+// ── UI functions ─────────────────────────────────────────
+function updateInfoPanel(){
+  const probs=sim.probs(),n=sim.n,maxP=Math.max(...probs,.001)
+  const topStates=probs.map((p,i)=>({p,i})).filter(x=>x.p>.01).sort((a,b)=>b.p-a.p).slice(0,3)
+  const svStr=topStates.map(x=>`|${x.i.toString(2).padStart(n,'0')}⟩:${(x.p*100).toFixed(1)}%`).join(' + ')
+  document.getElementById('sv-text').textContent=svStr||'|0…0⟩'
+  document.getElementById('ent-text').textContent=sim.entropy().toFixed(3)
+  document.getElementById('ent2-text').textContent=sim.isEntangled()?'Sí ⚡':'No'
+  document.getElementById('shots-text').textContent=totalShots
+}
+
+function measure(){
+  const results=sim.measureAll()
+  const bits=results.join('')
+  totalShots++;measHistory[bits]=(measHistory[bits]||0)+1
+  // Visual collapse
+  const n=sim.n,dim=sim.dim,scale=Math.min(W,H)*.22
+  const collapsedIdx=parseInt(bits,2)
+  const pos3=statePos(collapsedIdx,n,dim,scale)
+  const proj=project(pos3.x,pos3.y,pos3.z)
+  spawnParticles(proj.px,proj.py,'#f72585',60)
+  spawnParticles(proj.px,proj.py,'#a855f7',40)
+  spawnParticles(proj.px,proj.py,'#00dcff',30)
+  // Show result
+  const mr=document.getElementById('meas-result')
+  mr.textContent=`|${bits}⟩`
+  mr.style.color='#39ff8e'
+  mr.style.opacity='1'
+  setTimeout(()=>{mr.style.opacity='0'},1800)
+  updateInfoPanel()
+}
+
+function measureState(idx){
+  // Collapse to specific state
+  const n=sim.n,dim=sim.dim
+  for(let i=0;i<dim;i++) sim.state[i]=i===idx?C.O():C.Z()
+  const bits=idx.toString(2).padStart(n,'0')
+  totalShots++;measHistory[bits]=(measHistory[bits]||0)+1
+  const scale=Math.min(W,H)*.22
+  const pos3=statePos(idx,n,dim,scale),proj=project(pos3.x,pos3.y,pos3.z)
+  spawnParticles(proj.px,proj.py,'#39ff8e',80)
+  const mr=document.getElementById('meas-result')
+  mr.textContent=`→ |${bits}⟩`;mr.style.color='#39ff8e';mr.style.opacity='1'
+  setTimeout(()=>{mr.style.opacity='0'},1800)
+  updateInfoPanel()
+}
+
+function measure100(){
+  const snap=sim.probs()
+  // Simulate 100 measurements without collapsing current state
+  const dim=sim.dim,n=sim.n
+  let cumulative=0;const cdf=snap.map(p=>(cumulative+=p,cumulative))
+  for(let i=0;i<100;i++){
+    const r=Math.random(),idx=cdf.findIndex(c=>c>=r)
+    const bits=(idx<0?dim-1:idx).toString(2).padStart(n,'0')
+    measHistory[bits]=(measHistory[bits]||0)+1;totalShots++
+  }
+  // Burst particles at all active states
+  for(let i=0;i<dim;i++){
+    if(snap[i]>.01){
+      const pos3=statePos(i,n,dim,Math.min(W,H)*.22),proj=project(pos3.x,pos3.y,pos3.z)
+      spawnParticles(proj.px,proj.py,'#00dcff',Math.round(snap[i]*30))
+    }
+  }
+  updateInfoPanel()
+}
+
+function loadExample(name){
+  if(!name)return
+  sim=buildSim(name)
+  measHistory={};totalShots=0;hoveredIdx=-1
+  updateInfoPanel()
+  // Welcome burst at origin
+  spawnParticles(W/2,H/2,'#a855f7',50)
+  spawnParticles(W/2,H/2,'#00dcff',30)
+}
+
+function togglePulsar(){
+  pulsarMode=!pulsarMode
+  const btn=document.querySelectorAll('.btn')[2]  // 3rd button
+}
+
+function toggleGrid(){showGrid=!showGrid}
+
+function resetView(){camTheta=0.4;camPhi=-0.6;camDist=480;velTheta=velPhi=0}
+
+function toggleAutoRotate(){autoRotate=!autoRotate;velTheta=velPhi=0}
+
+// ── Boot ─────────────────────────────────────────────────
+updateInfoPanel()
+render()
+</script>
+</body>
+</html>
