@@ -1389,7 +1389,7 @@ const Q={
       document.getElementById(`mode${i}`)?.style && (document.getElementById(`mode${i}`).style.display=i===m?'':'none')
     })
     if(m===3){this.renderFullSV();this.renderStateProps();renderAmpChart(document.getElementById('amp-chart'),this.S)}
-    if(m===4){UV.syncFromSim()}
+    if(m===4){UV.open()}
   },
 
   updateStats(){
@@ -1628,10 +1628,13 @@ const UV = {
     ov.classList.add('open')
     this.canvas=document.getElementById('uv-canvas')
     this.ctx=this.canvas.getContext('2d')
-    this.resize()
-    this.syncFromSim()
-    this.bindEvents()
-    if(!this.raf) this.loop()
+    // Delay resize by one frame so the overlay is visible and has real dimensions
+    requestAnimationFrame(()=>{
+      this.resize()
+      this.syncFromSim()
+      this.bindEvents()
+      if(!this.raf) this.loop()
+    })
     document.addEventListener('keydown',this._keyFn=(e)=>{if(e.key==='Escape')this.close()})
   },
 
@@ -1810,8 +1813,8 @@ const UV = {
 
   // ── Main loop ───────────────────────────────────────────
   loop(){
+    if(!this.isOpen){this.raf=null;return}
     this.raf=requestAnimationFrame(()=>this.loop())
-    if(!this.isOpen)return
     const t=Date.now()*.001
 
     // Camera inertia / auto-rotate
@@ -1904,6 +1907,8 @@ const UV = {
 
   // ── Interaction ─────────────────────────────────────────
   bindEvents(){
+    if(this._bound) return
+    this._bound=true
     const canvas=this.canvas
     const onDown=e=>{
       this.mouseDown=true
