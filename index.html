@@ -6,29 +6,35 @@
 <title>Quantum Simulator</title>
 <style>
 :root {
-  --bg:#060910;--bg2:#0b0e1c;--bg3:#10142a;
-  --panel:rgba(10,13,28,0.97);--glass:rgba(130,60,255,0.06);--glassc:rgba(0,220,255,0.05);
-  --border:rgba(130,60,255,0.2);--borderc:rgba(0,220,255,0.2);
-  --av:#a855f7;--ac:#00dcff;--am:#f72585;--ag:#39ff8e;--ao:#ffaa00;
-  --text:#d8e8f8;--text2:#5a7090;--text3:#334055;
-  --gv:0 0 18px rgba(168,85,247,.4);--gc:0 0 18px rgba(0,220,255,.4);
-  --gm:0 0 18px rgba(247,37,133,.4);--gg:0 0 18px rgba(57,255,142,.4);
+  /* Dark theme: deep navy base, not pure black — better contrast for accents */
+  --bg:#0d1220;--bg2:#131826;--bg3:#1a2035;
+  --panel:rgba(16,20,38,0.97);--glass:rgba(140,70,255,0.09);--glassc:rgba(0,220,255,0.07);
+  --border:rgba(140,70,255,0.28);--borderc:rgba(0,220,255,0.28);
+  --av:#c084fc;--ac:#22d3ee;--am:#fb4d87;--ag:#4ade80;--ao:#fbbf24;
+  --text:#eef2ff;--text2:#8899cc;--text3:#4a5a80;
+  --gv:0 0 20px rgba(192,132,252,.5);--gc:0 0 20px rgba(34,211,238,.5);
+  --gm:0 0 20px rgba(251,77,135,.5);--gg:0 0 20px rgba(74,222,128,.5);
   --r:10px;--rs:6px;--mono:'Courier New',monospace;--ui:'Trebuchet MS','Segoe UI',sans-serif;
 }
 body.lm{
-  --bg:#f0f3fc;--bg2:#f8f9ff;--bg3:#ffffff;--panel:rgba(255,255,255,.98);
-  --glass:rgba(130,60,255,.05);--glassc:rgba(0,180,220,.04);
-  --border:rgba(130,60,255,.2);--borderc:rgba(0,180,220,.2);
-  --text:#0a1020;--text2:#4a5a80;--text3:#9aaac0;
+  /* Light theme: warm slate base, strong contrast, vivid accents */
+  --bg:#1e1b2e;--bg2:#252240;--bg3:#2d2a50;
+  --panel:rgba(30,27,46,0.98);--glass:rgba(140,70,255,0.1);--glassc:rgba(0,200,240,0.08);
+  --border:rgba(160,100,255,0.35);--borderc:rgba(0,200,240,0.35);
+  --av:#d8b4fe;--ac:#67e8f9;--am:#f9a8d4;--ag:#86efac;--ao:#fde68a;
+  --text:#f0ebff;--text2:#b0a8d8;--text3:#7060a0;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:var(--ui);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .4s,color .4s}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(168,85,247,.07) 0,transparent 70%),
-    radial-gradient(ellipse 50% 35% at 80% 80%,rgba(0,220,255,.06) 0,transparent 70%),
-    radial-gradient(ellipse 40% 30% at 60% 30%,rgba(247,37,133,.05) 0,transparent 70%)}
-body.lm::before{display:none}
+  background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(192,132,252,.12) 0,transparent 70%),
+    radial-gradient(ellipse 50% 35% at 80% 80%,rgba(34,211,238,.10) 0,transparent 70%),
+    radial-gradient(ellipse 40% 30% at 60% 30%,rgba(251,77,135,.08) 0,transparent 70%)}
+body.lm::before{
+  background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(192,132,252,.08) 0,transparent 70%),
+    radial-gradient(ellipse 50% 35% at 80% 80%,rgba(34,211,238,.07) 0,transparent 70%),
+    radial-gradient(ellipse 40% 30% at 60% 30%,rgba(251,77,135,.06) 0,transparent 70%)}
 #app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
 
 /* HEADER */
@@ -69,7 +75,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .sec-title{font-family:var(--mono);font-size:.6rem;color:var(--text2);text-transform:uppercase;
   letter-spacing:2px;margin-bottom:6px;display:flex;align-items:center;gap:5px}
 .sec-title::before{content:'';width:3px;height:11px;border-radius:2px;flex-shrink:0}
-.sec-title.v::before{background:var(--av);box-shadow:var(--gv)}
+.sec-title.v::before{background:var(--av);box-shadow:var(--gv);opacity:.9}
 .sec-title.c::before{background:var(--ac);box-shadow:var(--gc)}
 .sec-title.m::before{background:var(--am);box-shadow:var(--gm)}
 .sec-title.g::before{background:var(--ag);box-shadow:var(--gg)}
@@ -83,12 +89,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .gc .gs{font-size:.95rem;line-height:1;font-family:var(--mono);font-weight:bold}
 .gc .gn{font-size:.45rem;text-transform:uppercase;letter-spacing:.5px;opacity:.75}
 .gc.sel{outline:2px solid currentColor;outline-offset:1px}
-.gH{color:var(--ac);border-color:rgba(0,220,255,.4)}.gH:hover{background:rgba(0,220,255,.12);box-shadow:var(--gc)}
-.gX,.gY{color:var(--am);border-color:rgba(247,37,133,.4)}.gX:hover,.gY:hover{background:rgba(247,37,133,.12);box-shadow:var(--gm)}
-.gZ{color:var(--ag);border-color:rgba(57,255,142,.4)}.gZ:hover{background:rgba(57,255,142,.12);box-shadow:var(--gg)}
-.gS,.gT{color:var(--ao);border-color:rgba(255,170,0,.4)}.gS:hover,.gT:hover{background:rgba(255,170,0,.12)}
+.gH{color:var(--ac);border-color:rgba(34,211,238,.5);background:rgba(34,211,238,.07)}.gH:hover{background:rgba(34,211,238,.18);box-shadow:var(--gc)}
+.gX,.gY{color:var(--am);border-color:rgba(251,77,135,.5);background:rgba(251,77,135,.07)}.gX:hover,.gY:hover{background:rgba(251,77,135,.18);box-shadow:var(--gm)}
+.gZ{color:var(--ag);border-color:rgba(74,222,128,.5);background:rgba(74,222,128,.07)}.gZ:hover{background:rgba(74,222,128,.18);box-shadow:var(--gg)}
+.gS,.gT{color:var(--ao);border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.07)}.gS:hover,.gT:hover{background:rgba(251,191,36,.18);box-shadow:0 0 14px rgba(251,191,36,.4)}
 .gRx,.gRy,.gRz{color:var(--ag);border-color:rgba(57,255,142,.3)}.gRx:hover,.gRy:hover,.gRz:hover{background:rgba(57,255,142,.1);box-shadow:var(--gg)}
-.gCX,.gCZ,.gSW{color:var(--av);border-color:rgba(168,85,247,.5)}.gCX:hover,.gCZ:hover,.gSW:hover{background:rgba(168,85,247,.12);box-shadow:var(--gv)}
+.gCX,.gCZ,.gSW{color:var(--av);border-color:rgba(192,132,252,.55);background:rgba(192,132,252,.08)}.gCX:hover,.gCZ:hover,.gSW:hover{background:rgba(192,132,252,.2);box-shadow:var(--gv)}
 .gCC{color:var(--am);border-color:rgba(247,37,133,.5)}.gCC:hover{background:rgba(247,37,133,.12);box-shadow:var(--gm)}
 .gM{color:var(--ao);border-color:rgba(255,170,0,.5)}.gM:hover{background:rgba(255,170,0,.12)}
 .gI{color:var(--text2);border-color:var(--border)}
@@ -133,16 +139,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 .sv-row:hover{background:rgba(255,255,255,.03)}
 .sv-ket{color:var(--ac);width:50px;font-family:var(--mono);font-size:.64rem;flex-shrink:0}
 .sv-bw{flex:1;height:7px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
-.sv-bf{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--av),var(--ac));transition:width .35s ease;box-shadow:0 0 6px rgba(168,85,247,.5)}
+.sv-bf{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--av),var(--ac));transition:width .35s ease;box-shadow:0 0 8px rgba(192,132,252,.6)}
 .sv-pct{color:var(--ag);width:36px;text-align:right;font-family:var(--mono);font-size:.58rem;flex-shrink:0}
 .sv-amp{color:var(--text2);font-size:.55rem;min-width:88px;text-align:right;font-family:var(--mono)}
 
 /* Measure buttons */
 .mbtn{width:100%;padding:13px;border-radius:var(--r);border:2px solid var(--am);
-  background:linear-gradient(135deg,rgba(247,37,133,.14),rgba(168,85,247,.07));
+  background:linear-gradient(135deg,rgba(251,77,135,.2),rgba(192,132,252,.1));
   color:var(--am);font-family:var(--mono);font-size:.8rem;letter-spacing:2px;
-  cursor:pointer;transition:all .3s;box-shadow:var(--gm)}
-.mbtn:hover{box-shadow:0 0 35px rgba(247,37,133,.55);transform:translateY(-2px)}
+  cursor:pointer;transition:all .3s;box-shadow:var(--gm),inset 0 0 20px rgba(251,77,135,.05)}
+.mbtn:hover{box-shadow:0 0 40px rgba(251,77,135,.65),inset 0 0 20px rgba(251,77,135,.1);transform:translateY(-2px)}
 .mbtn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
 .mbtn-run{width:100%;padding:11px;border-radius:var(--r);margin-bottom:6px;border:2px solid var(--ac);
   background:linear-gradient(135deg,rgba(0,220,255,.12),rgba(168,85,247,.06));
@@ -437,11 +443,12 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   <button class="btn" onclick="Q.resetState()">↺ <span>Reiniciar</span></button>
   <button class="btn" onclick="Q.om('mo-exp')">📚 <span>Teoría</span></button>
   <button class="btn" onclick="Q.om('mo-ex')">⚡ <span>Ejemplos</span></button>
-  <button class="btn" id="btn-theme" onclick="Q.toggleTheme()">☀️ <span>Tema</span></button>
+  <button class="btn" id="btn-theme" onclick="Q.toggleTheme()">🎆 <span>Índigo</span></button>
   <button class="btn" onclick="Q.exportJSON()">↓ <span>Export</span></button>
   <button class="btn" onclick="document.getElementById('imp').click()">↑ <span>Import</span></button>
   <input type="file" id="imp" accept=".json" style="display:none" onchange="Q.importJSON(event)">
   <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
+  <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Universo q3d">❓ <span>q3d</span></a>
  </div>
 </header>
 
@@ -1379,7 +1386,7 @@ const Q={
 
   toggleTheme(){
     document.body.classList.toggle('lm')
-    document.getElementById('btn-theme').innerHTML=document.body.classList.contains('lm')?'🌙 <span>Tema</span>':'☀️ <span>Tema</span>'
+    document.getElementById('btn-theme').innerHTML=document.body.classList.contains('lm')?'🌌 <span>Cosmos</span>':'🎆 <span>Índigo</span>'
     this.renderAll();this.renderBloch()
   },
 
@@ -1598,6 +1605,33 @@ const Q={
 const UV = {
   isOpen: false,
   canvas: null, ctx: null,
+
+  // Returns true when the "Índigo" (secondary) theme is active
+  isLm(){ return document.body.classList.contains('lm') },
+
+  // Theme-aware color palette for the UV renderer
+  theme(){
+    const lm=this.isLm()
+    return {
+      bg:       lm ? 'rgba(14,10,40,1)'       : 'rgba(8,6,18,1)',
+      nebula1:  lm ? 'rgba(160,100,255,0.08)' : 'rgba(192,132,252,0.07)',
+      nebula2:  lm ? 'rgba(0,160,200,0.06)'   : 'rgba(34,211,238,0.05)',
+      nebula3:  lm ? 'rgba(220,60,130,0.05)'  : 'rgba(251,77,135,0.04)',
+      star:     lm ? 'rgba(220,210,255,'       : 'rgba(200,215,255,',
+      wire:     lm ? 'rgba(140,100,255,0.12)' : 'rgba(140,80,220,0.08)',
+      axisZ:    lm ? 'rgba(200,160,255,0.6)'  : 'rgba(168,85,247,0.55)',
+      axisX:    lm ? 'rgba(251,77,135,0.7)'   : 'rgba(247,37,133,0.65)',
+      axisY:    lm ? 'rgba(74,222,128,0.7)'   : 'rgba(57,255,142,0.65)',
+      label0:   lm ? 'rgba(200,160,255,0.7)'  : 'rgba(168,85,247,0.65)',
+      connA:    lm ? 'rgba(192,132,252,'       : 'rgba(168,85,247,',
+      connB:    lm ? 'rgba(34,211,238,'        : 'rgba(0,220,255,',
+      connC:    lm ? 'rgba(251,77,135,'        : 'rgba(247,37,133,',
+      grid:     lm ? 'rgba(160,100,255,0.14)' : 'rgba(140,80,200,0.08)',
+      ringHue:  lm ? 1 : 0,   // slight hue shift for rings
+      specular: lm ? 0.5      : 0.32,
+      labelAlpha: lm ? 1.05  : 1.0,
+    }
+  },
   W: 0, H: 0,
   camTheta: 0.45, camPhi: -0.55, camDist: 480,
   velTheta: 0, velPhi: 0,
@@ -1623,10 +1657,12 @@ const UV = {
   })),
 
   open(){
-    this.isOpen=true
     const ov=document.getElementById('universe-overlay')
+    const canv=document.getElementById('uv-canvas')
+    if(!ov||!canv){console.error('UV: overlay elements not found');return}
+    this.isOpen=true
     ov.classList.add('open')
-    this.canvas=document.getElementById('uv-canvas')
+    this.canvas=canv
     this.ctx=this.canvas.getContext('2d')
     // Delay resize by one frame so the overlay is visible and has real dimensions
     requestAnimationFrame(()=>{
@@ -1654,11 +1690,13 @@ const UV = {
 
   syncFromSim(){
     // Deep-copy state from Q.S
-    if(!Q||!Q.S) return
-    const s=Q.S
-    this.simN=s.n
-    this.simState=s.state.map(c=>({re:c.re,im:c.im}))
-    this.updateInfoPanel()
+    if(!Q||!Q.S||!Q.S.state||!Q.S.state.length) return
+    try{
+      const s=Q.S
+      this.simN=s.n
+      this.simState=s.state.map(c=>({re:c.re||0,im:c.im||0}))
+      if(this.isOpen) this.updateInfoPanel()
+    }catch(e){console.warn('UV.syncFromSim:',e)}
   },
 
   // Convenience accessors that work on our local copy
@@ -1666,8 +1704,8 @@ const UV = {
     if(!this.simState) return [1]
     return this.simState.map(a=>a.re*a.re+a.im*a.im)
   },
-  stateAbs(i){ const a=this.simState[i]; return Math.sqrt(a.re*a.re+a.im*a.im) },
-  stateArg(i){ return Math.atan2(this.simState[i].im,this.simState[i].re) },
+  stateAbs(i){ const a=this.simState&&this.simState[i]; return a?Math.sqrt(a.re*a.re+a.im*a.im):0 },
+  stateArg(i){ const a=this.simState&&this.simState[i]; return a?Math.atan2(a.im,a.re):0 },
 
   // ── 3D geometry ────────────────────────────────────────
   statePos(idx,n,dim,scale){
@@ -1705,21 +1743,27 @@ const UV = {
   },
 
   drawStars(t){
+    const th=this.theme(), sc=th.star
     this.stars.forEach(s=>{
       const x=s.x*this.W,y=s.y*this.H
       const b=s.b*(.65+.35*Math.sin(t*s.s+s.t))
       this.ctx.beginPath();this.ctx.arc(x,y,s.r,0,Math.PI*2)
-      this.ctx.fillStyle=`rgba(200,215,255,${b})`;this.ctx.fill()
+      this.ctx.fillStyle=`${sc}${b.toFixed(3)})`;this.ctx.fill()
     })
   },
 
   drawNebula(t){
     const c=this.ctx
+    if(!c||this.W<10||this.H<10) return
+    const th=this.theme()
     const cx=this.W*.38+Math.sin(t*.4)*this.W*.06
     const cy=this.H*.42+Math.cos(t*.3)*this.H*.05
-    const g=c.createRadialGradient(cx,cy,0,cx,cy,Math.min(this.W,this.H)*.55)
-    g.addColorStop(0,'rgba(168,85,247,0.05)');g.addColorStop(.45,'rgba(0,100,180,0.03)')
-    g.addColorStop(.8,'rgba(247,37,133,0.025)');g.addColorStop(1,'rgba(0,0,0,0)')
+    const r2=Math.max(1,Math.min(this.W,this.H)*.55)
+    const g=c.createRadialGradient(cx,cy,0,cx,cy,r2)
+    g.addColorStop(0,th.nebula1)
+    g.addColorStop(.45,th.nebula2)
+    g.addColorStop(.8,th.nebula3)
+    g.addColorStop(1,'rgba(0,0,0,0)')
     c.fillStyle=g;c.fillRect(0,0,this.W,this.H)
   },
 
@@ -1733,11 +1777,12 @@ const UV = {
         const strength=Math.sqrt(pi*pj)
         if(strength<.04)continue
         const si=spheres[i],sj=spheres[j],alpha=Math.min(.9,strength*.85)
+        const th=this.theme()
         c.save();c.setLineDash([6,8]);c.lineDashOffset=-t*18
         const g2=c.createLinearGradient(si.px,si.py,sj.px,sj.py)
-        g2.addColorStop(0,`rgba(168,85,247,${alpha})`)
-        g2.addColorStop(.5,`rgba(0,220,255,${alpha*.55})`)
-        g2.addColorStop(1,`rgba(247,37,133,${alpha})`)
+        g2.addColorStop(0,`${th.connA}${alpha})`)
+        g2.addColorStop(.5,`${th.connB}${alpha*.55})`)
+        g2.addColorStop(1,`${th.connC}${alpha})`)
         c.strokeStyle=g2;c.lineWidth=Math.max(.5,1+strength*2.5)
         c.shadowColor='rgba(0,220,255,.5)';c.shadowBlur=6
         c.beginPath();c.moveTo(si.px,si.py);c.lineTo(sj.px,sj.py);c.stroke()
@@ -1762,7 +1807,8 @@ const UV = {
   drawGridEdges(n,scale){
     if(!this.showGrid)return
     const dim=1<<n,c=this.ctx
-    c.save();c.globalAlpha=.07;c.strokeStyle='#a855f7';c.lineWidth=.5
+    const th2=this.theme()
+    c.save();c.globalAlpha=1;c.strokeStyle=th2.grid;c.lineWidth=.5
     for(let i=0;i<dim;i++){
       for(let bit=0;bit<n;bit++){
         const j=i^(1<<bit)
@@ -1778,7 +1824,8 @@ const UV = {
 
   drawAxes(){
     const len=38,ox=this.W-65,oy=this.H-65,c=this.ctx
-    [{v:[.001,0,0],col:'#f72585',l:'X'},{v:[0,.001,0],col:'#39ff8e',l:'Y'},{v:[0,0,.001],col:'#00dcff',l:'Z'}]
+    const txa=this.theme()
+    [{v:[.001,0,0],col:txa.axisX,l:'X'},{v:[0,.001,0],col:txa.axisY,l:'Y'},{v:[0,0,.001],col:txa.connB+'1)',l:'Z'}]
     .forEach(a=>{
       const s=this.project(0,0,0),e=this.project(...a.v)
       const dx=e.px-s.px,dy=e.py-s.py,nm=Math.sqrt(dx*dx+dy*dy)
@@ -1815,6 +1862,8 @@ const UV = {
   loop(){
     if(!this.isOpen){this.raf=null;return}
     this.raf=requestAnimationFrame(()=>this.loop())
+    try{
+    if(this.W<10||this.H<10){this.resize();return}  // skip degenerate frames
     const t=Date.now()*.001
 
     // Camera inertia / auto-rotate
@@ -1823,10 +1872,19 @@ const UV = {
     this.camPhi=Math.max(-Math.PI/2+.05,Math.min(Math.PI/2-.05,this.camPhi))
 
     const c=this.ctx
-    c.fillStyle='rgba(0,0,8,1)';c.fillRect(0,0,this.W,this.H)
+    c.fillStyle=this.theme().bg;c.fillRect(0,0,this.W,this.H)
     this.drawNebula(t);this.drawStars(t)
 
-    if(!this.simState){c.fillStyle='rgba(168,85,247,.4)';c.font='14px monospace';c.textAlign='center';c.fillText('Ejecuta un circuito para ver el universo cuántico',this.W/2,this.H/2);c.textAlign='left';return}
+    if(!this.simState){
+      const thN=this.theme()
+      c.fillStyle=thN.axisZ||'rgba(192,132,252,.6)'
+      c.font='14px monospace';c.textAlign='center'
+      c.fillText('Ejecuta un circuito para ver el universo cuántico',this.W/2,this.H/2)
+      c.fillStyle=thN.connB+'0.4)'
+      c.font='11px monospace'
+      c.fillText('Luego pulsa ▶ Ejecutar y abre el Universo de nuevo',this.W/2,this.H/2+28)
+      c.textAlign='left';return
+    }
 
     const n=this.simN,dim=1<<n,probs=this.probs()
     const scale=Math.min(this.W,this.H)*.22
@@ -1863,15 +1921,17 @@ const UV = {
       }
 
       // Main sphere
-      const sg=c.createRadialGradient(px-r*.3,py-r*.3,r*.08,px,py,r)
+      if(r<2) return  // too small to draw meaningful gradient
+      const sg=c.createRadialGradient(px-r*.3,py-r*.3,Math.max(0.01,r*.08),px,py,Math.max(0.01,r))
       sg.addColorStop(0,`rgba(255,255,255,${prob*.65})`)
       sg.addColorStop(.32,`rgba(${col.r},${col.g},${col.b},${prob*.9})`)
       sg.addColorStop(1,`rgba(${Math.round(col.r*.28)},${Math.round(col.g*.28)},${Math.round(col.b*.28)},${prob*.95})`)
       c.beginPath();c.arc(px,py,r,0,Math.PI*2);c.fillStyle=sg;c.fill()
 
       // Specular
+      const thSpec=this.theme()
       c.beginPath();c.arc(px-r*.3,py-r*.3,Math.max(.1,r*.24),0,Math.PI*2)
-      c.fillStyle=`rgba(255,255,255,${prob*.32})`;c.fill()
+      c.fillStyle=`rgba(255,255,255,${prob*thSpec.specular})`;c.fill()
 
       // Orbit ring
       if(prob>.08){
@@ -1903,6 +1963,7 @@ const UV = {
 
     this.updateParticles()
     this.drawAxes()
+  } catch(e){ console.warn('UV loop frame error:',e) }
   },
 
   // ── Interaction ─────────────────────────────────────────
@@ -2040,33 +2101,38 @@ const UV = {
   },
 
   updateInfoPanel(){
-    if(!this.simState)return
-    const probs=this.probs(),n=this.simN,maxP=Math.max(...probs,.001)
-    const top=probs.map((p,i)=>({p,i})).filter(x=>x.p>.01).sort((a,b)=>b.p-a.p).slice(0,3)
-    const svStr=top.map(x=>`|${x.i.toString(2).padStart(n,'0')}⟩:${(x.p*100).toFixed(1)}%`).join(' + ')||'|0…0⟩'
-    document.getElementById('uv-sv').textContent=svStr
-    // Entropy
-    let ent=0;probs.forEach(p=>{if(p>1e-9)ent-=p*Math.log2(p)})
-    document.getElementById('uv-ent').textContent=ent.toFixed(3)
-    // Entanglement (bloch vector purity)
-    const nd=this.simN,dd=1<<nd;let a0re=0,a0im=0,a1re=0,a1im=0
-    for(let i=0;i<dd;i++){const a=this.simState[i];if((i>>(nd-1))&1){a1re+=a.re;a1im+=a.im}else{a0re+=a.re;a0im+=a.im}}
-    const norm=Math.sqrt(a0re*a0re+a0im*a0im+a1re*a1re+a1im*a1im)||1
-    a0re/=norm;a0im/=norm;a1re/=norm;a1im/=norm
-    const theta=2*Math.acos(Math.min(Math.sqrt(a0re*a0re+a0im*a0im),1))
-    const phi=(Math.atan2(a1im,a1re))-(Math.atan2(a0im,a0re))
-    const bx=Math.sin(theta)*Math.cos(phi),by=Math.sin(theta)*Math.sin(phi),bz=Math.cos(theta)
-    const entg=nd>=2&&Math.sqrt(bx*bx+by*by+bz*bz)<0.99
-    document.getElementById('uv-entg').textContent=entg?'Sí ⚡':'No'
-    document.getElementById('uv-shots').textContent=this.totalShots
-    // Shots bar
-    const bar=document.getElementById('uv-shots-bar')
-    const entries=Object.entries(this.measHistory).sort((a,b)=>b[1]-a[1]).slice(0,5)
-    const maxC=entries[0]?.[1]||1
-    bar.innerHTML=entries.map(([bits,cnt])=>`
-      <div class="uv-sh"><div class="uv-sh-ket">|${bits}⟩</div>
-        <div class="uv-sh-bw"><div class="uv-sh-bf" style="width:${cnt/maxC*100}%"></div></div>
-        <div class="uv-sh-n">${cnt}</div></div>`).join('')
+    if(!this.simState||!this.simState.length)return
+    try{
+      const probs=this.probs(),n=this.simN,maxP=Math.max(...probs,.001)
+      const top=probs.map((p,i)=>({p,i})).filter(x=>x.p>.01).sort((a,b)=>b.p-a.p).slice(0,3)
+      const svStr=top.map(x=>`|${x.i.toString(2).padStart(n,'0')}⟩:${(x.p*100).toFixed(1)}%`).join(' + ')||'|0…0⟩'
+      const elSv=document.getElementById('uv-sv');if(elSv)elSv.textContent=svStr
+      let ent=0;probs.forEach(p=>{if(p>1e-9)ent-=p*Math.log2(p)})
+      const elEnt=document.getElementById('uv-ent');if(elEnt)elEnt.textContent=ent.toFixed(3)
+      const nd=this.simN,dd=Math.min(1<<nd,this.simState.length)
+      let a0re=0,a0im=0,a1re=0,a1im=0
+      for(let i=0;i<dd;i++){
+        const a=this.simState[i];if(!a)continue
+        if((i>>(nd-1))&1){a1re+=a.re;a1im+=a.im}else{a0re+=a.re;a0im+=a.im}
+      }
+      const norm=Math.sqrt(a0re*a0re+a0im*a0im+a1re*a1re+a1im*a1im)||1
+      a0re/=norm;a0im/=norm;a1re/=norm;a1im/=norm
+      const theta=2*Math.acos(Math.min(Math.sqrt(a0re*a0re+a0im*a0im),1))
+      const phi=(Math.atan2(a1im,a1re))-(Math.atan2(a0im,a0re))
+      const bx=Math.sin(theta)*Math.cos(phi),by=Math.sin(theta)*Math.sin(phi),bz=Math.cos(theta)
+      const entg=nd>=2&&Math.sqrt(bx*bx+by*by+bz*bz)<0.99
+      const elEntg=document.getElementById('uv-entg');if(elEntg)elEntg.textContent=entg?'Sí ⚡':'No'
+      const elShots=document.getElementById('uv-shots');if(elShots)elShots.textContent=this.totalShots
+      const bar=document.getElementById('uv-shots-bar')
+      if(bar){
+        const entries=Object.entries(this.measHistory).sort((a,b)=>b[1]-a[1]).slice(0,5)
+        const maxC=entries[0]?.[1]||1
+        bar.innerHTML=entries.map(([bits,cnt])=>`
+          <div class="uv-sh"><div class="uv-sh-ket">|${bits}⟩</div>
+            <div class="uv-sh-bw"><div class="uv-sh-bf" style="width:${cnt/maxC*100}%"></div></div>
+            <div class="uv-sh-n">${cnt}</div></div>`).join('')
+      }
+    }catch(e){console.warn('UV.updateInfoPanel:',e)}
   },
 
   // ── Controls ────────────────────────────────────────────
