@@ -291,6 +291,28 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   .ex-grid{grid-template-columns:1fr}
 }
 
+
+/* ── BRIGHTNESS CONTROL ─────────────────────────────── */
+.bright-wrap{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 8px;border-radius:20px;
+  border:1px solid var(--border);background:var(--glass)
+}
+.bright-wrap label{
+  font-family:var(--mono);font-size:.58rem;color:var(--text2);
+  white-space:nowrap;letter-spacing:.5px
+}
+.bright-wrap input[type=range]{
+  width:70px;min-width:70px;max-width:70px
+}
+.bright-val{
+  font-family:var(--mono);font-size:.6rem;color:var(--ac);
+  width:34px;text-align:right
+}
+/* Apply brightness filter to the whole app */
+#app{filter:brightness(var(--brightness,1.08)) contrast(var(--contrast-val,1.02))}
+/* Universe overlay has its own brightness controlled via canvas rendering */
+
 /* ── QUANTUM UNIVERSE 3D PANEL ──────────────────────── */
 #universe-overlay{position:fixed;inset:0;z-index:150;background:#000;display:none}
 #universe-overlay.open{display:block}
@@ -448,7 +470,6 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   <button class="btn" onclick="document.getElementById('imp').click()">↑ <span>Import</span></button>
   <input type="file" id="imp" accept=".json" style="display:none" onchange="Q.importJSON(event)">
   <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
-  <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Universo q3d">🌌 <span>q3d</span></a>
  </div>
 </header>
 
@@ -488,6 +509,12 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
    <button class="btn" onclick="Q.undo()">↩ Deshacer</button>
    <button class="btn m" onclick="Q.clearCircuit()">🗑 Limpiar</button>
    <span class="step-info" id="step-info"></span>
+   <div class="bright-wrap" title="Ajusta el brillo global de la interfaz">
+    <label>☀</label>
+    <input type="range" id="sl-bright" min="60" max="160" value="108" step="2"
+      oninput="Q.setBrightness(this.value)">
+    <span class="bright-val" id="bright-val">108%</span>
+   </div>
   </div>
   <div id="cw"><canvas id="cc"></canvas></div>
  </div>
@@ -594,6 +621,14 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
    <button class="uvb" onclick="UV.togglePulsar()" id="uv-btn-pulsar">💫 Pulsar</button>
    <button class="uvb g" onclick="UV.toggleGrid()" id="uv-btn-grid">⊞ Grid</button>
    <button class="uvb" onclick="UV.toggleAuto()" id="uv-btn-auto">↻ Auto</button>
+   <div style="display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;border:1px solid rgba(168,85,247,.35);background:rgba(168,85,247,.1)">
+    <span style="font-size:.65rem;color:#c084fc;font-family:var(--mono)">☀</span>
+    <input type="range" id="uv-sl-bright" min="60" max="200" value="108" step="2"
+      style="width:65px;min-width:65px;max-width:65px"
+      oninput="UV.setBrightness(this.value)"
+      title="Brillo del Universo">
+    <span style="font-family:var(--mono);font-size:.58rem;color:#22d3ee;width:32px;text-align:right" id="uv-bright-val">108%</span>
+   </div>
    <button class="uvb" onclick="UV.resetView()">⟳ Vista</button>
    <button class="uvb m" onclick="UV.close()">✕ Cerrar</button>
   </div>
@@ -1072,6 +1107,7 @@ const Q={
     this.buildPalettes();this.buildExamples();this.buildLearn();this.buildChallenges()
     this.setupCanvas();this.loadSaved();this.render();this.blochLoop()
     this.eduTab('theory')
+    this.loadBrightness()
   },
 
   buildPalettes(){
@@ -1594,6 +1630,28 @@ const Q={
   },
 
   render(){this.renderAll();this.updateStats()},
+
+  setBrightness(v){
+    const pct=Math.round(v)
+    // CSS custom properties on :root for the filter
+    document.documentElement.style.setProperty('--brightness', (pct/100).toFixed(2))
+    // Slight contrast boost at low brightness, reduce at high
+    const contrast = pct < 90 ? 1.08 : pct > 130 ? 0.96 : 1.02
+    document.documentElement.style.setProperty('--contrast-val', contrast.toFixed(2))
+    const el=document.getElementById('bright-val')
+    if(el) el.textContent=pct+'%'
+    // Save preference
+    localStorage.setItem('qsim_brightness', pct)
+  },
+
+  loadBrightness(){
+    const saved=localStorage.getItem('qsim_brightness')
+    if(saved){
+      const sl=document.getElementById('sl-bright')
+      if(sl) sl.value=saved
+      this.setBrightness(+saved)
+    }
+  },
 }
 
 
@@ -1605,6 +1663,16 @@ const Q={
 const UV = {
   isOpen: false,
   canvas: null, ctx: null,
+
+  // Brightness multiplier for UV canvas rendering (1.0 = normal)
+  brightness: 1.08,
+  _frame: 0,  // frame counter for throttling
+
+  setBrightness(v){
+    this.brightness=Math.max(0.4, Math.min(2.2, v/100))
+    const el=document.getElementById('uv-bright-val')
+    if(el) el.textContent=Math.round(v)+'%'
+  },
 
   // Returns true when the "Índigo" (secondary) theme is active
   isLm(){ return document.body.classList.contains('lm') },
@@ -1742,8 +1810,9 @@ const UV = {
     return{r:168,g:85,b:247}
   },
 
-  drawStars(t){
-    const th=this.theme(), sc=th.star
+  drawStars(t,th){
+    if(!th) th=this.theme()
+    const sc=th.star
     this.stars.forEach(s=>{
       const x=s.x*this.W,y=s.y*this.H
       const b=s.b*(.65+.35*Math.sin(t*s.s+s.t))
@@ -1752,10 +1821,10 @@ const UV = {
     })
   },
 
-  drawNebula(t){
+  drawNebula(t,th){
     const c=this.ctx
     if(!c||this.W<10||this.H<10) return
-    const th=this.theme()
+    if(!th) th=this.theme()
     const cx=this.W*.38+Math.sin(t*.4)*this.W*.06
     const cy=this.H*.42+Math.cos(t*.3)*this.H*.05
     const r2=Math.max(1,Math.min(this.W,this.H)*.55)
@@ -1767,7 +1836,8 @@ const UV = {
     c.fillStyle=g;c.fillRect(0,0,this.W,this.H)
   },
 
-  drawConnections(spheres){
+  drawConnections(spheres,th){
+    if(!th) th=this.theme()
     const probs=this.probs()
     const c=this.ctx,t=Date.now()*.001
     for(let i=0;i<spheres.length;i++){
@@ -1777,38 +1847,35 @@ const UV = {
         const strength=Math.sqrt(pi*pj)
         if(strength<.04)continue
         const si=spheres[i],sj=spheres[j],alpha=Math.min(.9,strength*.85)
-        const th=this.theme()
-        c.save();c.setLineDash([6,8]);c.lineDashOffset=-t*18
-        const g2=c.createLinearGradient(si.px,si.py,sj.px,sj.py)
-        g2.addColorStop(0,`${th.connA}${alpha})`)
-        g2.addColorStop(.5,`${th.connB}${alpha*.55})`)
-        g2.addColorStop(1,`${th.connC}${alpha})`)
-        c.strokeStyle=g2;c.lineWidth=Math.max(.5,1+strength*2.5)
-        c.shadowColor='rgba(0,220,255,.5)';c.shadowBlur=6
+        // No save/restore, no gradient, no shadowBlur — direct color
+        c.setLineDash([6,8]);c.lineDashOffset=-t*18
+        c.strokeStyle=`${th.connB}${alpha})`
+        c.lineWidth=Math.max(.4,1+strength*2)
         c.beginPath();c.moveTo(si.px,si.py);c.lineTo(sj.px,sj.py);c.stroke()
-        c.shadowBlur=0;c.restore()
       }
     }
+    c.setLineDash([])  // reset once after all connections
   },
 
   drawPhaseRing(px,py,r,phase,prob,sc,t){
-    if(prob<.015)return
-    const c=this.ctx,ringR=Math.max(.1,r+5*sc),segs=32
-    for(let i=0;i<segs;i++){
-      const a0=(i/segs)*Math.PI*2,a1=((i+1)/segs)*Math.PI*2
-      const hue=(phase*180/Math.PI+i/segs*360+t*55)%360
-      const cl=this.hslRgb(hue/360,.9,.6)
-      c.beginPath();c.arc(px,py,ringR,a0,a1)
-      c.strokeStyle=`rgba(${cl.r},${cl.g},${cl.b},${prob*.75})`
-      c.lineWidth=Math.max(.3,2*sc*prob);c.stroke()
-    }
+    if(prob<.02)return
+    const c=this.ctx
+    const ringR=Math.max(.5,r+4*sc)
+    // Single arc with hue-rotated color — 1 draw call instead of 32
+    const hue=((phase*180/Math.PI+t*55)%360+360)%360
+    const cl=this.hslRgb(hue/360,.95,.65)
+    const alpha=Math.min(0.85,prob*.8)
+    c.beginPath();c.arc(px,py,ringR,0,Math.PI*2)
+    c.strokeStyle=`rgba(${cl.r},${cl.g},${cl.b},${alpha})`
+    c.lineWidth=Math.max(.5,2.5*sc*prob);c.stroke()
   },
 
-  drawGridEdges(n,scale){
+  drawGridEdges(n,scale,th){
     if(!this.showGrid)return
     const dim=1<<n,c=this.ctx
-    const th2=this.theme()
-    c.save();c.globalAlpha=1;c.strokeStyle=th2.grid;c.lineWidth=.5
+    const th2=th||this.theme()
+    const _prevStroke=c.strokeStyle,_prevLW=c.lineWidth
+    c.strokeStyle=th2.grid;c.lineWidth=.5
     for(let i=0;i<dim;i++){
       for(let bit=0;bit<n;bit++){
         const j=i^(1<<bit)
@@ -1825,15 +1892,20 @@ const UV = {
   drawAxes(){
     const len=38,ox=this.W-65,oy=this.H-65,c=this.ctx
     const txa=this.theme()
-    [{v:[.001,0,0],col:txa.axisX,l:'X'},{v:[0,.001,0],col:txa.axisY,l:'Y'},{v:[0,0,.001],col:txa.connB+'1)',l:'Z'}]
-    .forEach(a=>{
+    // Semicolons prevent JS from parsing the array literal as a subscript of txa
+    const axes=[
+      {v:[.001,0,0],  col:txa.axisX,           l:'X'},
+      {v:[0,.001,0],  col:txa.axisY,           l:'Y'},
+      {v:[0,0,.001],  col:txa.connB+'1)',       l:'Z'}
+    ]
+    axes.forEach(a=>{
       const s=this.project(0,0,0),e=this.project(...a.v)
       const dx=e.px-s.px,dy=e.py-s.py,nm=Math.sqrt(dx*dx+dy*dy)
       if(nm<.001)return
       const ex=ox+dx/nm*len,ey=oy+dy/nm*len
       c.beginPath();c.moveTo(ox,oy);c.lineTo(ex,ey)
-      c.strokeStyle=a.col;c.lineWidth=1.5;c.stroke()
-      c.fillStyle=a.col;c.font='10px monospace';c.fillText(a.l,ex+4,ey+4)
+      c.strokeStyle=a.col;c.lineWidth=1.8;c.stroke()
+      c.fillStyle=a.col;c.font='bold 10px monospace';c.fillText(a.l,ex+4,ey+4)
     })
   },
 
@@ -1844,8 +1916,8 @@ const UV = {
       if(p.life<=0)return false
       c.globalAlpha=p.life
       c.beginPath();c.arc(p.x,p.y,Math.max(.1,p.r*p.life),0,Math.PI*2)
-      c.fillStyle=p.color;c.shadowColor=p.color;c.shadowBlur=p.r*3;c.fill()
-      c.shadowBlur=0;c.globalAlpha=1
+      c.fillStyle=p.color;c.fill()
+      c.globalAlpha=1
       return true
     })
   },
@@ -1864,6 +1936,7 @@ const UV = {
     this.raf=requestAnimationFrame(()=>this.loop())
     try{
     if(this.W<10||this.H<10){this.resize();return}  // skip degenerate frames
+    this._frame++
     const t=Date.now()*.001
 
     // Camera inertia / auto-rotate
@@ -1872,8 +1945,10 @@ const UV = {
     this.camPhi=Math.max(-Math.PI/2+.05,Math.min(Math.PI/2-.05,this.camPhi))
 
     const c=this.ctx
-    c.fillStyle=this.theme().bg;c.fillRect(0,0,this.W,this.H)
-    this.drawNebula(t);this.drawStars(t)
+    // Background fill (no ctx.filter — too slow; brightness via overlay below)
+    const th=this.theme()  // cache theme once per frame
+    c.fillStyle=th.bg;c.fillRect(0,0,this.W,this.H)
+    this.drawNebula(t,th);this.drawStars(t,th)
 
     if(!this.simState){
       const thN=this.theme()
@@ -1888,7 +1963,7 @@ const UV = {
 
     const n=this.simN,dim=1<<n,probs=this.probs()
     const scale=Math.min(this.W,this.H)*.22
-    this.drawGridEdges(n,scale)
+    this.drawGridEdges(n,scale,th)
 
     // Build + sort spheres
     const spheres=[]
@@ -1899,7 +1974,7 @@ const UV = {
         prob:probs[i],phase:this.stateArg(i),col:this.stateColor(probs[i],this.stateArg(i))})
     }
     spheres.sort((a,b)=>a.depth-b.depth)
-    this.drawConnections(spheres)
+    if(this._frame%3===0) this.drawConnections(spheres,th)  // every 3rd frame
 
     spheres.forEach(sp=>{
       const{idx,px,py,sc,prob,phase,col}=sp
@@ -1914,32 +1989,31 @@ const UV = {
 
       this.drawPhaseRing(px,py,r,phase,prob,sc,t)
 
-      // Glow
-      for(let l=5;l>=1;l--){
-        c.beginPath();c.arc(px,py,Math.max(.1,r*(1+l*.5)),0,Math.PI*2)
-        c.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob*.35*(1-l/6)*.5})`;c.fill()
+      // Glow — 3 layers (was 5), halved alpha per layer for same visual
+      for(let l=3;l>=1;l--){
+        c.beginPath();c.arc(px,py,Math.max(.1,r*(1+l*.7)),0,Math.PI*2)
+        c.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob*.25*(1-l/4)*.5})`;c.fill()
       }
 
-      // Main sphere
-      if(r<2) return  // too small to draw meaningful gradient
-      const sg=c.createRadialGradient(px-r*.3,py-r*.3,Math.max(0.01,r*.08),px,py,Math.max(0.01,r))
-      sg.addColorStop(0,`rgba(255,255,255,${prob*.65})`)
-      sg.addColorStop(.32,`rgba(${col.r},${col.g},${col.b},${prob*.9})`)
-      sg.addColorStop(1,`rgba(${Math.round(col.r*.28)},${Math.round(col.g*.28)},${Math.round(col.b*.28)},${prob*.95})`)
-      c.beginPath();c.arc(px,py,r,0,Math.PI*2);c.fillStyle=sg;c.fill()
+      // Main sphere — 3 fast fills instead of createRadialGradient
+      if(r<2) return
+      // Outer body
+      c.beginPath();c.arc(px,py,r,0,Math.PI*2)
+      c.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob*.85})`;c.fill()
+      // Inner bright core (offset for 3D look)
+      c.beginPath();c.arc(px-r*.22,py-r*.22,r*.55,0,Math.PI*2)
+      c.fillStyle=`rgba(${Math.min(255,col.r+60)},${Math.min(255,col.g+60)},${Math.min(255,col.b+60)},${prob*.5})`;c.fill()
 
-      // Specular
-      const thSpec=this.theme()
-      c.beginPath();c.arc(px-r*.3,py-r*.3,Math.max(.1,r*.24),0,Math.PI*2)
-      c.fillStyle=`rgba(255,255,255,${prob*thSpec.specular})`;c.fill()
+      // Specular highlight (no theme() call — use cached th from closure)
+      c.beginPath();c.arc(px-r*.28,py-r*.28,Math.max(.1,r*.22),0,Math.PI*2)
+      c.fillStyle=`rgba(255,255,255,${prob*.3})`;c.fill()
 
       // Orbit ring
-      if(prob>.08){
+      if(prob>.10){
         const oa=phase+t*1.4*prob,rx2=r*1.4,ry2=Math.max(.1,r*.34)
-        c.save();c.translate(px,py);c.rotate(oa)
-        c.beginPath();c.ellipse(0,0,rx2,ry2,0,0,Math.PI*2)
+        // Orbit ellipse without save/restore — use ellipse rotation param
+        c.beginPath();c.ellipse(px,py,rx2,ry2,oa,0,Math.PI*2)
         c.strokeStyle=`rgba(${col.r},${col.g},${col.b},${prob*.48})`;c.lineWidth=Math.max(.3,1.5*sc);c.stroke()
-        c.restore()
         // Orbital dot
         const odx=Math.cos(t*2+phase)*rx2,ody=Math.sin(t*2+phase)*ry2*Math.cos(oa)
         c.beginPath();c.arc(px+odx,py+ody,Math.max(.1,3*sc),0,Math.PI*2)
@@ -1949,21 +2023,31 @@ const UV = {
       // Hover ring
       if(hov){c.beginPath();c.arc(px,py,Math.max(.1,r+8*sc),0,Math.PI*2);c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=2*sc;c.stroke()}
 
-      // Labels
-      const bits=idx.toString(2).padStart(n,'0')
-      const labelAlpha=prob>.28?Math.min(prob*1.4,.92):.35
-      c.fillStyle=`rgba(200,220,255,${labelAlpha})`;c.font=`${Math.max(9,10*sc)}px 'Courier New'`;c.textAlign='center';c.textBaseline='top'
-      c.fillText(`|${bits}⟩`,px,py+r+5*sc)
-      if(prob>.04){
-        c.fillStyle=`rgba(100,200,255,${prob*.75})`;c.font=`${Math.max(7,8*sc)}px 'Courier New'`
-        c.fillText(`${(prob*100).toFixed(1)}%`,px,py+r+18*sc)
+      // Labels — only for states with meaningful probability
+      if(prob>.03){
+        const bits=idx.toString(2).padStart(n,'0')
+        const labelAlpha=Math.min(prob*1.4,.9)
+        c.fillStyle=`rgba(200,220,255,${labelAlpha})`;c.font=`${Math.max(9,10*sc)}px 'Courier New'`;c.textAlign='center';c.textBaseline='top'
+        c.fillText(`|${bits}⟩`,px,py+r+5*sc)
+        if(prob>.08){
+          c.fillStyle=`rgba(100,200,255,${prob*.8})`;c.font=`${Math.max(7,8*sc)}px 'Courier New'`
+          c.fillText(`${(prob*100).toFixed(1)}%`,px,py+r+18*sc)
+        }
+        c.textAlign='left';c.textBaseline='alphabetic'
       }
-      c.textAlign='left';c.textBaseline='alphabetic'
     })
 
     this.updateParticles()
     this.drawAxes()
-  } catch(e){ console.warn('UV loop frame error:',e) }
+    // Cheap brightness overlay — one fillRect, not a per-pixel ctx.filter
+    if(Math.abs(this.brightness-1.0)>0.06){
+      const bDelta=this.brightness-1.0
+      c.globalAlpha=Math.min(0.55,Math.abs(bDelta)*0.65)
+      c.fillStyle=bDelta>0?'rgba(255,255,255,1)':'rgba(0,0,0,1)'
+      c.fillRect(0,0,this.W,this.H)
+      c.globalAlpha=1
+    }
+    } catch(e){ console.warn('UV loop frame error:',e) }
   },
 
   // ── Interaction ─────────────────────────────────────────
