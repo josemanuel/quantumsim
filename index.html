@@ -469,8 +469,9 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   <button class="btn" onclick="Q.exportJSON()">↓ <span>Export</span></button>
   <button class="btn" onclick="document.getElementById('imp').click()">↑ <span>Import</span></button>
   <input type="file" id="imp" accept=".json" style="display:none" onchange="Q.importJSON(event)">
-  <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
   <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Q3D Universe">🌌 <span>Q3D</span></a>
+  <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
+  
  </div>
 </header>
 
@@ -624,11 +625,11 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
    <button class="uvb" onclick="UV.toggleAuto()" id="uv-btn-auto">↻ Auto</button>
    <div style="display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;border:1px solid rgba(168,85,247,.35);background:rgba(168,85,247,.1)">
     <span style="font-size:.65rem;color:#c084fc;font-family:var(--mono)">☀</span>
-    <input type="range" id="uv-sl-bright" min="60" max="200" value="108" step="2"
+    <input type="range" id="uv-sl-bright" min="40" max="200" value="100" step="5"
       style="width:65px;min-width:65px;max-width:65px"
       oninput="UV.setBrightness(this.value)"
-      title="Brillo del Universo">
-    <span style="font-family:var(--mono);font-size:.58rem;color:#22d3ee;width:32px;text-align:right" id="uv-bright-val">108%</span>
+      title="Brillo de las esferas">
+    <span style="font-family:var(--mono);font-size:.58rem;color:#22d3ee;width:32px;text-align:right" id="uv-bright-val">100%</span>
    </div>
    <button class="uvb" onclick="UV.resetView()">⟳ Vista</button>
    <button class="uvb m" onclick="UV.close()">✕ Cerrar</button>
@@ -1666,11 +1667,12 @@ const UV = {
   canvas: null, ctx: null,
 
   // Brightness multiplier for UV canvas rendering (1.0 = normal)
-  brightness: 1.08,
+  brightness: 1.0,  // 1.0 = neutral, <1 = dimmer, >1 = brighter
   _frame: 0,  // frame counter for throttling
 
   setBrightness(v){
-    this.brightness=Math.max(0.4, Math.min(2.2, v/100))
+    // v is 40–200 (slider value), mapped to 0.4–2.0 multiplier for sphere colors
+    this.brightness=Math.max(0.4, Math.min(2.0, v/100))
     const el=document.getElementById('uv-bright-val')
     if(el) el.textContent=Math.round(v)+'%'
   },
@@ -1806,9 +1808,14 @@ const UV = {
   },
 
   stateColor(prob,phase){
-    if(prob>0.55) return{r:247,g:37,b:133}
-    if(prob>0.22) return{r:0,g:220,b:255}
-    return{r:168,g:85,b:247}
+    // Colors: use full-brightness values; alpha controls visibility
+    // Hue varies with phase for visual distinction between states
+    const hue=((phase*180/Math.PI)%360+360)%360
+    if(prob>0.55) return{r:255,g:80,b:180}    // bright magenta
+    if(prob>0.22) return{r:60,g:240,b:255}     // bright cyan
+    // Low prob — use hue-based color for visual variety
+    const cl=this.hslRgb(hue/360, 0.9, 0.75)
+    return{r:cl.r,g:cl.g,b:cl.b}
   },
 
   drawStars(t,th){
@@ -1850,8 +1857,9 @@ const UV = {
         const si=spheres[i],sj=spheres[j],alpha=Math.min(.9,strength*.85)
         // No save/restore, no gradient, no shadowBlur — direct color
         c.setLineDash([6,8]);c.lineDashOffset=-t*18
-        c.strokeStyle=`${th.connB}${alpha})`
-        c.lineWidth=Math.max(.4,1+strength*2)
+        const connA=Math.min(0.9, alpha*1.5*this.brightness)
+        c.strokeStyle=`${th.connB}${connA})`
+        c.lineWidth=Math.max(0.8, 1.2+strength*2.5)
         c.beginPath();c.moveTo(si.px,si.py);c.lineTo(sj.px,sj.py);c.stroke()
       }
     }
@@ -1864,11 +1872,11 @@ const UV = {
     const ringR=Math.max(.5,r+4*sc)
     // Single arc with hue-rotated color — 1 draw call instead of 32
     const hue=((phase*180/Math.PI+t*55)%360+360)%360
-    const cl=this.hslRgb(hue/360,.95,.65)
-    const alpha=Math.min(0.85,prob*.8)
+    const cl=this.hslRgb(hue/360, 1.0, 0.75)
+    const alpha=Math.min(0.95, Math.max(0.5, prob*0.9) * this.brightness)
     c.beginPath();c.arc(px,py,ringR,0,Math.PI*2)
     c.strokeStyle=`rgba(${cl.r},${cl.g},${cl.b},${alpha})`
-    c.lineWidth=Math.max(.5,2.5*sc*prob);c.stroke()
+    c.lineWidth=Math.max(1.0, 3*sc*Math.max(prob,0.15));c.stroke()
   },
 
   drawGridEdges(n,scale,th){
@@ -1980,9 +1988,11 @@ const UV = {
     spheres.forEach(sp=>{
       const{idx,px,py,sc,prob,phase,col}=sp
       const hov=idx===this.hoveredIdx
-      if(prob<.001){
-        c.beginPath();c.arc(px,py,Math.max(.5,8*sc),0,Math.PI*2)
-        c.fillStyle=`rgba(35,45,75,${.14*sc})`;c.fill()
+      if(prob<.005){
+        // Faint outline so zero-states are still locatable
+        c.beginPath();c.arc(px,py,Math.max(2,7*sc),0,Math.PI*2)
+        c.strokeStyle=`rgba(120,100,180,${Math.max(0.08,0.15*sc)})`
+        c.lineWidth=0.6;c.stroke()
         return
       }
       const pf=this.pulsarMode?(1+.28*Math.sin(t*3+idx)):1
@@ -1990,64 +2000,61 @@ const UV = {
 
       this.drawPhaseRing(px,py,r,phase,prob,sc,t)
 
-      // Glow — 3 layers (was 5), halved alpha per layer for same visual
+      // Glow halos — brightness-aware, perceptual floor so all states visible
+      const bMult=this.brightness   // 1.0 = default
+      const glowBase=Math.max(0.18, prob*0.6) * bMult
       for(let l=3;l>=1;l--){
-        c.beginPath();c.arc(px,py,Math.max(.1,r*(1+l*.7)),0,Math.PI*2)
-        c.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob*.25*(1-l/4)*.5})`;c.fill()
+        const glowA=Math.min(0.55, glowBase*(1-l/5))
+        c.beginPath();c.arc(px,py,Math.max(.1,r*(1+l*.8)),0,Math.PI*2)
+        c.fillStyle=`rgba(${col.r},${col.g},${col.b},${glowA})`;c.fill()
       }
 
-      // Main sphere — 3 fast fills instead of createRadialGradient
+      // Main sphere body — brightness-scaled, perceptual alpha floor
       if(r<2) return
+      const bodyA=Math.min(0.95, Math.max(0.55, prob*1.2) * bMult)
+      const coreA=Math.min(0.85, Math.max(0.40, prob*0.9) * bMult)
       // Outer body
       c.beginPath();c.arc(px,py,r,0,Math.PI*2)
-      c.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob*.85})`;c.fill()
-      // Inner bright core (offset for 3D look)
+      c.fillStyle=`rgba(${col.r},${col.g},${col.b},${bodyA})`;c.fill()
+      // Inner bright core
       c.beginPath();c.arc(px-r*.22,py-r*.22,r*.55,0,Math.PI*2)
-      c.fillStyle=`rgba(${Math.min(255,col.r+60)},${Math.min(255,col.g+60)},${Math.min(255,col.b+60)},${prob*.5})`;c.fill()
+      c.fillStyle=`rgba(${Math.min(255,col.r+80)},${Math.min(255,col.g+80)},${Math.min(255,col.b+80)},${coreA})`;c.fill()
 
-      // Specular highlight (no theme() call — use cached th from closure)
+      // Specular highlight — always bright for 3D effect
       c.beginPath();c.arc(px-r*.28,py-r*.28,Math.max(.1,r*.22),0,Math.PI*2)
-      c.fillStyle=`rgba(255,255,255,${prob*.3})`;c.fill()
+      c.fillStyle=`rgba(255,255,255,${Math.min(0.7, Math.max(0.25, prob*0.6)*bMult)})`;c.fill()
 
       // Orbit ring
       if(prob>.10){
         const oa=phase+t*1.4*prob,rx2=r*1.4,ry2=Math.max(.1,r*.34)
         // Orbit ellipse without save/restore — use ellipse rotation param
         c.beginPath();c.ellipse(px,py,rx2,ry2,oa,0,Math.PI*2)
-        c.strokeStyle=`rgba(${col.r},${col.g},${col.b},${prob*.48})`;c.lineWidth=Math.max(.3,1.5*sc);c.stroke()
+        const orbitA=Math.min(0.8, Math.max(0.3, prob*0.7)*bMult)
+        c.strokeStyle=`rgba(${col.r},${col.g},${col.b},${orbitA})`;c.lineWidth=Math.max(.8,2*sc);c.stroke()
         // Orbital dot
         const odx=Math.cos(t*2+phase)*rx2,ody=Math.sin(t*2+phase)*ry2*Math.cos(oa)
-        c.beginPath();c.arc(px+odx,py+ody,Math.max(.1,3*sc),0,Math.PI*2)
-        c.fillStyle=`rgba(${col.r},${col.g},${col.b},${prob})`;c.fill()
+        c.beginPath();c.arc(px+odx,py+ody,Math.max(.5,3.5*sc),0,Math.PI*2)
+        c.fillStyle=`rgba(255,255,255,${Math.min(0.9, Math.max(0.5,prob)*bMult)})`;c.fill()
       }
 
       // Hover ring
       if(hov){c.beginPath();c.arc(px,py,Math.max(.1,r+8*sc),0,Math.PI*2);c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=2*sc;c.stroke()}
 
-      // Labels — only for states with meaningful probability
-      if(prob>.03){
-        const bits=idx.toString(2).padStart(n,'0')
-        const labelAlpha=Math.min(prob*1.4,.9)
-        c.fillStyle=`rgba(200,220,255,${labelAlpha})`;c.font=`${Math.max(9,10*sc)}px 'Courier New'`;c.textAlign='center';c.textBaseline='top'
-        c.fillText(`|${bits}⟩`,px,py+r+5*sc)
-        if(prob>.08){
-          c.fillStyle=`rgba(100,200,255,${prob*.8})`;c.font=`${Math.max(7,8*sc)}px 'Courier New'`
-          c.fillText(`${(prob*100).toFixed(1)}%`,px,py+r+18*sc)
-        }
-        c.textAlign='left';c.textBaseline='alphabetic'
-      }
+      // Labels — always visible with brightness-scaled alpha
+      const bits=idx.toString(2).padStart(n,'0')
+      const lblA=Math.min(0.95, Math.max(0.55, prob*1.5) * bMult)
+      const pctA=Math.min(0.9,  Math.max(0.45, prob*1.2) * bMult)
+      c.textAlign='center';c.textBaseline='top'
+      c.fillStyle=`rgba(220,235,255,${lblA})`;c.font=`bold ${Math.max(9,10*sc)}px 'Courier New'`
+      c.fillText(`|${bits}⟩`,px,py+r+4*sc)
+      c.fillStyle=`rgba(140,220,255,${pctA})`;c.font=`${Math.max(7,9*sc)}px 'Courier New'`
+      c.fillText(`${(prob*100).toFixed(1)}%`,px,py+r+16*sc)
+      c.textAlign='left';c.textBaseline='alphabetic'
     })
 
     this.updateParticles()
     this.drawAxes()
-    // Cheap brightness overlay — one fillRect, not a per-pixel ctx.filter
-    if(Math.abs(this.brightness-1.0)>0.06){
-      const bDelta=this.brightness-1.0
-      c.globalAlpha=Math.min(0.55,Math.abs(bDelta)*0.65)
-      c.fillStyle=bDelta>0?'rgba(255,255,255,1)':'rgba(0,0,0,1)'
-      c.fillRect(0,0,this.W,this.H)
-      c.globalAlpha=1
-    }
+    // brightness applied per-sphere (not canvas overlay)
     } catch(e){ console.warn('UV loop frame error:',e) }
   },
 
