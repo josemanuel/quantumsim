@@ -525,6 +525,56 @@ kbd {
   transform: translateX(-2px);
 }
 
+/* Example launch buttons */
+.ex-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(0,220,255,.4);
+  background: rgba(0,220,255,.08);
+  color: var(--ac);
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .8px;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+  margin: 3px 3px 3px 0;
+  user-select: none;
+}
+.ex-launch:hover {
+  background: rgba(0,220,255,.2);
+  box-shadow: 0 0 10px rgba(0,220,255,.35);
+  transform: translateY(-1px);
+}
+.ex-launch.v {
+  border-color: rgba(168,85,247,.4);
+  background: rgba(168,85,247,.08);
+  color: var(--av);
+}
+.ex-launch.v:hover { background: rgba(168,85,247,.2); box-shadow: 0 0 10px rgba(168,85,247,.35); }
+.ex-launch.m {
+  border-color: rgba(247,37,133,.4);
+  background: rgba(247,37,133,.08);
+  color: var(--am);
+}
+.ex-launch.m:hover { background: rgba(247,37,133,.2); box-shadow: 0 0 10px rgba(247,37,133,.35); }
+.ex-launch.g {
+  border-color: rgba(57,255,142,.35);
+  background: rgba(57,255,142,.06);
+  color: var(--ag);
+}
+.ex-launch.g:hover { background: rgba(57,255,142,.18); box-shadow: 0 0 10px rgba(57,255,142,.3); }
+
+.ex-launch-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 10px 0 4px;
+}
+
 </style>
 </head>
 <body>
@@ -686,6 +736,9 @@ kbd {
     <li><p>Pulsa <strong>📏 MEDIR TODOS LOS QUBITS</strong> en el panel derecho. El resultado siempre será <span class="hc">|00⟩</span> o <span class="hc">|11⟩</span>, nunca <span class="hm">|01⟩</span> ni <span class="hm">|10⟩</span>. ¡Has creado entrelazamiento cuántico!</p></li>
     <li><p>Pulsa la pestaña <strong>🌌 Universo</strong> y abre el Quantum Universe para ver el estado entrelazado en 3D.</p></li>
   </ul>
+  <div class="ex-launch-group">
+    <span class="ex-launch" onclick="launchExample('bell')" title="Abre el simulador con el Estado de Bell cargado">⚡ Abrir Estado de Bell en el simulador</span>
+  </div>
 
   <div class="tip">
     <strong>💡 Atajo rápido:</strong> En vez de arrastrar, haz clic en una puerta de la paleta (queda seleccionada en azul) y luego clic en cualquier punto del circuito para colocarla.
@@ -1230,6 +1283,20 @@ q1 ────────⊕──────
   <div class="tip">
     <strong>💡 Consejo:</strong> Carga cualquier ejemplo y usa <strong>⏭ Paso</strong> para ver la evolución puerta a puerta. Es la forma más didáctica de entender cada algoritmo.
   </div>
+  <h3>Lanzar directamente desde aquí</h3>
+  <div class="ex-launch-group">
+    <span class="ex-launch" onclick="launchExample('bell')">Estado de Bell</span>
+    <span class="ex-launch" onclick="launchExample('bellminus')">Bell |Φ-⟩</span>
+    <span class="ex-launch" onclick="launchExample('uniform2')">Uniforme 2Q</span>
+    <span class="ex-launch" onclick="launchExample('uniform3')">Uniforme 3Q</span>
+    <span class="ex-launch m" onclick="launchExample('grover')">Grover</span>
+    <span class="ex-launch v" onclick="launchExample('deutsch')">Deutsch-Jozsa</span>
+    <span class="ex-launch" onclick="launchExample('teleport')">Teleportación</span>
+    <span class="ex-launch g" onclick="launchExample('qft3')">QFT 3Q</span>
+    <span class="ex-launch" onclick="launchExample('ghz')">GHZ</span>
+    <span class="ex-launch" onclick="launchExample('toffoli_demo')">Toffoli</span>
+    <span class="ex-launch v" onclick="launchExample('phase_kickback')">Phase Kickback</span>
+  </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════ -->
@@ -1238,20 +1305,26 @@ q1 ────────⊕──────
 
   <h3>Estado de Bell</h3>
   <p>El circuito más fundamental. <span class="hc">H + CNOT</span> genera el estado <span class="hl">(|00⟩+|11⟩)/√2</span>. Al medir, siempre se obtiene |00⟩ ó |11⟩ con exactamente 50% de probabilidad cada uno, nunca |01⟩ ni |10⟩. Esto demuestra correlaciones más fuertes que cualquier teoría clásica de variables ocultas (desigualdad de Bell).</p>
+  <span class="ex-launch" onclick="launchExample('bell')">⚡ Probar en el simulador</span>
 
   <h3>Deutsch-Jozsa</h3>
+  <span class="ex-launch v" onclick="launchExample('deutsch')">⚡ Probar en el simulador</span>
   <p>Primer algoritmo que demuestra <strong>ventaja cuántica exponencial</strong>. El problema: dada una función f:{0,1}ⁿ→{0,1}, determinar si es constante (siempre 0 ó siempre 1) o balanceada (50% ceros, 50% unos). Un ordenador clásico necesita hasta 2ⁿ⁻¹+1 consultas. El algoritmo cuántico lo resuelve en <strong>1 consulta</strong> usando interferencia cuántica. Si al medir q0 obtienes |0⟩, la función es constante; si es |1⟩, es balanceada.</p>
 
   <h3>Grover (Búsqueda)</h3>
+  <span class="ex-launch m" onclick="launchExample('grover')">⚡ Probar en el simulador</span>
   <p>Búsqueda en una base de datos no ordenada en <span class="hg">O(√N)</span> pasos (clásico: O(N)). La ventaja es cuadrática. El algoritmo: (1) superposición uniforme con H, (2) el oráculo marca el objetivo con fase -1, (3) el operador de difusión amplifica la amplitud del objetivo. Para 2 qubits, una sola iteración amplifica |11⟩ de 25% a 100%.</p>
 
   <h3>Teleportación Cuántica</h3>
+  <span class="ex-launch" onclick="launchExample('teleport')">⚡ Probar en el simulador</span>
   <p>Transfiere el estado cuántico desconocido de q0 a q2 usando un par de Bell compartido entre Alice (tiene q0, q1) y Bob (tiene q2). Alice mide sus dos qubits y envía 2 bits clásicos a Bob, quien aplica correcciones. Al final, q2 tiene exactamente el estado que tenía q0 originalmente. <strong>No viola relatividad</strong>: requiere canal clásico.</p>
 
   <h3>QFT (Transformada de Fourier Cuántica)</h3>
+  <span class="ex-launch g" onclick="launchExample('qft3')">⚡ Probar en el simulador</span>
   <p>La DFT cuántica en O(n²) puertas (vs O(N log N) clásico, donde N=2ⁿ → ventaja exponencial). Base del <strong>algoritmo de Shor</strong> (factorización) y de la estimación de fase cuántica. Implementa la transformación: <span class="hc">|j⟩ → (1/√N) Σ e^(2πijk/N)|k⟩</span>.</p>
 
   <h3>Phase Kickback</h3>
+  <span class="ex-launch v" onclick="launchExample('phase_kickback')">⚡ Probar en el simulador</span>
   <p>Truco cuántico donde la fase adquirida por el qubit objetivo "rebota" al qubit de control. Fundamental en Shor, Grover y estimación de fase. Se ve con: |+⟩ en control, |1⟩ en objetivo, CNOT → el control adquiere fase -1, convirtiéndose en |-⟩.</p>
 </section>
 
@@ -1463,6 +1536,27 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
       target.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   })
+})
+
+// Cross-tab example launcher
+// Writes a flag to localStorage that index.html picks up on next focus/load
+function launchExample(exId) {
+  localStorage.setItem('qsim_launch_ex', exId)
+  // Try to focus an already-open simulator tab
+  const simUrl = 'index.html'
+  // Open or focus the simulator
+  const win = window.open(simUrl, 'qsim_main')
+  if (win) {
+    // Give it a moment to load, then send the message
+    setTimeout(() => {
+      try { win.focus() } catch(e) {}
+    }, 300)
+  }
+}
+
+// Also handle the case where help.html is opened from the simulator tab
+window.addEventListener('storage', e => {
+  if (e.key === 'qsim_launch_ex') localStorage.removeItem('qsim_launch_ex')
 })
 </script>
 </body>
