@@ -453,6 +453,18 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
  </div>
 </div>
 
+<div class="ov" id="mo-qasm">
+ <div class="modal" style="max-width:620px">
+  <div class="mhdr"><h2>📋 OpenQASM 2.0</h2><button class="mclose" onclick="Q.cm('mo-qasm')">✕</button></div>
+  <p style="font-size:.7rem;color:var(--text2);margin-bottom:12px;line-height:1.6">Formato estándar compatible con Qiskit, IBM Quantum y otros entornos. Copia o descarga.</p>
+  <div class="mat-box" id="qasm-out" style="max-height:340px;overflow-y:auto;font-size:.65rem;line-height:1.7;cursor:text;user-select:text"></div>
+  <div style="display:flex;gap:6px;margin-top:12px">
+   <button class="btn c" onclick="Q.downloadQASM()" style="flex:1;justify-content:center">↓ Descargar .qasm</button>
+   <button class="btn" onclick="navigator.clipboard?.writeText(document.getElementById('qasm-out').textContent).then(()=>Q.toast('QASM copiado','ok'))" style="flex:1;justify-content:center">⎘ Copiar</button>
+  </div>
+ </div>
+</div>
+
 <!-- APP -->
 <div id="app">
 <header>
@@ -466,12 +478,14 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   <button class="btn" onclick="Q.om('mo-exp')">📚 <span>Teoría</span></button>
   <button class="btn" onclick="Q.om('mo-ex')">⚡ <span>Ejemplos</span></button>
   <button class="btn" id="btn-theme" onclick="Q.toggleTheme()">🎆 <span>Índigo</span></button>
-  <button class="btn" onclick="Q.exportJSON()">↓ <span>Export</span></button>
-  <button class="btn" onclick="document.getElementById('imp').click()">↑ <span>Import</span></button>
+  <button class="btn" onclick="Q.exportJSON()">↓ <span>JSON</span></button>
+  <button class="btn" onclick="document.getElementById('imp').click()">↑ <span>JSON</span></button>
   <input type="file" id="imp" accept=".json" style="display:none" onchange="Q.importJSON(event)">
+  <button class="btn c" onclick="Q.showQASM()">↓ <span>QASM</span></button>
+  <button class="btn c" onclick="document.getElementById('imp-qasm').click()">↑ <span>QASM</span></button>
+  <input type="file" id="imp-qasm" accept=".qasm,.txt" style="display:none" onchange="Q.importQASM(event)">
   <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Q3D Universe">🌌 <span>Q3D</span></a>
   <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
-  
  </div>
 </header>
 
@@ -878,7 +892,7 @@ class Circuit {
 // ── CANVAS RENDERER ─────────────────────────────────────
 const CW=74,CH=58,PL=54,PT=28,GW=46,GH=30
 
-function renderCircuit(canvas,circuit,sim,hiCol=-1,selId=-1){
+function renderCircuit(canvas,circuit,sim,hiCol=-1,selId=-1,dragId=-1,dragCol=-1,dragQ=-1){
   const ctx=canvas.getContext('2d'),n=circuit.n
   const cols=Math.max(circuit.maxCol()+2,9)
   const W=PL+cols*CW+24,H=PT+n*CH+20
@@ -938,6 +952,13 @@ function renderCircuit(canvas,circuit,sim,hiCol=-1,selId=-1){
       ctx.shadowColor=gc(op.gate);ctx.shadowBlur=14
       rr(ctx,b.x-2,b.y-2,b.w+4,b.h+4,8);ctx.stroke();ctx.shadowBlur=0
     }
+  }
+  // Drag preview: dashed drop zone indicator
+  if(dragId>=0&&dragCol>=0&&dragQ>=0){
+    const dpx=PL+dragCol*CW,dpy=PT+dragQ*CH
+    ctx.strokeStyle='rgba(0,220,255,.6)';ctx.lineWidth=2;ctx.setLineDash([4,4])
+    rr(ctx,dpx+(CW-GW)/2-3,dpy+(CH-GH)/2-3,GW+6,GH+6,7);ctx.stroke()
+    ctx.setLineDash([])
   }
 }
 
@@ -1110,6 +1131,18 @@ const Q={
     this.setupCanvas();this.loadSaved();this.render();this.blochLoop()
     this.eduTab('theory')
     this.loadBrightness()
+    // Check for cross-tab example launch from help.html
+    this.checkExLaunch()
+    window.addEventListener('focus',()=>this.checkExLaunch())
+    window.addEventListener('storage',e=>{if(e.key==='qsim_launch_ex')this.checkExLaunch()})
+  },
+
+  checkExLaunch(){
+    const ex=localStorage.getItem('qsim_launch_ex')
+    if(ex&&this.EX[ex]){
+      localStorage.removeItem('qsim_launch_ex')
+      setTimeout(()=>{this.loadEx(ex);this.toast(`Ejemplo "${this.EX[ex].t}" cargado desde el manual`,'ok')},100)
+    }
   },
 
   buildPalettes(){
@@ -1138,17 +1171,48 @@ const Q={
 
   setupCanvas(){
     const wrap=document.getElementById('cw'),canvas=document.getElementById('cc')
+    // Internal drag state for moving existing gates
+    this._dragOp=null;this._dragGhost=false;this._dragMX=0;this._dragMY=0
     canvas.addEventListener('contextmenu',e=>{
       e.preventDefault();const{mx,my}=this.mouse(e)
-      const op=this.hit(mx,my);if(op){this.C.remove(op.id);this.renderAll();this.save()}
+      const op=this.hit(mx,my);if(op){this.C.remove(op.id);this.renderAll();this.simulateFull();this.save()}
+    })
+    canvas.addEventListener('mousedown',e=>{
+      if(e.button!==0)return
+      const{mx,my}=this.mouse(e);const op=this.hit(mx,my)
+      if(op&&!this.activeGate){
+        this._dragOp=op;this._dragGhost=false
+        this._dragMX=mx;this._dragMY=my;e.preventDefault()
+      }
+    })
+    canvas.addEventListener('mousemove',e=>{
+      if(!this._dragOp)return
+      const{mx,my}=this.mouse(e)
+      if(!this._dragGhost&&(Math.abs(mx-this._dragMX)+Math.abs(my-this._dragMY))>5){
+        this._dragGhost=true;canvas.style.cursor='grabbing'
+      }
+      if(this._dragGhost){
+        const col=Math.max(0,Math.floor((mx-PL)/CW))
+        const q=Math.max(0,Math.min(this.C.n-1,Math.floor((my-PT)/CH)))
+        this.renderCirc(-1,this._dragOp.id,col,q)
+      }
+    })
+    canvas.addEventListener('mouseup',e=>{
+      const op=this._dragOp;this._dragOp=null;canvas.style.cursor=''
+      if(!op)return
+      const{mx,my}=this.mouse(e)
+      if(this._dragGhost){
+        this._dragGhost=false
+        const newCol=Math.max(0,Math.floor((mx-PL)/CW))
+        const newQ=Math.max(0,Math.min(this.C.n-1,Math.floor((my-PT)/CH)))
+        this.moveGate(op,newCol,newQ);return
+      }
+      if(e.shiftKey)this.openGateModal(op)
+      else{this.selId=this.selId===op.id?-1:op.id;this.renderCirc();this.showGateInfo(op.gate)}
     })
     canvas.addEventListener('click',e=>{
       const{mx,my}=this.mouse(e);const op=this.hit(mx,my)
-      if(op){
-        if(e.shiftKey)this.openGateModal(op)
-        else{this.selId=this.selId===op.id?-1:op.id;this.renderCirc();this.showGateInfo(op.gate)}
-        return
-      }
+      if(op)return
       if(this.activeGate)this.place(this.activeGate,mx,my)
     })
     wrap.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy'})
@@ -1157,6 +1221,27 @@ const Q={
       const r=canvas.getBoundingClientRect()
       this.place(gid,e.clientX-r.left,e.clientY-r.top)
     })
+  },
+
+  moveGate(op,newCol,newQ){
+    const g=GATES[op.gate];if(!g)return
+    let newQubits
+    if(g.sp==='barrier'){newQubits=[0]}
+    else if(g.n===1){newQubits=[newQ]}
+    else if(g.n===2){
+      const tgt=newQ+1<this.C.n?newQ+1:(newQ-1>=0?newQ-1:-1)
+      if(tgt<0){this.toast('Necesitas >= 2 qubits','er');this.renderCirc();return}
+      newQubits=[newQ,tgt]
+    } else {
+      if(this.C.n<3){this.toast('Necesitas >= 3 qubits','er');this.renderCirc();return}
+      newQubits=[newQ,Math.min(newQ+1,this.C.n-1),Math.min(newQ+2,this.C.n-1)]
+      if(new Set(newQubits).size<3)newQubits=[0,1,2]
+    }
+    if(newQubits.some(q=>q>=this.C.n)){this.renderCirc();return}
+    op.col=newCol;op.qubits=newQubits
+    this.renderAll();this.simulateFull();this.save();this.updateStats()
+    this.checkChallenges()
+    this.toast(g.lbl+' movida a col'+newCol,'in')
   },
 
   mouse(e){const r=document.getElementById('cc').getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top}},
@@ -1248,7 +1333,7 @@ const Q={
     this.setAng(op.param||Math.PI/2);this.om('mo-ang')
   },
 
-  renderCirc(hiCol=-1){renderCircuit(document.getElementById('cc'),this.C,this.S,hiCol,this.selId)},
+  renderCirc(hiCol=-1,dragId=-1,dragCol=-1,dragQ=-1){renderCircuit(document.getElementById('cc'),this.C,this.S,hiCol,this.selId,dragId,dragCol,dragQ)},
   renderBloch(){renderBloch(document.getElementById('bcanv'),this.S)},
 
   renderSV(){
@@ -1414,6 +1499,109 @@ const Q={
       }catch(err){this.toast('Error al importar','er')}
     };r.readAsText(f);e.target.value=''
   },
+  // ── QASM ────────────────────────────────────────────────
+  circuitToQASM(){
+    const n=this.C.n
+    const lines=[
+      'OPENQASM 2.0;',
+      'include "qelib1.inc";',
+      `qreg q[${n}];`,
+      `creg c[${n}];`,
+      ''
+    ]
+    // Gate name map: our id → QASM standard name
+    const QN={H:'h',X:'x',Y:'y',Z:'z',S:'s',Sd:'sdg',T:'t',Td:'tdg',
+               Rx:'rx',Ry:'ry',Rz:'rz',I:'id',CX:'cx',CZ:'cz',
+               SW:'swap',iSW:'iswap',CC:'ccx',CCZ:'ccz',M:'measure',BAR:'barrier'}
+    for(const op of this.C.sorted()){
+      const qn=QN[op.gate]
+      if(!qn)continue
+      const qs=op.qubits.map(q=>`q[${q}]`).join(', ')
+      if(op.gate==='M'){
+        op.qubits.forEach(q=>lines.push(`measure q[${q}] -> c[${q}];`))
+      } else if(op.gate==='BAR'){
+        lines.push('barrier '+Array.from({length:n},(_,i)=>'q['+i+']').join(', ')+';')
+      } else if(op.param!=null){
+        lines.push(`${qn}(${op.param.toFixed(6)}) ${qs};`)
+      } else {
+        lines.push(`${qn} ${qs};`)
+      }
+    }
+    return lines.join('\n')
+  },
+
+  showQASM(){
+    const qasm=this.circuitToQASM()
+    document.getElementById('qasm-out').textContent=qasm
+    this._lastQASM=qasm
+    this.om('mo-qasm')
+  },
+
+  downloadQASM(){
+    const qasm=this._lastQASM||this.circuitToQASM()
+    const blob=new Blob([qasm],{type:'text/plain'})
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob)
+    a.download='circuit.qasm';a.click()
+  },
+
+  importQASM(e){
+    const f=e.target.files[0];if(!f)return
+    const r=new FileReader();r.onload=ev=>{
+      try{
+        const txt=ev.target.result
+        const result=this.parseQASM(txt)
+        if(!result){this.toast('QASM no reconocido o vacío','er');return}
+        this.C=new Circuit(result.n)
+        document.getElementById('sl-q').value=result.n
+        document.getElementById('qb').textContent=`${result.n} qubit${result.n>1?'s':''}`
+        this.S=new QSim(result.n)
+        result.ops.forEach(o=>this.C.add(o.gate,o.qubits,o.col,o.param||null))
+        this.simulateFull();this.renderAll();this.save();this.updateStats()
+        this.toast(`QASM importado: ${result.n} qubits, ${result.ops.length} puertas`,'ok')
+      }catch(err){console.warn('QASM parse error',err);this.toast('Error al parsear QASM','er')}
+    };r.readAsText(f);e.target.value=''
+  },
+
+  parseQASM(src){
+    // Reverse map: QASM name → our gate id
+    const RM={h:'H',x:'X',y:'Y',z:'Z',s:'S',sdg:'Sd',t:'T',tdg:'Td',
+               id:'I',cx:'CX',cz:'CZ',swap:'SW',iswap:'iSW',ccx:'CC',ccz:'CCZ',
+               rx:'Rx',ry:'Ry',rz:'Rz',measure:'M',barrier:'BAR',u3:'Ry'}
+    let n=2
+    const ops=[];let col=0
+    // Track which cols are used to auto-assign columns
+    const colTrack={}
+    const lines=src.split('\n')
+    for(let raw of lines){
+      const line=raw.trim().replace(/;$/,'')
+      if(!line||line.startsWith('//')||line.startsWith('OPENQASM')||line.startsWith('include'))continue
+      // qreg q[n]
+      const qm=line.match(/^qreg\s+\w+\[(\d+)\]/)
+      if(qm){n=parseInt(qm[1]);continue}
+      // measure q[i] -> c[j]
+      const mm=line.match(/^measure\s+\w+\[(\d+)\]\s*->\s*\w+\[(\d+)\]/)
+      if(mm){ops.push({gate:'M',qubits:[parseInt(mm[1])],col:col++,param:null});continue}
+      // barrier
+      if(line.startsWith('barrier')){ops.push({gate:'BAR',qubits:[0],col:col++,param:null});continue}
+      // gate with optional param: name[(p)] q[i], q[j], ...
+      const gm=line.match(/^(\w+)\s*(?:\(([^)]*)\))?\s+(.+)/)
+      if(!gm)continue
+      const gname=gm[1].toLowerCase(),paramStr=gm[2],qubitStr=gm[3]
+      const gid=RM[gname];if(!gid)continue
+      const qs=qubitStr.split(',').map(s=>{const m=s.trim().match(/\[(\d+)\]/);return m?parseInt(m[1]):-1}).filter(q=>q>=0)
+      if(!qs.length)continue
+      let param=null
+      if(paramStr){
+        // Evaluate param: may contain pi, numbers, operators
+        try{param=Function('"use strict";const pi=Math.PI;return '+paramStr.replace(/pi/gi,'Math.PI'))()}
+        catch(ex){param=parseFloat(paramStr)||0}
+      }
+      ops.push({gate:gid,qubits:qs,col:col++,param})
+    }
+    if(!ops.length&&n===2)return null
+    return{n,ops}
+  },
+
   newCircuit(){
     if(!confirm('¿Crear nuevo circuito?'))return
     this.C=new Circuit(+document.getElementById('sl-q').value);this.S=new QSim(this.C.n)
@@ -1783,10 +1971,23 @@ const UV = {
     if(n===1) return idx===0?{x:0,y:scale*.7,z:0}:{x:0,y:-scale*.7,z:0}
     if(n===2){const cx=[0,1,0,1],cy=[0,0,1,1];return{x:(cx[idx]-.5)*scale*1.35,y:0,z:(cy[idx]-.5)*scale*1.35}}
     if(n===3){const bx=(idx>>2)&1,by=(idx>>1)&1,bz=idx&1;return{x:(bx-.5)*scale*1.35,y:(by-.5)*scale*1.35,z:(bz-.5)*scale*1.35}}
-    // 4-5 qubits: golden spiral on sphere
+    if(n===4){
+      // 4D hypercube (tesseract) projected to 3D via stereographic projection
+      // Vertices: 4 bits → 4D unit hypercube ±0.5, project W axis onto XYZ
+      const b0=(idx>>3)&1,b1=(idx>>2)&1,b2=(idx>>1)&1,b3=idx&1
+      const x4=(b0-.5),y4=(b1-.5),z4=(b2-.5),w4=(b3-.5)
+      // Stereographic-ish: use w as depth modifier for inner/outer cube
+      const wScale=w4>0?0.55:1.0
+      return{x:x4*scale*1.3*wScale,y:y4*scale*1.3*wScale,z:z4*scale*1.3*wScale}
+    }
+    // 5 qubits: golden-ratio Fibonacci spiral on sphere (optimal point distribution)
+    const goldenAngle=Math.PI*(3-Math.sqrt(5))
     const t=idx/(dim-1)
-    const phi=Math.acos(1-2*t),theta=Math.PI*(1+Math.sqrt(5))*idx
-    return{x:scale*Math.sin(phi)*Math.cos(theta),y:scale*Math.sin(phi)*Math.sin(theta),z:scale*Math.cos(phi)}
+    // Offset spiral for better spread at poles
+    const y=(1-2*(idx+.5)/dim)
+    const r=Math.sqrt(Math.max(0,1-y*y))
+    const theta=goldenAngle*idx
+    return{x:scale*r*Math.cos(theta),y:scale*y,z:scale*r*Math.sin(theta)}
   },
 
   project(x,y,z){
@@ -1807,14 +2008,16 @@ const UV = {
     return{r:Math.round(hue2(p,q,h+1/3)*255),g:Math.round(hue2(p,q,h)*255),b:Math.round(hue2(p,q,h-1/3)*255)}
   },
 
-  stateColor(prob,phase){
-    // Colors: use full-brightness values; alpha controls visibility
-    // Hue varies with phase for visual distinction between states
-    const hue=((phase*180/Math.PI)%360+360)%360
-    if(prob>0.55) return{r:255,g:80,b:180}    // bright magenta
-    if(prob>0.22) return{r:60,g:240,b:255}     // bright cyan
-    // Low prob — use hue-based color for visual variety
-    const cl=this.hslRgb(hue/360, 0.9, 0.75)
+  stateColor(prob,phase,idx=0,dim=4){
+    // Each state |k⟩ has a unique BASE hue from its index (evenly distributed in spectrum)
+    // Phase modulates the hue slightly for visual richness
+    // Probability boosts saturation and lightness
+    const baseHue=(idx/dim)*360          // each state gets its own sector of the spectrum
+    const phaseShift=(phase*30/Math.PI)  // ±30° shift from phase
+    const hue=((baseHue+phaseShift)%360+360)%360
+    const sat=0.7+prob*0.3               // more saturated when probable
+    const lig=0.45+prob*0.3              // brighter when more probable, floor at 0.45
+    const cl=this.hslRgb(hue/360, sat, lig)
     return{r:cl.r,g:cl.g,b:cl.b}
   },
 
@@ -1980,7 +2183,7 @@ const UV = {
       const pos3=this.statePos(i,n,dim,scale)
       const proj=this.project(pos3.x,pos3.y,pos3.z)
       spheres.push({idx:i,px:proj.px,py:proj.py,sc:proj.scale,depth:proj.depth,
-        prob:probs[i],phase:this.stateArg(i),col:this.stateColor(probs[i],this.stateArg(i))})
+        prob:probs[i],phase:this.stateArg(i),col:this.stateColor(probs[i],this.stateArg(i),i,dim)})
     }
     spheres.sort((a,b)=>a.depth-b.depth)
     if(this._frame%3===0) this.drawConnections(spheres,th)  // every 3rd frame
