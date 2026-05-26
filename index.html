@@ -321,6 +321,18 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
 #uv-topbar{position:absolute;top:0;left:0;right:0;z-index:10;padding:10px 18px;
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
   background:linear-gradient(180deg,rgba(0,0,10,.95) 0%,transparent 100%)}
+#uv-menu-toggle{display:none;padding:5px 12px;border-radius:20px;border:1px solid rgba(168,85,247,.4);
+  background:rgba(168,85,247,.1);color:#a855f7;font-family:var(--mono);font-size:.7rem;
+  cursor:pointer;letter-spacing:1px}
+@media(max-width:640px){
+  #uv-menu-toggle{display:block}
+  .uv-btns{display:none;width:100%;flex-direction:column;gap:6px;
+    background:rgba(0,0,10,.92);padding:8px 0;border-radius:8px;margin-top:4px}
+  .uv-btns.open{display:flex}
+  .uvb{width:100%;text-align:center;justify-content:center}
+  #uv-title{font-size:.65rem;letter-spacing:2px}
+  #uv-sub{font-size:.45rem}
+}
 #uv-title{font-family:var(--mono);font-size:.85rem;letter-spacing:4px;text-transform:uppercase;
   background:linear-gradient(90deg,#a855f7,#00dcff,#f72585);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -453,6 +465,14 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
  </div>
 </div>
 
+<div class="ov" id="mo-hist">
+ <div class="modal" style="max-width:520px">
+  <div class="mhdr"><h2>📂 Historial de Circuitos</h2><button class="mclose" onclick="Q.cm('mo-hist')">✕</button></div>
+  <p style="font-size:.7rem;color:var(--text2);margin-bottom:12px;line-height:1.6">Últimos circuitos guardados. Haz clic para restaurar.</p>
+  <div id="hist-list"></div>
+ </div>
+</div>
+
 <div class="ov" id="mo-qasm">
  <div class="modal" style="max-width:620px">
   <div class="mhdr"><h2>📋 OpenQASM 2.0</h2><button class="mclose" onclick="Q.cm('mo-qasm')">✕</button></div>
@@ -484,6 +504,8 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   <button class="btn c" onclick="Q.showQASM()">↓ <span>QASM</span></button>
   <button class="btn c" onclick="document.getElementById('imp-qasm').click()">↑ <span>QASM</span></button>
   <input type="file" id="imp-qasm" accept=".qasm,.txt" style="display:none" onchange="Q.importQASM(event)">
+  <button class="btn g" onclick="Q.saveSlot()" title="Guardar circuito actual en el historial">💾 <span>Guardar</span></button>
+  <button class="btn" onclick="Q.openHist()" title="Ver historial de circuitos guardados">📂 <span>Historial</span></button>
   <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Q3D Universe">🌌 <span>Q3D</span></a>
   <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
  </div>
@@ -560,6 +582,7 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
      <div class="ba-item"><div class="ba-lbl">θ (polar)</div><div class="ba-val" id="ba-th">0.0°</div></div>
      <div class="ba-item"><div class="ba-lbl">φ (azimutal)</div><div class="ba-val" id="ba-ph">0.0°</div></div>
     </div>
+    <div id="bloch-ent-note" style="display:none;margin-top:6px;padding:5px 8px;border-radius:var(--rs);border:1px solid rgba(251,77,135,.35);background:rgba(251,77,135,.07);font-family:var(--mono);font-size:.55rem;color:var(--am);text-align:center;line-height:1.5"></div>
    </div>
    <div class="rsp"><div class="sec-title v">Vector de Estado</div><div id="sv"></div></div>
    <div class="rsp"><div class="sec-title g">Distribución de Probabilidades</div><canvas id="prob-chart" height="100"></canvas></div>
@@ -627,9 +650,12 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
 <div id="universe-overlay">
  <canvas id="uv-canvas"></canvas>
  <div id="uv-topbar">
-  <div>
-   <div id="uv-title">⚛ Quantum Universe</div>
-   <div id="uv-sub">Espacio de Hilbert · Sincronizado con el circuito</div>
+  <div style="display:flex;align-items:center;gap:10px">
+   <div>
+    <div id="uv-title">⚛ Quantum Universe</div>
+    <div id="uv-sub">Espacio de Hilbert · Sincronizado con el circuito</div>
+   </div>
+   <button id="uv-menu-toggle" onclick="document.querySelector('.uv-btns').classList.toggle('open')">☰ Menú</button>
   </div>
   <div class="uv-btns">
    <button class="uvb m" onclick="UV.measure()">📏 Medir</button>
@@ -645,6 +671,7 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
       title="Brillo de las esferas">
     <span style="font-family:var(--mono);font-size:.58rem;color:#22d3ee;width:32px;text-align:right" id="uv-bright-val">100%</span>
    </div>
+   <button class="uvb g" onclick="UV.exportPNG()">📷 PNG</button>
    <button class="uvb" onclick="UV.resetView()">⟳ Vista</button>
    <button class="uvb m" onclick="UV.close()">✕ Cerrar</button>
   </div>
@@ -826,20 +853,44 @@ class QSim {
   probs(){return this.state.map(a=>a.abs2())}
 
   blochQ0(){
+    // Correct reduced density matrix via partial trace over all qubits except q0
+    // q0 is the most-significant bit (index n-1 in bit position)
     const n=this.n,d=this.dim
-    let a0=C.Z(),a1=C.Z()
-    for(let i=0;i<d;i++){if((i>>(n-1))&1)a1=a1.add(this.state[i]);else a0=a0.add(this.state[i])}
-    const norm=Math.sqrt(a0.abs2()+a1.abs2())
-    if(norm<1e-12)return{theta:0,phi:0,x:0,y:0,z:1}
-    a0=a0.scale(1/norm);a1=a1.scale(1/norm)
-    const theta=2*Math.acos(Math.min(a0.abs(),1))
-    const phi=a1.arg()-a0.arg()
-    return{theta,phi,x:Math.sin(theta)*Math.cos(phi),y:Math.sin(theta)*Math.sin(phi),z:Math.cos(theta)}
+    // ρ_q0 = 2×2 matrix: rho[a][b] = Σ_k conj(ψ_{ak}) ψ_{bk}
+    // where a,b ∈ {0,1} are the q0 values, k indexes the rest of the qubits
+    let r00=0,r11=0,r01re=0,r01im=0
+    const q0bit=1<<(n-1)
+    for(let k=0;k<(d>>1);k++){
+      // k iterates over all 2^(n-1) states of the other qubits
+      // reconstruct full state indices: i0 has q0=0, i1 has q0=1
+      // q0 is bit n-1 (most significant). The remaining bits form k.
+      // i0 = k with q0 bit = 0, i1 = k with q0 bit = 1
+      // For n qubits, q0 is bit position n-1:
+      // i = q0_bit * 2^(n-1) + rest_bits
+      // But rest bits are the n-1 least-significant bits of k
+      const i0=k  // q0=0 states: top bit clear, rest=k (k < d/2)
+      const i1=k+d/2  // q0=1 states: top bit set
+      const a=this.state[i0],b=this.state[i1]
+      r00+=a.abs2()
+      r11+=b.abs2()
+      r01re+=a.re*b.re+a.im*b.im  // Re(conj(a)*b)
+      r01im+=a.re*b.im-a.im*b.re  // Im(conj(a)*b)
+    }
+    // Bloch vector from density matrix:
+    // x = 2*Re(ρ01), y = 2*Im(ρ01), z = ρ00 - ρ11
+    const x=2*r01re,y=2*r01im,z=r00-r11
+    const theta=Math.acos(Math.max(-1,Math.min(1,z)))
+    const phi=Math.atan2(y,x)
+    return{theta,phi,x,y,z,purity:r00*r00+r11*r11+2*(r01re*r01re+r01im*r01im)}
   }
   isEntangled(){
     if(this.n<2)return false
+    // Use purity of reduced density matrix: Tr(ρ²) < 1 iff entangled
     const bv=this.blochQ0()
-    return Math.sqrt(bv.x**2+bv.y**2+bv.z**2)<0.99
+    // |Bloch vector|² = x²+y²+z² = 4|ρ01|²+(ρ00-ρ11)² = 2*Tr(ρ²)-1
+    // So purity = (1 + |r|²) / 2, entangled when purity < ~0.99
+    const blochLen=Math.sqrt(bv.x**2+bv.y**2+bv.z**2)
+    return blochLen<0.985
   }
   entropy(){
     let e=0;this.probs().forEach(p=>{if(p>1e-9)e-=p*Math.log2(p)});return e
@@ -1063,6 +1114,23 @@ function renderBloch(canvas,sim){
   const td=(bv.theta*180/Math.PI).toFixed(1),pd=(bv.phi*180/Math.PI).toFixed(1)
   document.getElementById('ba-th').textContent=`${td}°`
   document.getElementById('ba-ph').textContent=`${pd}°`
+  // Show entanglement indicator when Bloch vector is inside the sphere
+  const purity=Math.sqrt(bv.x**2+bv.y**2+bv.z**2)
+  const entEl=document.getElementById('bloch-ent-note')
+  if(entEl){
+    if(sim.n>1&&purity<0.99){
+      const pct=Math.round(purity*100)
+      entEl.style.display='block'
+      entEl.textContent=`Estado mixto (q0 entrelazado) · Pureza: ${pct}%`
+    } else {
+      entEl.style.display='none'
+    }
+  }
+  // Draw purity indicator arc inside the sphere
+  const purityR=R*purity
+  ctx.beginPath();ctx.arc(cx,cy,Math.max(2,purityR),0,Math.PI*2)
+  ctx.strokeStyle=purity<0.99?(dm?'rgba(251,77,135,.35)':'rgba(220,50,120,.4)'):'rgba(0,220,255,.0)'
+  ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.stroke();ctx.setLineDash([])
 }
 
 // ── PROBABILITY CHART ───────────────────────────────────
@@ -1135,6 +1203,71 @@ const Q={
     this.checkExLaunch()
     window.addEventListener('focus',()=>this.checkExLaunch())
     window.addEventListener('storage',e=>{if(e.key==='qsim_launch_ex')this.checkExLaunch()})
+  },
+
+  // ── Circuit history ─────────────────────────────────────
+  saveSlot(){
+    const slots=JSON.parse(localStorage.getItem('qsim_hist')||'[]')
+    const name=prompt('Nombre para este circuito:',`Circuito ${slots.length+1}`)
+    if(!name)return
+    const entry={
+      name,
+      ts:Date.now(),
+      n:this.C.n,
+      ops:this.C.ops.map(({gate,qubits,param,col})=>({gate,qubits,param,col}))
+    }
+    slots.unshift(entry)
+    if(slots.length>8)slots.length=8
+    localStorage.setItem('qsim_hist',JSON.stringify(slots))
+    this.toast(`"${name}" guardado en historial`,'ok')
+  },
+
+  openHist(){
+    this.renderHistModal()
+    this.om('mo-hist')
+  },
+
+  renderHistModal(){
+    const el=document.getElementById('hist-list');if(!el)return
+    const slots=JSON.parse(localStorage.getItem('qsim_hist')||'[]')
+    if(!slots.length){
+      el.innerHTML='<div style="font-family:var(--mono);font-size:.62rem;color:var(--text3);text-align:center;padding:14px">Sin circuitos guardados.<br>Pulsa 💾 Guardar para añadir uno.</div>'
+      return
+    }
+    el.innerHTML=slots.map((s,i)=>{
+      const d=new Date(s.ts)
+      const dstr=d.toLocaleDateString('es',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})
+      return `<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass);margin-bottom:7px">
+        <div style="flex:1">
+          <div style="font-family:var(--mono);font-size:.68rem;color:var(--av)">${s.name}</div>
+          <div style="font-family:var(--mono);font-size:.56rem;color:var(--text3)">${s.n} qubits · ${s.ops.length} puertas · ${dstr}</div>
+        </div>
+        <button class="btn c" onclick="Q.loadSlot(${i})" style="font-size:.6rem">↩ Cargar</button>
+        <button class="btn m" onclick="Q.deleteSlot(${i})" style="font-size:.6rem">🗑</button>
+      </div>`
+    }).join('')
+  },
+
+  loadSlot(i){
+    const slots=JSON.parse(localStorage.getItem('qsim_hist')||'[]')
+    const s=slots[i];if(!s)return
+    this.cm('mo-hist')
+    this.C=new Circuit(s.n)
+    document.getElementById('sl-q').value=s.n
+    document.getElementById('qb').textContent=`${s.n} qubit${s.n>1?'s':''}`
+    this.S=new QSim(s.n)
+    s.ops.forEach(o=>this.C.add(o.gate,o.qubits,o.col,o.param||null))
+    this.simulateFull();this.renderAll();this.save();this.updateStats()
+    this.toast(`"${s.name}" cargado`,'ok')
+  },
+
+  deleteSlot(i){
+    const slots=JSON.parse(localStorage.getItem('qsim_hist')||'[]')
+    const name=slots[i]?.name||''
+    slots.splice(i,1)
+    localStorage.setItem('qsim_hist',JSON.stringify(slots))
+    this.renderHistModal()
+    this.toast(`"${name}" eliminado`,'in')
   },
 
   checkExLaunch(){
@@ -1372,7 +1505,7 @@ const Q={
   renderStateProps(){
     const el=document.getElementById('state-props');if(!el)return
     const bv=this.S.blochQ0(),ent=this.S.isEntangled(),ent2=this.S.entropy()
-    const purity=Math.sqrt(bv.x**2+bv.y**2+bv.z**2)
+    const purity=Math.sqrt(Math.max(0,bv.x**2+bv.y**2+bv.z**2))
     el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-family:var(--mono);font-size:.65rem">
       <div style="padding:7px;border:1px solid var(--border);border-radius:var(--rs);background:var(--glass)">
        <div style="color:var(--text2);font-size:.55rem;margin-bottom:3px">ENTRELAZADO</div>
@@ -1387,6 +1520,29 @@ const Q={
        <div style="color:var(--text2);font-size:.55rem;margin-bottom:3px">ESTADOS ≠ 0</div>
        <div style="color:var(--ao)">${this.S.probs().filter(p=>p>0.001).length}/${this.S.dim}</div></div>
     </div>`
+    // Actualizar matriz del circuito
+    this.renderCircMatrix()
+  },
+
+  renderCircMatrix(){
+    const el=document.getElementById('circ-matrix');if(!el)return
+    const ops=this.C.sorted().filter(o=>GATES[o.gate]?.n>0)
+    if(!ops.length){el.textContent='— Circuito vacío —';return}
+    const n=this.C.n,probs=this.S.probs()
+    // Mostrar resumen del estado actual + secuencia de puertas aplicadas
+    const gateSeq=ops.map(o=>{
+      const g=GATES[o.gate],qs=o.qubits.map(q=>'q'+q).join(',')
+      const param=o.param!=null?`(${(o.param/Math.PI).toFixed(2)}π)`:''
+      return `${g.lbl}${param}[${qs}]`
+    }).join(' → ')
+    const topStates=probs.map((p,i)=>({p,i})).filter(x=>x.p>.001).sort((a,b)=>b.p-a.p).slice(0,4)
+    const stateStr=topStates.map(({p,i})=>{
+      const bits=i.toString(2).padStart(n,'0')
+      const amp=this.S.state[i]
+      return `|${bits}⟩  ${(p*100).toFixed(1).padStart(5)}%  ${amp.short()}`
+    }).join('\n')
+    const ent=this.S.isEntangled(),entr=this.S.entropy()
+    el.textContent='Puertas: '+gateSeq+'\n\nEstado resultante:\n'+stateStr+'\n\nEntropía: '+entr.toFixed(3)+' bits  |  '+(ent?'Entrelazado ⚡':'Separable ○')
   },
 
   renderHist(){
@@ -1406,7 +1562,7 @@ const Q={
   simulateFull(){
     this.S=new QSim(this.C.n)
     for(const op of this.C.sorted())this.S.applyOp(op)
-    this.renderSV();this.renderCharts()
+    this.renderSV();this.renderCharts();this.updateStats()
     if(typeof UV!=='undefined'&&UV.isOpen)UV.syncFromSim()
   },
 
@@ -1422,6 +1578,7 @@ const Q={
     }
     this.renderCirc();document.getElementById('step-info').textContent=`✓ ${ops.length} puertas aplicadas`
     this.setBusy(false);this.checkChallenges();this.updateStats();this.save()
+    if(this.mode===3)this.renderCircMatrix()
     this.toast('Circuito ejecutado','ok')
   },
 
@@ -1438,7 +1595,7 @@ const Q={
   },
 
   setBusy(v){['btn-run','btn-run2','btn-step','btn-meas'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=v})},
-  resetState(){this.S=new QSim(this.C.n);this.stepIdx=-1;this.renderAll();document.getElementById('step-info').textContent='';this.toast('Estado → |0…0⟩','ok')},
+  resetState(){this.S=new QSim(this.C.n);this.stepIdx=-1;this.renderAll();this.updateStats();document.getElementById('step-info').textContent='';this.toast('Estado → |0…0⟩','ok')},
 
   setQubits(n){
     this.C.n=n;this.C.ops=this.C.ops.filter(op=>op.qubits.every(q=>q<n))
@@ -1449,7 +1606,7 @@ const Q={
   measureAll(){
     const res=this.S.measureAll(),bits=res.join('')
     this.hist.unshift(bits);if(this.hist.length>2000)this.hist=this.hist.slice(0,2000)
-    this.renderSV();this.renderCharts();this.renderHist()
+    this.renderSV();this.renderCharts();this.renderHist();this.updateStats()
     this.collapseAnim();this.checkChallenges()
     this.toast(`Medición: |${bits}⟩`,'ok');this.save()
     if(typeof UV!=='undefined'&&UV.isOpen)UV.syncFromSim()
@@ -1621,7 +1778,7 @@ const Q={
       document.getElementById(`mt-${i}`)?.classList.toggle('on',i===m)
       document.getElementById(`mode${i}`)?.style && (document.getElementById(`mode${i}`).style.display=i===m?'':'none')
     })
-    if(m===3){this.renderFullSV();this.renderStateProps();renderAmpChart(document.getElementById('amp-chart'),this.S)}
+    if(m===3){this.renderFullSV();this.renderStateProps();renderAmpChart(document.getElementById('amp-chart'),this.S);this.renderCircMatrix()}
     if(m===4){UV.open()}
   },
 
@@ -1735,28 +1892,49 @@ const Q={
   // Challenges
   CHS:[
     {id:'c1',t:'NOT cuántico',d:'Lleva q0 de |0⟩ a |1⟩ con probabilidad ≥ 98%.', done:false,
+     hint:'1️⃣ Asegúrate de tener 1 qubit (o más).\n2️⃣ Coloca la puerta X en q0 columna 0.\n3️⃣ Pulsa ▶ Ejecutar.\n\nLa puerta X es el NOT cuántico: invierte |0⟩→|1⟩.',
      chk:s=>s.probs()[s.dim>>1]>.98||s.n===1&&s.probs()[1]>.98},
     {id:'c2',t:'Estado de Bell',d:'Crea (|00⟩+|11⟩)/√2: P(00)≈P(11)≈50%, P(01)≈P(10)≈0.', done:false,
+     hint:'1️⃣ Pon el slider en 2 qubits.\n2️⃣ Coloca H en q0 columna 0.\n3️⃣ Coloca CNOT (CX) en q0 columna 1 — conecta q0→q1.\n4️⃣ Pulsa ▶ Ejecutar.\n\nH crea superposición en q0; CNOT entrelaza q0 con q1.',
      chk:s=>s.n>=2&&Math.abs(s.probs()[0]-.5)<.04&&Math.abs(s.probs()[3]-.5)<.04&&s.probs()[1]<.04},
     {id:'c3',t:'Superposición 3Q',d:'3 qubits, todos los 8 estados con ~12.5%.', done:false,
+     hint:'1️⃣ Pon el slider en 3 qubits.\n2️⃣ Coloca H en q0, q1 y q2 (columna 0 los tres).\n3️⃣ Pulsa ▶ Ejecutar.\n\nH⊗H⊗H genera superposición uniforme: los 8 estados con igual probabilidad.',
      chk:s=>s.n===3&&s.probs().every(p=>Math.abs(p-1/8)<.04)},
     {id:'c4',t:'Estado GHZ',d:'3 qubits: P(000)≈P(111)≈50%, resto ≈0.', done:false,
+     hint:'1️⃣ Pon el slider en 3 qubits.\n2️⃣ H en q0 col 0.\n3️⃣ CNOT (CX) en q0 col 1 → entrelaza q0→q1.\n4️⃣ CNOT (CX) en q0 col 2 → entrelaza q0→q2.\n5️⃣ Pulsa ▶ Ejecutar.\n\nResultado: (|000⟩+|111⟩)/√2',
      chk:s=>s.n>=3&&Math.abs(s.probs()[0]-.5)<.04&&Math.abs(s.probs()[7]-.5)<.04&&s.probs()[1]<.02},
     {id:'c5',t:'Identidad oculta',d:'Aplica puertas que al final no cambien el estado: P(00…0)=100%.', done:false,
+     hint:'1️⃣ Opción A: Coloca X en q0 col 0, luego otra X en q0 col 1. X·X = Identidad.\n2️⃣ Opción B: Coloca H en q0 col 0, luego otra H en q0 col 1. H·H = Identidad.\n3️⃣ Pulsa ▶ Ejecutar.\n\nCualquier puerta aplicada dos veces vuelve al estado inicial.',
      chk:s=>s.probs()[0]>.999},
     {id:'c6',t:'Rotación exacta',d:'Obtén P(|1⟩)≈75% en q0 (usa Ry o Rx).', done:false,
+     hint:'1️⃣ Haz clic en la puerta Ry de la paleta izquierda.\n2️⃣ Colócala en q0. Se abrirá el diálogo de ángulo.\n3️⃣ Mueve el slider hasta que P(|1⟩) ≈ 75% (θ ≈ 2.094 rad = 2π/3).\n4️⃣ Pulsa "✓ Aplicar Puerta" y luego ▶ Ejecutar.\n\nFórmula: P(|1⟩) = sin²(θ/2) → θ = 2·arcsin(√0.75) ≈ 2.094',
      chk:s=>s.n>=1&&Math.abs(s.probs()[s.dim>>1]-.75)<.03},
     {id:'c7',t:'iSWAP',d:'Usa la puerta iSWAP entre dos qubits en superposición.', done:false,
+     hint:'1️⃣ Pon el slider en 2 qubits.\n2️⃣ H en q0 col 0, H en q1 col 0 (superposición en ambos).\n3️⃣ Coloca iSW (iSWAP) en q0 col 1.\n4️⃣ Pulsa ▶ Ejecutar.\n\niSWAP intercambia los estados de q0 y q1 añadiendo una fase i. Es nativo en procesadores superconductores.',
      chk:s=>s.n>=2&&Q.C.ops.some(o=>o.gate==='iSW')&&s.probs()[1]>.01},
   ],
   buildChallenges(){
-    document.getElementById('ch-list').innerHTML=this.CHS.map((c,i)=>`
-      <div class="ch-card ${c.done?'done':''}" id="chc-${c.id}">
-        <span class="ch-badge ${c.done?'done':'pending'}">${c.done?'✓ Hecho':'Pendiente'}</span>
-        <div class="ch-title">${c.t}</div>
-        <div class="ch-desc">${c.d}</div>
-        <button class="btn c" onclick="Q.checkOne('${c.id}')" style="font-size:.58rem;margin-top:6px">🔍 Verificar</button>
+    document.getElementById('ch-list').innerHTML=this.CHS.map((ch,i)=>`
+      <div class="ch-card ${ch.done?'done':''}" id="chc-${ch.id}">
+        <span class="ch-badge ${ch.done?'done':'pending'}">${ch.done?'✓ Hecho':'Pendiente'}</span>
+        <div class="ch-title">${ch.t}</div>
+        <div class="ch-desc">${ch.d}</div>
+        <div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap">
+          <button class="btn c" onclick="Q.checkOne('${ch.id}')" style="font-size:.58rem;flex:1;justify-content:center;min-width:70px">🔍 Verificar</button>
+          <button class="btn" onclick="Q.toggleHint('${ch.id}')" style="font-size:.58rem;flex:1;justify-content:center;min-width:70px">💡 Ayuda</button>
+        </div>
+        <div id="hint-${ch.id}" style="display:none;margin-top:8px;padding:9px 10px;border-radius:var(--rs);border:1px solid rgba(251,191,36,.3);background:rgba(251,191,36,.06);font-size:.64rem;color:var(--text2);line-height:1.75;white-space:pre-line"></div>
       </div>`).join('')
+    // Rellenar hints fuera del template para evitar newlines literales
+    this.CHS.forEach(ch=>{
+      const hel=document.getElementById('hint-'+ch.id)
+      if(hel&&ch.hint)hel.textContent=ch.hint
+    })
+  },
+
+  toggleHint(id){
+    const el=document.getElementById('hint-'+id);if(!el)return
+    el.style.display=el.style.display==='none'?'block':'none'
   },
   checkChallenges(){
     this.CHS.forEach(c=>{
@@ -1853,6 +2031,7 @@ const Q={
 const UV = {
   isOpen: false,
   canvas: null, ctx: null,
+  _collapsedIdx: -1, _collapseTime: 0,
 
   // Brightness multiplier for UV canvas rendering (1.0 = normal)
   brightness: 1.0,  // 1.0 = neutral, <1 = dimmer, >1 = brighter
@@ -2242,6 +2421,18 @@ const UV = {
 
       // Hover ring
       if(hov){c.beginPath();c.arc(px,py,Math.max(.1,r+8*sc),0,Math.PI*2);c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=2*sc;c.stroke()}
+      // Collapse confirmation: expanding ring fades over 2s
+      if(idx===this._collapsedIdx&&this._collapseTime>0){
+        const elapsed=(Date.now()-this._collapseTime)/1000
+        if(elapsed<2.0){
+          const prog=elapsed/2.0
+          const cRing=Math.max(.1,r*(1+prog*3.5)),cAlpha=Math.max(0,(1-prog)*.9)
+          c.beginPath();c.arc(px,py,cRing,0,Math.PI*2)
+          c.strokeStyle=`rgba(57,255,142,${cAlpha})`;c.lineWidth=Math.max(.5,(1-prog)*4);c.stroke()
+          const dotA=Math.max(0,(1-prog*2)*.7)
+          if(dotA>0){c.beginPath();c.arc(px,py,Math.max(.1,r*.3),0,Math.PI*2);c.fillStyle=`rgba(57,255,142,${dotA})`;c.fill()}
+        } else {this._collapsedIdx=-1}
+      }
 
       // Labels — always visible with brightness-scaled alpha
       const bits=idx.toString(2).padStart(n,'0')
@@ -2348,7 +2539,9 @@ const UV = {
     this.spawnParticles(proj.px,proj.py,'#00dcff',30)
     const mr=document.getElementById('uv-meas')
     mr.textContent=`→ |${bits}⟩`;mr.style.color='#39ff8e';mr.style.opacity='1'
-    setTimeout(()=>{mr.style.opacity='0'},1800)
+    mr.style.fontSize='2.8rem';mr.style.textShadow='0 0 40px #39ff8e'
+    this._collapsedIdx=idx;this._collapseTime=Date.now()
+    setTimeout(()=>{mr.style.opacity='0';mr.style.fontSize='2.2rem';mr.style.textShadow=''},2200)
     this.totalShots++;this.measHistory[bits]=(this.measHistory[bits]||0)+1
     this.updateInfoPanel()
     Q.toast(`⚛ Colapso cuántico: |${bits}⟩`,'ok')
@@ -2447,6 +2640,16 @@ const UV = {
     if(b){b.style.background=this.autoRotate?'rgba(168,85,247,.25)':'rgba(168,85,247,.1)'}
   },
   resetView(){this.camTheta=0.45;this.camPhi=-0.55;this.camDist=480;this.velTheta=this.velPhi=0},
+
+  exportPNG(){
+    if(!this.canvas)return
+    // Render one clean frame then export
+    const a=document.createElement('a')
+    a.download='quantum-universe.png'
+    a.href=this.canvas.toDataURL('image/png',1.0)
+    a.click()
+    if(typeof Q!=='undefined')Q.toast('Imagen PNG descargada','ok')
+  },
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
