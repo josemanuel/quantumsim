@@ -911,7 +911,7 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
    </div>
 
    <div style="padding:8px 14px;font-family:var(--mono);font-size:.52rem;color:var(--text3);line-height:1.9">
-    <span style="color:var(--ao)">PennyLane</span> via Pyodide WASM ·
+    <span style="color:var(--ao)">PennyLane 0.35</span> via Pyodide 0.25 WASM ·
     <span style="color:var(--ac)">default.qubit</span> simulator ·
     <span style="color:var(--av)">StronglyEntanglingLayers</span> ansatz ·
     Gradientes exactos via <span style="color:var(--am)">param shift</span>
@@ -3513,24 +3513,29 @@ const QNNP = {
     try {
       // Load Pyodide from CDN
       if (!window.loadPyodide) {
-        await this._loadScript('https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js');
+        await this._loadScript('https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js');
       }
       this._setMsg(msg, 'Inicializando Python WASM...', bar, 25);
       this.pyodide = await window.loadPyodide({
-        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/',
+        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/',
         stdout: (s) => this._log(s),
         stderr: (s) => this._log('⚠ ' + s),
+        fullStdLib: false,
       });
       this._setMsg(msg, 'Instalando NumPy...', bar, 45);
-      await this.pyodide.loadPackage(['numpy', 'micropip']);
+      await this.pyodide.loadPackage(['numpy']);
       this._setMsg(msg, 'Instalando PennyLane (puede tardar 20-40s)...', bar, 60);
       await this.pyodide.runPythonAsync(`
-import micropip
-await micropip.install('pennylane')
+import micropip, sys
+# pennylane 0.35.0 + autograd 1.6.2: WASM-safe (no rustworkx)
+if 'autograd' not in sys.modules:
+    await micropip.install('autograd==1.6.2')
+await micropip.install('pennylane==0.35.0')
 import pennylane as qml
 import numpy as np
 print(f"PennyLane {qml.__version__} listo ✓")
 print(f"NumPy {np.__version__} listo ✓")
+print("autograd: " + str("autograd" in sys.modules))
 `);
       this._setMsg(msg, 'Preparando clasificador...', bar, 85);
       // Bootstrap the Python QNN code
@@ -3545,10 +3550,15 @@ print(f"NumPy {np.__version__} listo ✓")
       Q.toast('PennyLane cargado ✓', 'ok');
     } catch (e) {
       this._setBadge('idle', 'ERROR');
-      this._log('ERROR: ' + e.message);
-      if (btn) btn.disabled = false;
-      if (btn) btn.textContent = '↺ Reintentar';
-      Q.toast('Error cargando Pyodide: ' + e.message.slice(0, 60), 'er');
+      const fullMsg = (e.message || String(e));
+      this._log('═══ ERROR COMPLETO ═══');
+      this._log(fullMsg);
+      if (e.stack) this._log(e.stack);
+      this._log('═════════════════════');
+      if (btn) { btn.disabled = false; btn.textContent = '↺ Reintentar'; }
+      const shortMsg = fullMsg.length > 80 ? fullMsg.slice(0,80)+'…' : fullMsg;
+      Q.toast('QNN-Pro error: ' + shortMsg, 'er');
+      console.error('[QNNP load error]', e);
     }
   },
 
@@ -3571,7 +3581,6 @@ print(f"NumPy {np.__version__} listo ✓")
     await this.pyodide.runPythonAsync(`
 import pennylane as qml
 import numpy as np
-from pennylane import numpy as pnp
 
 # Global state
 _dev = None
@@ -3581,6 +3590,26 @@ _n_layers = 3
 _ansatz_type = 'strongly_entangling'
 _loss_history = []
 _acc_history = []
+
+# ── Manual Adam optimizer (no autograd needed) ────────────────────
+_adam_m = None
+_adam_v = None
+_adam_t = 0
+
+def _adam_init(size):
+    global _adam_m, _adam_v, _adam_t
+    _adam_m = np.zeros(size)
+    _adam_v = np.zeros(size)
+    _adam_t = 0
+
+def _adam_update(grads, lr, beta1=0.9, beta2=0.999, eps=1e-8):
+    global _adam_m, _adam_v, _adam_t
+    _adam_t += 1
+    _adam_m = beta1 * _adam_m + (1 - beta1) * grads
+    _adam_v = beta2 * _adam_v + (1 - beta2) * grads**2
+    m_hat = _adam_m / (1 - beta1**_adam_t)
+    v_hat = _adam_v / (1 - beta2**_adam_t)
+    return lr * m_hat / (np.sqrt(v_hat) + eps)
 
 def build_device(n_qubits):
     global _dev, _n_qubits
@@ -3598,8 +3627,8 @@ def init_params(n_qubits, n_layers, ansatz_type='strongly_entangling'):
         shape = qml.BasicEntanglerLayers.shape(n_layers=n_layers, n_wires=n_qubits)
     else:
         shape = (n_layers, n_qubits, 3)
-    _params = pnp.random.uniform(-np.pi/4, np.pi/4, shape, requires_grad=True)
-    return list(_params.flatten())
+    _params = np.random.uniform(-np.pi/4, np.pi/4, shape).astype(np.float64)
+    return [float(v) for v in _params.flatten()]
 
 def build_circuit(n_qubits, n_layers, ansatz_type):
     dev = qml.device('default.qubit', wires=n_qubits)
@@ -3725,17 +3754,11 @@ _circuit_fn = build_circuit(${this.nQubits}, ${this.nLayers}, '${this.ansatz}')
 `);
 
       // Setup optimizer
-      const optMap = {
-        adam: 'qml.AdamOptimizer',
-        gradient_descent: 'qml.GradientDescentOptimizer',
-        nesterov: 'qml.NesterovMomentumOptimizer',
-        adagrad: 'qml.AdagradOptimizer',
-      };
-      const optClass = optMap[this.optimizer] || 'qml.AdamOptimizer';
+      // Pure-numpy optimizers (no qml autograd needed)
       await this.pyodide.runPythonAsync(
-        `_optimizer = ${optClass}(stepsize=${this.lr})`
+        `_opt_name = '${this.optimizer}'; _adam_init(len(list(_params.flatten()))); print('Optimizador: ' + _opt_name)`
       );
-      this._log(`Optimizador: ${optClass}(lr=${this.lr})`);
+      this._log(`Optimizador: ${this.optimizer} (lr=${this.lr})`);
 
       // Serialize training data to Python
       const X = this.data.map(d => [d.x0, d.x1]);
@@ -3755,9 +3778,33 @@ print(f"Dataset: {len(_X)} puntos")
       for (let ep = 0; ep < epochs && !this._stopFlag; ep++) {
         // One optimizer step in Python
         const result = await this.pyodide.runPythonAsync(`
-cost_fn = lambda p: bce_loss(p, _circuit_fn, _X, _Y)
-_params, _cost = _optimizer.step_and_cost(cost_fn, _params)
-_acc = accuracy(_params, _circuit_fn, _X, _Y)
+# Param-shift gradient on flattened params
+_pf = _params.flatten()
+_grads = np.zeros_like(_pf)
+for _i in range(len(_pf)):
+    _pp = _pf.copy(); _pp[_i] += np.pi/2
+    _pm = _pf.copy(); _pm[_i] -= np.pi/2
+    _lp = 0.0; _lm = 0.0
+    for _x, _y in zip(_X, _Y):
+        _ep = float(_circuit_fn(_pp.reshape(_params.shape), _x))
+        _em = float(_circuit_fn(_pm.reshape(_params.shape), _x))
+        _pp2 = float(1/(1+np.exp(-3*_ep))); _pm2 = float(1/(1+np.exp(-3*_em)))
+        _pp2 = np.clip(_pp2,1e-7,1-1e-7); _pm2 = np.clip(_pm2,1e-7,1-1e-7)
+        _lp += -(_y*np.log(_pp2)+(1-_y)*np.log(1-_pp2))
+        _lm += -(_y*np.log(_pm2)+(1-_y)*np.log(1-_pm2))
+    _grads[_i] = 0.5*(_lp - _lm)/len(_X)
+# Optimizer step
+_delta = _adam_update(_grads, ${this.lr}) if _opt_name=='adam' else ${this.lr}*_grads
+_pf = _pf - _delta
+_params = _pf.reshape(_params.shape)
+# Current loss + accuracy
+_cost = 0.0
+for _x, _y in zip(_X, _Y):
+    _ev = float(_circuit_fn(_params, _x))
+    _pr = float(np.clip(1/(1+np.exp(-3*_ev)),1e-7,1-1e-7))
+    _cost += -(_y*np.log(_pr)+(1-_y)*np.log(1-_pr))
+_cost /= len(_X)
+_acc = sum(1 for _x,_y in zip(_X,_Y) if (1 if 1/(1+np.exp(-3*float(_circuit_fn(_params,_x))))>0.5 else 0)==int(_y))/len(_X)
 _loss_history.append(float(_cost))
 _acc_history.append(float(_acc))
 [float(_cost), float(_acc)]
@@ -3838,7 +3885,7 @@ _grid_x0 = ${JSON.stringify(xs)}
 _grid_x1 = ${JSON.stringify(ys)}
 `);
       const probs = await this.pyodide.runPythonAsync(
-        'predict_grid(_params, _circuit_fn, _grid_x0, _grid_x1)'
+        '[float(1/(1+np.exp(-3*float(_circuit_fn(_params,[x0,x1]))))) for x0,x1 in zip(_grid_x0,_grid_x1)]'
       );
       this.drawDecisionMap(probs.toJs(), res);
     } catch(e) {
@@ -3867,7 +3914,7 @@ def _sv_node(params):
     elif '${this.ansatz}' == 'basic_entangler':
         qml.BasicEntanglerLayers(params, wires=range(${this.nQubits}))
     return qml.state()
-sv = _sv_node(_params)
+sv = _sv_node(_params.astype(np.float64) if hasattr(_params,'astype') else np.array(_params))
 [[float(v.real), float(v.imag)] for v in sv]
 `);
       const sv = svResult.toJs();
