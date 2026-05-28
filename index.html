@@ -520,7 +520,7 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   <input type="file" id="imp-qasm" accept=".qasm,.txt" style="display:none" onchange="Q.importQASM(event)">
   <button class="btn g" onclick="Q.saveSlot()" title="Guardar circuito actual en el historial">💾 <span>Guardar</span></button>
   <button class="btn" onclick="Q.openHist()" title="Ver historial de circuitos guardados">📂 <span>Historial</span></button>
-  <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Q3D Universe">🌌 <span>Q3D</span></a>
+   <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Q3D Universe">🌌 <span>Q3D</span></a>
   <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
  </div>
 </header>
@@ -579,6 +579,7 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
    <button class="mt" id="mt-3" onclick="Q.setMode(3)">📊 Estado</button>
    <button class="mt" id="mt-4" onclick="Q.setMode(4)">🌌 Universo</button>
    <button class="mt" id="mt-5" onclick="Q.setMode(5)">🧠 QNN</button>
+   <button class="mt" id="mt-6" onclick="Q.setMode(6)">🧪 QNN-Pro</button>
   </div>
 
   <div id="mode0">
@@ -752,6 +753,174 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
  </div>
 
 </div>
+
+<!-- QNN-PRO MODE (Modo 6) — PennyLane/Pyodide -->
+<div id="mode6" style="display:none">
+
+ <div class="qnn-section">
+  <div class="sec-title v" style="display:flex;align-items:center;justify-content:space-between">
+   <span>🧪 QNN-Pro <span style="font-size:.52rem;color:var(--ac);letter-spacing:1px">PennyLane + Pyodide</span></span>
+   <span id="qnnp-status-badge" class="qnn-badge idle">NO INICIADO</span>
+  </div>
+  <div style="font-size:.62rem;color:var(--text2);line-height:1.7;margin-bottom:10px">
+   Clasificador cuántico variacional con <span style="color:#fbbf24">PennyLane</span> real ejecutándose en el navegador via <span style="color:var(--ac)">Pyodide (WASM)</span>. Carga ~10MB la primera vez.
+  </div>
+
+  <!-- Load button -->
+  <div id="qnnp-load-section">
+   <div style="border:1px solid rgba(251,191,36,.3);border-radius:var(--r);padding:12px;background:rgba(251,191,36,.05);margin-bottom:8px">
+    <div style="font-family:var(--mono);font-size:.62rem;color:var(--ao);margin-bottom:6px">⚠ Primera carga: descarga PennyLane (~10MB) · Solo ocurre una vez por sesión</div>
+    <div id="qnnp-load-progress" style="display:none">
+     <div style="font-family:var(--mono);font-size:.6rem;color:var(--text2);margin-bottom:5px" id="qnnp-load-msg">Iniciando Pyodide...</div>
+     <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+      <div id="qnnp-load-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--av),var(--ac));transition:width .3s;border-radius:2px"></div>
+     </div>
+    </div>
+    <button class="btn c" id="qnnp-btn-load" onclick="QNNP.load()" style="width:100%;justify-content:center;padding:10px;font-size:.72rem;margin-top:6px">
+     ⬇ Cargar PennyLane + Pyodide
+    </button>
+   </div>
+  </div>
+
+  <!-- Main interface (hidden until loaded) -->
+  <div id="qnnp-main" style="display:none">
+
+   <!-- Problem selector -->
+   <div class="qnn-section" style="padding:8px 0">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
+     <select id="qnnp-problem" onchange="QNNP.setProblem(this.value)"
+      style="padding:5px 9px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg2);color:var(--av);font-family:var(--mono);font-size:.62rem;cursor:pointer">
+      <option value="xor">XOR (no lineal)</option>
+      <option value="circle">Círculo</option>
+      <option value="linear">Lineal</option>
+      <option value="spiral">Espiral (difícil)</option>
+      <option value="moons">Medias Lunas</option>
+     </select>
+     <button class="btn" onclick="QNNP.clearData()" style="font-size:.58rem">🗑 Limpiar datos</button>
+    </div>
+    <div class="sec-title c">Datos <span style="font-size:.52rem;color:var(--text3)">(clic=clase 0 · shift+clic=clase 1)</span></div>
+    <div class="qnn-canvas-wrap" style="height:170px">
+     <canvas id="qnnp-data-canvas" style="display:block;width:100%;height:170px"></canvas>
+    </div>
+   </div>
+
+   <!-- Architecture -->
+   <div class="qnn-section" style="padding:8px 0 4px">
+    <div class="sec-title g">Arquitectura PennyLane</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+     <div>
+      <div style="font-family:var(--mono);font-size:.58rem;color:var(--text2);margin-bottom:3px">Qubits</div>
+      <input type="range" id="qnnp-qubits" min="2" max="5" value="3" style="width:100%"
+       oninput="QNNP.setArch();document.getElementById('qnnp-qubits-val').textContent=this.value">
+      <span id="qnnp-qubits-val" style="font-family:var(--mono);font-size:.62rem;color:var(--av)">3</span>
+     </div>
+     <div>
+      <div style="font-family:var(--mono);font-size:.58rem;color:var(--text2);margin-bottom:3px">Capas</div>
+      <input type="range" id="qnnp-layers" min="1" max="6" value="3" style="width:100%"
+       oninput="QNNP.setArch();document.getElementById('qnnp-layers-val').textContent=this.value">
+      <span id="qnnp-layers-val" style="font-family:var(--mono);font-size:.62rem;color:var(--av)">3</span>
+     </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+     <div>
+      <div style="font-family:var(--mono);font-size:.58rem;color:var(--text2);margin-bottom:3px">Ansatz</div>
+      <select id="qnnp-ansatz" onchange="QNNP.setArch()"
+       style="width:100%;padding:4px 6px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg2);color:var(--av);font-family:var(--mono);font-size:.6rem">
+       <option value="strongly_entangling">StronglyEntangling</option>
+       <option value="basic_entangler">BasicEntangler</option>
+       <option value="random_layers">RandomLayers</option>
+      </select>
+     </div>
+     <div>
+      <div style="font-family:var(--mono);font-size:.58rem;color:var(--text2);margin-bottom:3px">Optimizador</div>
+      <select id="qnnp-optimizer" onchange="QNNP.setArch()"
+       style="width:100%;padding:4px 6px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg2);color:var(--av);font-family:var(--mono);font-size:.6rem">
+       <option value="adam">Adam</option>
+       <option value="gradient_descent">GradDesc</option>
+       <option value="nesterov">Nesterov</option>
+       <option value="adagrad">AdaGrad</option>
+      </select>
+     </div>
+    </div>
+    <!-- Circuit diagram -->
+    <div class="qnn-canvas-wrap" style="height:70px">
+     <canvas id="qnnp-circuit-canvas" style="display:block;width:100%;height:70px"></canvas>
+    </div>
+   </div>
+
+   <!-- Training controls -->
+   <div class="qnn-section" style="padding:8px 0 4px">
+    <div class="sec-title m">Entrenamiento</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px">
+     <div class="qnn-stat"><span class="lbl">Época</span><span class="val" id="qnnp-epoch">0</span></div>
+     <div class="qnn-stat"><span class="lbl">Pérdida</span><span class="val" id="qnnp-loss">—</span></div>
+     <div class="qnn-stat"><span class="lbl">Precisión</span><span class="val" id="qnnp-acc">—</span></div>
+     <div class="qnn-stat"><span class="lbl">LR</span><span class="val" id="qnnp-lr-val">0.05</span></div>
+    </div>
+    <div class="qnn-canvas-wrap" style="height:80px;margin-bottom:8px">
+     <canvas id="qnnp-loss-canvas" style="display:block;width:100%;height:80px"></canvas>
+    </div>
+    <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:7px">
+     <span style="font-family:var(--mono);font-size:.58rem;color:var(--text2)">LR:</span>
+     <input type="range" id="qnnp-lr" min="1" max="30" value="5" style="width:60px"
+      oninput="QNNP.lr=this.value/100;document.getElementById('qnnp-lr-val').textContent=(this.value/100).toFixed(2)">
+     <span style="font-family:var(--mono);font-size:.58rem;color:var(--text2);margin-left:8px">Épocas:</span>
+     <input type="range" id="qnnp-epochs" min="10" max="200" value="60" step="5" style="width:60px"
+      oninput="document.getElementById('qnnp-epochs-val').textContent=this.value">
+     <span id="qnnp-epochs-val" style="font-family:var(--mono);font-size:.62rem;color:var(--av)">60</span>
+     <label style="display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:.58rem;color:var(--text2);margin-left:4px;cursor:pointer">
+      <input type="checkbox" id="qnnp-batch" checked style="accent-color:var(--av)"> Mini-batch
+     </label>
+    </div>
+    <div style="display:flex;gap:5px">
+     <button class="btn c" id="qnnp-btn-train" onclick="QNNP.train()" style="flex:2;justify-content:center;font-size:.65rem">▶ Entrenar (PennyLane)</button>
+     <button class="btn" onclick="QNNP.reset()" style="flex:1;justify-content:center;font-size:.65rem">↺ Reset</button>
+     <button class="btn m" id="qnnp-btn-stop" onclick="QNNP.stop()" disabled style="flex:1;justify-content:center;font-size:.65rem">■ Stop</button>
+    </div>
+   </div>
+
+   <!-- Decision map -->
+   <div class="qnn-section" style="padding:8px 0 4px">
+    <div class="sec-title v">Mapa de Decisión</div>
+    <div class="qnn-canvas-wrap" style="height:170px">
+     <canvas id="qnnp-map-canvas" style="display:block;width:100%;height:170px"></canvas>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap">
+     <button class="btn c" onclick="QNNP.sendStateToUV()" style="font-size:.58rem;flex:1;justify-content:center">🌌 Ver en Universo</button>
+     <button class="btn" onclick="QNNP.exportParams()" style="font-size:.58rem;flex:1;justify-content:center">↓ Export θ JSON</button>
+    </div>
+   </div>
+
+   <!-- Params list -->
+   <div class="qnn-section" style="padding:8px 0 4px">
+    <div class="sec-title ao">Parámetros θ (PennyLane)</div>
+    <div id="qnnp-params-list" style="max-height:110px;overflow-y:auto"></div>
+   </div>
+
+   <!-- Python output console -->
+   <div class="qnn-section" style="padding:8px 0 4px">
+    <div class="sec-title c" style="display:flex;align-items:center;justify-content:space-between">
+     <span>Consola Python</span>
+     <button class="btn" onclick="QNNP.clearConsole()" style="font-size:.52rem;padding:2px 7px">Limpiar</button>
+    </div>
+    <div id="qnnp-console" style="
+     font-family:var(--mono);font-size:.58rem;color:#4ade80;
+     background:rgba(0,0,0,.35);border:1px solid var(--border);
+     border-radius:var(--rs);padding:8px;height:90px;overflow-y:auto;
+     line-height:1.6;white-space:pre-wrap;word-break:break-all"></div>
+   </div>
+
+   <div style="padding:8px 14px;font-family:var(--mono);font-size:.52rem;color:var(--text3);line-height:1.9">
+    <span style="color:var(--ao)">PennyLane</span> via Pyodide WASM ·
+    <span style="color:var(--ac)">default.qubit</span> simulator ·
+    <span style="color:var(--av)">StronglyEntanglingLayers</span> ansatz ·
+    Gradientes exactos via <span style="color:var(--am)">param shift</span>
+   </div>
+
+  </div><!-- /qnnp-main -->
+ </div><!-- /qnn-section -->
+</div><!-- /mode6 -->
+
 
 <!-- QUANTUM UNIVERSE 3D OVERLAY -->
 <div id="universe-overlay">
@@ -1312,6 +1481,7 @@ const Q={
     window.addEventListener('storage',e=>{if(e.key==='qsim_launch_ex')this.checkExLaunch()})
     // Init QNN after a tick so the DOM is ready
     setTimeout(()=>QNN.init(),50)
+    setTimeout(()=>QNNP.init(),80)
   },
 
   // ── Circuit history ─────────────────────────────────────
@@ -1883,7 +2053,7 @@ const Q={
   },
 
   setMode(m){
-    this.mode=m;[0,1,2,3,4,5].forEach(i=>{
+    this.mode=m;[0,1,2,3,4,5,6].forEach(i=>{
       document.getElementById(`mt-${i}`)?.classList.toggle('on',i===m)
       const el=document.getElementById(`mode${i}`)
       if(el)el.style.display=i===m?'':'none'
@@ -1891,6 +2061,7 @@ const Q={
     if(m===3){this.renderFullSV();this.renderStateProps();renderAmpChart(document.getElementById('amp-chart'),this.S);this.renderCircMatrix()}
     if(m===4){UV.open()}
     if(m===5){QNN.activate()}
+    if(m===6){QNNP.activate()}
   },
 
   updateStats(){
@@ -3278,6 +3449,714 @@ const QNN = {
     })
   },
 }
+
+
+/* ============================================================
+   QNNP — Quantum Neural Network Pro (PennyLane via Pyodide)
+   Loads PennyLane inside a Pyodide WASM runtime in the browser.
+   Keeps the existing QNN (vanilla JS) untouched.
+   ============================================================ */
+const QNNP = {
+  // ── State ────────────────────────────────────────────
+  loaded: false,
+  pyodide: null,
+  isTraining: false,
+  _stopFlag: false,
+  lr: 0.05,
+  nQubits: 3,
+  nLayers: 3,
+  ansatz: 'strongly_entangling',
+  optimizer: 'adam',
+  problem: 'xor',
+  data: [],
+  lossHistory: [],
+  accHistory: [],
+  _params: null,   // numpy array serialized as JS Float64Array
+
+  // ── Problems ─────────────────────────────────────────
+  PROBLEMS: {
+    xor: [
+      {x0:-.65,x1:-.65,y:0},{x0:.65,x1:.65,y:0},
+      {x0:-.65,x1:.65,y:1},{x0:.65,x1:-.65,y:1},
+      {x0:-.30,x1:-.50,y:0},{x0:.42,x1:.52,y:0},
+      {x0:-.52,x1:.32,y:1},{x0:.52,x1:-.42,y:1},
+    ],
+    circle: [
+      {x0:.0,x1:.0,y:0},{x0:.22,x1:.12,y:0},{x0:-.20,x1:.10,y:0},{x0:.10,x1:-.22,y:0},
+      {x0:.72,x1:.58,y:1},{x0:-.72,x1:.58,y:1},{x0:.72,x1:-.58,y:1},{x0:-.62,x1:-.70,y:1},
+    ],
+    linear: [
+      {x0:-.70,x1:-.52,y:0},{x0:-.50,x1:-.68,y:0},{x0:-.32,x1:-.32,y:0},{x0:-.58,x1:.02,y:0},
+      {x0:.50,x1:.62,y:1},{x0:.70,x1:.42,y:1},{x0:.32,x1:.70,y:1},{x0:.02,x1:.62,y:1},
+    ],
+    spiral: [
+      {x0:.5,x1:.0,y:0},{x0:.18,x1:.48,y:0},{x0:-.42,x1:.38,y:0},{x0:-.58,x1:-.10,y:0},
+      {x0:.02,x1:-.58,y:1},{x0:.48,x1:-.38,y:1},{x0:.38,x1:.28,y:1},{x0:-.28,x1:-.52,y:1},
+    ],
+    moons: [
+      {x0:-.80,x1:.20,y:0},{x0:-.50,x1:.55,y:0},{x0:.0,x1:.70,y:0},{x0:.50,x1:.55,y:0},{x0:.80,x1:.20,y:0},
+      {x0:-.30,x1:-.45,y:1},{x0:.20,x1:-.60,y:1},{x0:.70,x1:-.45,y:1},{x0:-.80,x1:-.20,y:1},{x0:.0,x1:-.30,y:1},
+    ],
+  },
+
+  // ── Load Pyodide + PennyLane ──────────────────────────
+  async load() {
+    if (this.loaded) { this._log('PennyLane ya está cargado ✓'); return; }
+    const btn = document.getElementById('qnnp-btn-load');
+    const prog = document.getElementById('qnnp-load-progress');
+    const bar = document.getElementById('qnnp-load-bar');
+    const msg = document.getElementById('qnnp-load-msg');
+    if (btn) btn.disabled = true;
+    if (prog) prog.style.display = 'block';
+    this._setBadge('training', 'CARGANDO...');
+    this._setMsg(msg, 'Cargando Pyodide runtime...', bar, 10);
+    try {
+      // Load Pyodide from CDN
+      if (!window.loadPyodide) {
+        await this._loadScript('https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js');
+      }
+      this._setMsg(msg, 'Inicializando Python WASM...', bar, 25);
+      this.pyodide = await window.loadPyodide({
+        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/',
+        stdout: (s) => this._log(s),
+        stderr: (s) => this._log('⚠ ' + s),
+      });
+      this._setMsg(msg, 'Instalando NumPy...', bar, 45);
+      await this.pyodide.loadPackage(['numpy', 'micropip']);
+      this._setMsg(msg, 'Instalando PennyLane (puede tardar 20-40s)...', bar, 60);
+      await this.pyodide.runPythonAsync(`
+import micropip
+await micropip.install('pennylane')
+import pennylane as qml
+import numpy as np
+print(f"PennyLane {qml.__version__} listo ✓")
+print(f"NumPy {np.__version__} listo ✓")
+`);
+      this._setMsg(msg, 'Preparando clasificador...', bar, 85);
+      // Bootstrap the Python QNN code
+      await this._initPython();
+      this._setMsg(msg, '¡Todo listo!', bar, 100);
+      this.loaded = true;
+      this._setBadge('done', 'LISTO');
+      document.getElementById('qnnp-load-section').style.display = 'none';
+      document.getElementById('qnnp-main').style.display = 'block';
+      this.setProblem(this.problem);
+      this._log('=== QNN-Pro con PennyLane activo ===');
+      Q.toast('PennyLane cargado ✓', 'ok');
+    } catch (e) {
+      this._setBadge('idle', 'ERROR');
+      this._log('ERROR: ' + e.message);
+      if (btn) btn.disabled = false;
+      if (btn) btn.textContent = '↺ Reintentar';
+      Q.toast('Error cargando Pyodide: ' + e.message.slice(0, 60), 'er');
+    }
+  },
+
+  async _loadScript(src) {
+    return new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  },
+
+  _setMsg(el, text, bar, pct) {
+    if (el) el.textContent = text;
+    if (bar) bar.style.width = pct + '%';
+    this._log(text);
+  },
+
+  // ── Python bootstrap code ─────────────────────────────
+  async _initPython() {
+    await this.pyodide.runPythonAsync(`
+import pennylane as qml
+import numpy as np
+from pennylane import numpy as pnp
+
+# Global state
+_dev = None
+_params = None
+_n_qubits = 3
+_n_layers = 3
+_ansatz_type = 'strongly_entangling'
+_loss_history = []
+_acc_history = []
+
+def build_device(n_qubits):
+    global _dev, _n_qubits
+    _n_qubits = n_qubits
+    _dev = qml.device('default.qubit', wires=n_qubits)
+    return f"Device: default.qubit, {n_qubits} qubits"
+
+def init_params(n_qubits, n_layers, ansatz_type='strongly_entangling'):
+    global _params, _n_layers, _ansatz_type
+    _n_layers = n_layers
+    _ansatz_type = ansatz_type
+    if ansatz_type == 'strongly_entangling':
+        shape = qml.StronglyEntanglingLayers.shape(n_layers=n_layers, n_wires=n_qubits)
+    elif ansatz_type == 'basic_entangler':
+        shape = qml.BasicEntanglerLayers.shape(n_layers=n_layers, n_wires=n_qubits)
+    else:
+        shape = (n_layers, n_qubits, 3)
+    _params = pnp.random.uniform(-np.pi/4, np.pi/4, shape, requires_grad=True)
+    return list(_params.flatten())
+
+def build_circuit(n_qubits, n_layers, ansatz_type):
+    dev = qml.device('default.qubit', wires=n_qubits)
+
+    @qml.qnode(dev)
+    def circuit(params, x):
+        # Angle encoding of features
+        for i in range(n_qubits):
+            qml.RY(np.pi * x[0], wires=i)
+            qml.RZ(np.pi * x[1], wires=i)
+        # Variational ansatz
+        if ansatz_type == 'strongly_entangling':
+            qml.StronglyEntanglingLayers(params, wires=range(n_qubits))
+        elif ansatz_type == 'basic_entangler':
+            qml.BasicEntanglerLayers(params, wires=range(n_qubits))
+        else:
+            for l in range(n_layers):
+                for q in range(n_qubits):
+                    qml.Rot(*params[l, q], wires=q)
+                for q in range(n_qubits - 1):
+                    qml.CNOT(wires=[q, q+1])
+        return qml.expval(qml.PauliZ(0))
+    return circuit
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def bce_loss(params, circuit_fn, X, Y):
+    total = 0.0
+    for x, y in zip(X, Y):
+        ev = circuit_fn(params, x)
+        prob = sigmoid(3.0 * float(ev))
+        prob = np.clip(prob, 1e-7, 1 - 1e-7)
+        total += -(y * np.log(prob) + (1 - y) * np.log(1 - prob))
+    return total / len(Y)
+
+def accuracy(params, circuit_fn, X, Y):
+    correct = 0
+    for x, y in zip(X, Y):
+        ev = circuit_fn(params, x)
+        pred = 1 if sigmoid(3.0 * float(ev)) > 0.5 else 0
+        if pred == int(y): correct += 1
+    return correct / len(Y)
+
+def get_params_flat():
+    global _params
+    if _params is None: return []
+    return [float(v) for v in _params.flatten()]
+
+def predict_grid(params, circuit_fn, grid_x0, grid_x1):
+    results = []
+    for x0, x1 in zip(grid_x0, grid_x1):
+        ev = circuit_fn(params, [x0, x1])
+        results.append(float(sigmoid(3.0 * float(ev))))
+    return results
+
+print("Python QNN-Pro bootstrap OK")
+`);
+  },
+
+  // ── Architecture ──────────────────────────────────────
+  setArch() {
+    this.nQubits = parseInt(document.getElementById('qnnp-qubits').value);
+    this.nLayers = parseInt(document.getElementById('qnnp-layers').value);
+    this.ansatz = document.getElementById('qnnp-ansatz').value;
+    this.optimizer = document.getElementById('qnnp-optimizer').value;
+    this.drawCircuit();
+    this._log(`Arquitectura: ${this.nQubits}q × ${this.nLayers}L · ${this.ansatz}`);
+  },
+
+  // ── Problem selector ──────────────────────────────────
+  setProblem(name) {
+    this.problem = name;
+    this.data = this.PROBLEMS[name].map(p => ({...p}));
+    this.lossHistory = []; this.accHistory = [];
+    this.drawData(); this.drawLoss(); this._renderParams([]);
+    if (this.isTraining) this.stop();
+    const mapC = document.getElementById('qnnp-map-canvas');
+    if (mapC) {
+      const ctx = mapC.getContext('2d');
+      const W = mapC.offsetWidth || 200, H = mapC.height || 170;
+      mapC.width = W;
+      ctx.fillStyle = document.body.classList.contains('lm') ? '#1e1b2e' : '#060910';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(120,100,200,.4)'; ctx.font = '11px monospace';
+      ctx.textAlign = 'center'; ctx.fillText('Entrena para ver el mapa de decisión', W/2, H/2);
+      ctx.textAlign = 'left';
+    }
+  },
+
+  clearData() {
+    this.data = [];
+    this.drawData();
+  },
+
+  // ── Training ──────────────────────────────────────────
+  async train() {
+    if (!this.loaded) { Q.toast('Carga PennyLane primero', 'wa'); return; }
+    if (this.isTraining) return;
+    if (this.data.length < 3) { Q.toast('Añade al menos 3 puntos de datos', 'wa'); return; }
+
+    this.isTraining = true; this._stopFlag = false;
+    this._setBadge('training', 'ENTRENANDO');
+    document.getElementById('qnnp-btn-train').disabled = true;
+    document.getElementById('qnnp-btn-stop').disabled = false;
+
+    const epochs = parseInt(document.getElementById('qnnp-epochs').value) || 60;
+    const useBatch = document.getElementById('qnnp-batch')?.checked ?? true;
+
+    try {
+      // Build device and initialize params in Python
+      await this.pyodide.runPythonAsync(
+        `build_device(${this.nQubits})`
+      );
+      const initResult = await this.pyodide.runPythonAsync(
+        `init_params(${this.nQubits}, ${this.nLayers}, '${this.ansatz}')`
+      );
+      this._log(`Parámetros inicializados: ${initResult.toJs().length} θ`);
+
+      // Build circuit function in Python
+      await this.pyodide.runPythonAsync(`
+_circuit_fn = build_circuit(${this.nQubits}, ${this.nLayers}, '${this.ansatz}')
+`);
+
+      // Setup optimizer
+      const optMap = {
+        adam: 'qml.AdamOptimizer',
+        gradient_descent: 'qml.GradientDescentOptimizer',
+        nesterov: 'qml.NesterovMomentumOptimizer',
+        adagrad: 'qml.AdagradOptimizer',
+      };
+      const optClass = optMap[this.optimizer] || 'qml.AdamOptimizer';
+      await this.pyodide.runPythonAsync(
+        `_optimizer = ${optClass}(stepsize=${this.lr})`
+      );
+      this._log(`Optimizador: ${optClass}(lr=${this.lr})`);
+
+      // Serialize training data to Python
+      const X = this.data.map(d => [d.x0, d.x1]);
+      const Y = this.data.map(d => d.y);
+      await this.pyodide.runPythonAsync(`
+import json
+_X = np.array(${JSON.stringify(X)}, dtype=float)
+_Y = np.array(${JSON.stringify(Y)}, dtype=float)
+_loss_history = []
+_acc_history = []
+print(f"Dataset: {len(_X)} puntos")
+`);
+
+      // Epoch loop — each epoch runs one Python step then yields to JS
+      this.lossHistory = []; this.accHistory = [];
+
+      for (let ep = 0; ep < epochs && !this._stopFlag; ep++) {
+        // One optimizer step in Python
+        const result = await this.pyodide.runPythonAsync(`
+cost_fn = lambda p: bce_loss(p, _circuit_fn, _X, _Y)
+_params, _cost = _optimizer.step_and_cost(cost_fn, _params)
+_acc = accuracy(_params, _circuit_fn, _X, _Y)
+_loss_history.append(float(_cost))
+_acc_history.append(float(_acc))
+[float(_cost), float(_acc)]
+`);
+        const [loss, acc] = result.toJs();
+        this.lossHistory.push(loss);
+        this.accHistory.push(acc);
+
+        // Update UI every 2 epochs
+        if (ep % 2 === 0 || ep === epochs - 1) {
+          this._updateStats(ep + 1, loss, acc);
+          this.drawLoss();
+          const params = await this.pyodide.runPythonAsync('get_params_flat()');
+          this._params = params.toJs();
+          this._renderParams(this._params);
+          if (ep % 6 === 0) await this._updateDecisionMap();
+          await new Promise(r => setTimeout(r, 0)); // yield
+        }
+      }
+
+      // Final decision map
+      await this._updateDecisionMap();
+      const finalParams = await this.pyodide.runPythonAsync('get_params_flat()');
+      this._params = finalParams.toJs();
+      this._renderParams(this._params);
+
+      const finalAcc = this.accHistory[this.accHistory.length - 1] || 0;
+      this._setBadge('done', 'LISTO');
+      Q.toast(`PennyLane: entrenamiento completo · Acc ${Math.round(finalAcc*100)}%`,
+               finalAcc > 0.85 ? 'ok' : 'wa');
+      this._log(`Completado: ${this.lossHistory.length} épocas, acc=${(finalAcc*100).toFixed(1)}%`);
+
+    } catch (e) {
+      this._log('ERROR en entrenamiento: ' + e.message);
+      Q.toast('Error en entrenamiento Python: ' + e.message.slice(0, 60), 'er');
+      this._setBadge('idle', 'ERROR');
+    }
+
+    this.isTraining = false; this._stopFlag = false;
+    document.getElementById('qnnp-btn-train').disabled = false;
+    document.getElementById('qnnp-btn-stop').disabled = true;
+  },
+
+  stop() {
+    this._stopFlag = true;
+    this._setBadge('idle', 'DETENIDO');
+    document.getElementById('qnnp-btn-train').disabled = false;
+    document.getElementById('qnnp-btn-stop').disabled = true;
+    this._log('Entrenamiento detenido por el usuario.');
+  },
+
+  reset() {
+    this.stop();
+    this.lossHistory = []; this.accHistory = [];
+    this._params = null;
+    this._updateStats(0, null, null);
+    this._setBadge('idle', 'EN REPOSO');
+    this._renderParams([]);
+    this.drawLoss();
+    this.setProblem(this.problem);
+    this._log('Reset completo.');
+  },
+
+  // ── Decision map via Python grid ─────────────────────
+  async _updateDecisionMap() {
+    if (!this.loaded || !this._params) return;
+    try {
+      const res = parseInt(document.getElementById('qnnp-map-canvas')?.offsetWidth > 200 ? 28 : 22);
+      const xs = [], ys = [];
+      for (let gi = 0; gi < res; gi++) {
+        for (let gj = 0; gj < res; gj++) {
+          xs.push((gi / res) * 2 - 1 + (1/res));
+          ys.push(1 - (gj / res) * 2 - (1/res));
+        }
+      }
+      await this.pyodide.runPythonAsync(`
+_grid_x0 = ${JSON.stringify(xs)}
+_grid_x1 = ${JSON.stringify(ys)}
+`);
+      const probs = await this.pyodide.runPythonAsync(
+        'predict_grid(_params, _circuit_fn, _grid_x0, _grid_x1)'
+      );
+      this.drawDecisionMap(probs.toJs(), res);
+    } catch(e) {
+      this._log('Mapa de decisión error: ' + e.message);
+    }
+  },
+
+  // ── Send final state to UV ────────────────────────────
+  async sendStateToUV() {
+    if (!this.loaded) { Q.toast('Carga PennyLane primero', 'wa'); return; }
+    try {
+      await this.pyodide.runPythonAsync(`
+# Get final state vector from circuit on zero input
+_sv_circuit = build_circuit(${this.nQubits}, ${this.nLayers}, '${this.ansatz}')
+`);
+      // Run circuit on (0,0) input with current params → get state vector
+      const svResult = await this.pyodide.runPythonAsync(`
+dev_sv = qml.device('default.qubit', wires=${this.nQubits})
+@qml.qnode(dev_sv)
+def _sv_node(params):
+    for i in range(${this.nQubits}):
+        qml.RY(0.0, wires=i)
+        qml.RZ(0.0, wires=i)
+    if '${this.ansatz}' == 'strongly_entangling':
+        qml.StronglyEntanglingLayers(params, wires=range(${this.nQubits}))
+    elif '${this.ansatz}' == 'basic_entangler':
+        qml.BasicEntanglerLayers(params, wires=range(${this.nQubits}))
+    return qml.state()
+sv = _sv_node(_params)
+[[float(v.real), float(v.imag)] for v in sv]
+`);
+      const sv = svResult.toJs();
+      // Inject into Q.S
+      const n = this.nQubits;
+      Q.C.n = n; Q.S = new QSim(n);
+      document.getElementById('sl-q').value = n;
+      document.getElementById('qb').textContent = `${n} qubit${n>1?'s':''}`;
+      sv.forEach((pair, i) => {
+        Q.S.state[i] = new C(pair[0], pair[1]);
+      });
+      UV.syncFromSim();
+      Q.setMode(4); // open UV
+      Q.toast('Estado cuántico PennyLane → Quantum Universe', 'ok');
+    } catch(e) {
+      Q.toast('Error al enviar estado: ' + e.message.slice(0,60), 'er');
+    }
+  },
+
+  // ── Export params ─────────────────────────────────────
+  exportParams() {
+    if (!this._params || !this._params.length) { Q.toast('Entrena primero', 'wa'); return; }
+    const d = {
+      source: 'QNNP-PennyLane',
+      nQubits: this.nQubits, nLayers: this.nLayers,
+      ansatz: this.ansatz, optimizer: this.optimizer,
+      finalLoss: this.lossHistory[this.lossHistory.length-1],
+      finalAcc: this.accHistory[this.accHistory.length-1],
+      params: Array.from(this._params),
+    };
+    const blob = new Blob([JSON.stringify(d, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'pennylane_params.json'; a.click();
+    Q.toast('Parámetros exportados', 'ok');
+  },
+
+  // ── Drawing helpers ───────────────────────────────────
+  _getCanvas(id) {
+    const el = document.getElementById(id); if (!el) return {ctx:null,W:0,H:0};
+    const W = el.offsetWidth || el.width || 200, H = el.height || 170;
+    el.width = W; el.height = H;
+    return {ctx: el.getContext('2d'), W, H, el};
+  },
+
+  drawData() {
+    const {ctx, W, H} = this._getCanvas('qnnp-data-canvas');
+    if (!ctx) return;
+    const dm = !document.body.classList.contains('lm');
+    ctx.fillStyle = dm ? '#060910' : '#f0f3fc'; ctx.fillRect(0,0,W,H);
+    // Grid
+    ctx.strokeStyle = dm ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.06)'; ctx.lineWidth = 1;
+    for (let i = 1; i < 4; i++) {
+      ctx.beginPath(); ctx.moveTo(W*i/4, 0); ctx.lineTo(W*i/4, H); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, H*i/4); ctx.lineTo(W, H*i/4); ctx.stroke();
+    }
+    ctx.strokeStyle = dm ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.18)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+    const pad = 16;
+    const toX = v => (v+1)/2*(W-2*pad)+pad;
+    const toY = v => (1-(v+1)/2)*(H-2*pad)+pad;
+    this.data.forEach(pt => {
+      const px = toX(pt.x0), py = toY(pt.x1);
+      if (pt.y === 0) {
+        ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2);
+        ctx.fillStyle = 'rgba(34,211,238,.88)'; ctx.fill();
+        ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 1.5; ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.moveTo(px,py-8); ctx.lineTo(px+7,py); ctx.lineTo(px,py+8); ctx.lineTo(px-7,py); ctx.closePath();
+        ctx.fillStyle = 'rgba(251,77,135,.88)'; ctx.fill();
+        ctx.strokeStyle = '#fb4d87'; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+    });
+    ctx.font = '9px monospace'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(34,211,238,.9)'; ctx.beginPath(); ctx.arc(12,H-12,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = dm ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.45)'; ctx.fillText('Clase 0',19,H-12);
+    ctx.fillStyle = 'rgba(251,77,135,.9)';
+    ctx.beginPath(); ctx.moveTo(44,H-17); ctx.lineTo(49,H-12); ctx.lineTo(44,H-7); ctx.lineTo(39,H-12); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = dm ? 'rgba(255,255,255,.45)' : 'rgba(0,0,0,.45)'; ctx.fillText('Clase 1',53,H-12);
+  },
+
+  drawCircuit() {
+    const {ctx, W, H} = this._getCanvas('qnnp-circuit-canvas');
+    if (!ctx) return;
+    const dm = !document.body.classList.contains('lm');
+    const n = this.nQubits, L = this.nLayers;
+    ctx.fillStyle = dm ? '#060910' : '#f0f3fc'; ctx.fillRect(0,0,W,H);
+    const rowH = H/n, colW = W/(L+2);
+    const colors = ['#22d3ee','#c084fc','#fb4d87','#4ade80','#fbbf24','#a78bfa'];
+    for (let q = 0; q < n; q++) {
+      const y = (q+.5)*rowH;
+      ctx.strokeStyle = dm ? 'rgba(120,140,200,.25)' : 'rgba(80,100,180,.3)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(28,y); ctx.lineTo(W-8,y); ctx.stroke();
+      ctx.fillStyle = dm ? '#a855f7' : '#8030d0'; ctx.font = 'bold 9px monospace';
+      ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+      ctx.fillText('q'+q, 24, y); ctx.textAlign = 'left';
+    }
+    // Encoding block
+    for (let q = 0; q < n; q++) {
+      const y = (q+.5)*rowH, x = colW*.6, bh = Math.min(rowH*.72,20), bw = 26;
+      ctx.fillStyle = 'rgba(0,180,255,.1)'; ctx.strokeStyle = 'rgba(0,220,255,.55)'; ctx.lineWidth = 1;
+      if (ctx.roundRect) ctx.beginPath(), ctx.roundRect(x-bw/2,y-bh/2,bw,bh,3), ctx.fill(), ctx.stroke();
+      else { ctx.fillRect(x-bw/2,y-bh/2,bw,bh); ctx.strokeRect(x-bw/2,y-bh/2,bw,bh); }
+      ctx.fillStyle = '#22d3ee'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('Enc', x, y); ctx.textAlign = 'left';
+    }
+    // Variational layers
+    for (let l = 0; l < L; l++) {
+      const cx = (l+1.5)*colW+colW*.1, col = colors[l % colors.length];
+      for (let q = 0; q < n; q++) {
+        const y = (q+.5)*rowH, bh = Math.min(rowH*.72,20), bw = 24;
+        ctx.fillStyle = col+'22'; ctx.strokeStyle = col+'cc'; ctx.lineWidth = 1;
+        if (ctx.roundRect) ctx.beginPath(), ctx.roundRect(cx-bw/2,y-bh/2,bw,bh,3), ctx.fill(), ctx.stroke();
+        else { ctx.fillRect(cx-bw/2,y-bh/2,bw,bh); ctx.strokeRect(cx-bw/2,y-bh/2,bw,bh); }
+        ctx.fillStyle = col; ctx.font = 'bold 7px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('Ry', cx, y-3); ctx.font = '6px monospace'; ctx.fillText('θ', cx, y+4); ctx.textAlign = 'left';
+      }
+      if (n > 1) {
+        ctx.strokeStyle = dm ? 'rgba(192,132,252,.45)' : 'rgba(140,80,220,.55)'; ctx.lineWidth = 1.4;
+        for (let q = 0; q < n-1; q++) {
+          const y0=(q+.5)*rowH, y1=(q+1.5)*rowH, ex=cx+colW*.3;
+          ctx.beginPath(); ctx.moveTo(ex,y0); ctx.lineTo(ex,y1); ctx.stroke();
+          ctx.beginPath(); ctx.arc(ex,y0,3,0,Math.PI*2);
+          ctx.fillStyle = dm ? 'rgba(192,132,252,.7)' : 'rgba(140,80,220,.7)'; ctx.fill();
+          ctx.beginPath(); ctx.arc(ex,y1,4,0,Math.PI*2); ctx.strokeStyle = dm ? 'rgba(192,132,252,.6)' : 'rgba(140,80,220,.6)'; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(ex-4,y1); ctx.lineTo(ex+4,y1); ctx.moveTo(ex,y1-4); ctx.lineTo(ex,y1+4); ctx.stroke();
+        }
+      }
+    }
+    // <Z> measurement
+    const mx = (L+1.4)*colW, my = rowH*.5, bh = Math.min(rowH*.72,20), bw = 24;
+    ctx.fillStyle = 'rgba(255,170,0,.1)'; ctx.strokeStyle = 'rgba(255,170,0,.65)'; ctx.lineWidth = 1;
+    if (ctx.roundRect) ctx.beginPath(), ctx.roundRect(mx-bw/2,my-bh/2,bw,bh,3), ctx.fill(), ctx.stroke();
+    else { ctx.fillRect(mx-bw/2,my-bh/2,bw,bh); ctx.strokeRect(mx-bw/2,my-bh/2,bw,bh); }
+    ctx.fillStyle = '#fbbf24'; ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('⟨Z⟩', mx, my); ctx.textAlign = 'left';
+  },
+
+  drawLoss() {
+    const {ctx, W, H} = this._getCanvas('qnnp-loss-canvas');
+    if (!ctx) return;
+    const dm = !document.body.classList.contains('lm');
+    ctx.fillStyle = dm ? '#060910' : '#f0f3fc'; ctx.fillRect(0,0,W,H);
+    if (this.lossHistory.length < 2) {
+      ctx.fillStyle = 'rgba(120,100,200,.3)'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('Curva de pérdida aparecerá aquí', W/2, H/2); ctx.textAlign = 'left'; return;
+    }
+    const pad = 8, iW = W-pad*2, iH = H-pad*2;
+    const maxL = Math.max(...this.lossHistory, .01);
+    const toX = i => (i/(this.lossHistory.length-1))*iW+pad;
+    const toY = v => iH-(v/maxL)*iH+pad;
+    ctx.strokeStyle = 'rgba(251,77,135,.9)'; ctx.lineWidth = 1.8; ctx.beginPath();
+    this.lossHistory.forEach((v,i) => i===0 ? ctx.moveTo(toX(i),toY(v)) : ctx.lineTo(toX(i),toY(v)));
+    ctx.stroke();
+    if (this.accHistory.length > 1) {
+      ctx.strokeStyle = 'rgba(74,222,128,.7)'; ctx.lineWidth = 1.5; ctx.setLineDash([3,3]); ctx.beginPath();
+      this.accHistory.forEach((v,i) => i===0 ? ctx.moveTo(toX(i),toY(v*maxL)) : ctx.lineTo(toX(i),toY(v*maxL)));
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    const lastL = this.lossHistory[this.lossHistory.length-1];
+    const lastA = this.accHistory[this.accHistory.length-1];
+    ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(251,77,135,.8)';
+    ctx.fillText(`L=${lastL.toFixed(4)}`, pad+2, pad+10);
+    if (lastA != null) { ctx.fillStyle = 'rgba(74,222,128,.8)'; ctx.fillText(`Acc=${Math.round(lastA*100)}%`, W-44, pad+10); }
+  },
+
+  drawDecisionMap(probGrid, res) {
+    const {ctx, W, H} = this._getCanvas('qnnp-map-canvas');
+    if (!ctx || !probGrid) return;
+    const cw = W/res, ch = H/res;
+    for (let gi = 0; gi < res; gi++) {
+      for (let gj = 0; gj < res; gj++) {
+        const prob = probGrid[gi*res + gj];
+        const r = Math.round(34+(251-34)*prob), g2 = Math.round(211+(77-211)*prob), b = Math.round(238+(135-238)*prob);
+        ctx.fillStyle = `rgba(${r},${g2},${b},${0.32+Math.abs(prob-.5)*0.65})`;
+        ctx.fillRect(gi*cw, gj*ch, cw+1, ch+1);
+      }
+    }
+    // Overlay data points
+    const pad = 16;
+    const toX = v => (v+1)/2*(W-2*pad)+pad;
+    const toY = v => (1-(v+1)/2)*(H-2*pad)+pad;
+    this.data.forEach(pt => {
+      const px = toX(pt.x0), py = toY(pt.x1);
+      if (pt.y === 0) {
+        ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2);
+        ctx.fillStyle = 'rgba(34,211,238,.9)'; ctx.fill();
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.moveTo(px,py-7); ctx.lineTo(px+6,py); ctx.lineTo(px,py+7); ctx.lineTo(px-6,py); ctx.closePath();
+        ctx.fillStyle = 'rgba(251,77,135,.9)'; ctx.fill();
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+    });
+    const dm = !document.body.classList.contains('lm');
+    ctx.font = '8px monospace'; ctx.fillStyle = dm ? 'rgba(255,255,255,.4)' : 'rgba(0,0,0,.35)';
+    ctx.fillText('PennyLane · Frontera de decisión', 4, H-5);
+  },
+
+  // ── UI helpers ────────────────────────────────────────
+  _updateStats(epoch, loss, acc) {
+    const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    el('qnnp-epoch', epoch);
+    el('qnnp-loss', loss != null ? loss.toFixed(4) : '—');
+    el('qnnp-acc',  acc  != null ? Math.round(acc*100)+'%' : '—');
+  },
+
+  _setBadge(cls, text) {
+    const el = document.getElementById('qnnp-status-badge'); if (!el) return;
+    el.className = 'qnn-badge ' + cls; el.textContent = text;
+  },
+
+  _renderParams(params) {
+    const el = document.getElementById('qnnp-params-list'); if (!el) return;
+    if (!params || !params.length) {
+      el.innerHTML = '<div style="font-family:var(--mono);font-size:.58rem;color:var(--text3);padding:4px">Sin parámetros todavía</div>';
+      return;
+    }
+    const n = this.nQubits;
+    el.innerHTML = params.slice(0, 24).map((p, i) => {
+      const l = Math.floor(i/n)+1, q = i%n;
+      return `<div class="qnn-param-row">
+        <span class="pname">θ${i+1}</span>
+        <span style="font-family:var(--mono);font-size:.52rem;color:var(--text3)">L${l}q${q}</span>
+        <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin:0 5px">
+          <div style="width:${((p+Math.PI)/(2*Math.PI)*100).toFixed(1)}%;height:100%;background:var(--av);border-radius:2px"></div>
+        </div>
+        <span class="pval">${p.toFixed(3)}</span>
+      </div>`;
+    }).join('');
+    if (params.length > 24) {
+      el.innerHTML += `<div style="font-family:var(--mono);font-size:.55rem;color:var(--text3);padding:3px 0">...y ${params.length-24} parámetros más</div>`;
+    }
+  },
+
+  _log(msg) {
+    const el = document.getElementById('qnnp-console'); if (!el) return;
+    const ts = new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    el.textContent += `[${ts}] ${msg}\n`;
+    el.scrollTop = el.scrollHeight;
+  },
+
+  clearConsole() {
+    const el = document.getElementById('qnnp-console'); if (el) el.textContent = '';
+  },
+
+  // ── Canvas interaction ────────────────────────────────
+  _setupDataCanvas() {
+    const el = document.getElementById('qnnp-data-canvas'); if (!el) return;
+    el.addEventListener('click', e => {
+      const r = el.getBoundingClientRect();
+      const mx = e.clientX-r.left, my = e.clientY-r.top;
+      const W = el.offsetWidth, H = el.offsetHeight, pad = 16;
+      const x0 = ((mx-pad)/(W-2*pad))*2-1;
+      const x1 = 1-((my-pad)/(H-2*pad))*2;
+      if (Math.abs(x0)<=1.1 && Math.abs(x1)<=1.1) {
+        this.data.push({x0:Math.max(-1,Math.min(1,x0)), x1:Math.max(-1,Math.min(1,x1)), y:e.shiftKey?1:0});
+        this.drawData();
+      }
+    });
+    el.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const mx = e.clientX-r.left, my = e.clientY-r.top;
+      const W = el.offsetWidth, H = el.offsetHeight, pad = 16;
+      const x0 = ((mx-pad)/(W-2*pad))*2-1;
+      const x1 = 1-((my-pad)/(H-2*pad))*2;
+      if (Math.abs(x0)<=1.1 && Math.abs(x1)<=1.1) {
+        this.data.push({x0:Math.max(-1,Math.min(1,x0)), x1:Math.max(-1,Math.min(1,x1)), y:1});
+        this.drawData();
+      }
+    });
+  },
+
+  // ── Init ─────────────────────────────────────────────
+  init() {
+    this.setProblem('xor');
+    this._setupDataCanvas();
+    this.drawCircuit();
+    this._log('QNN-Pro listo. Pulsa "Cargar PennyLane + Pyodide" para iniciar.');
+  },
+
+  activate() {
+    this.drawData();
+    this.drawCircuit();
+    this.drawLoss();
+  },
+}
+
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
