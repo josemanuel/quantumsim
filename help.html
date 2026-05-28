@@ -624,6 +624,7 @@ kbd {
     <a href="#mode-learn"><span class="icon">🎓</span>Modo Guiado</a>
     <a href="#mode-challenge"><span class="icon">🏆</span>Retos</a>
     <a href="#mode-state"><span class="icon">📐</span>Inspector de Estado</a>
+    <a href="#qnn"><span class="icon">🧠</span>QNN — Red Neuronal Cuántica</a>
   </div>
 
   <div class="nav-section">
@@ -639,6 +640,7 @@ kbd {
     <a href="#math"><span class="icon">∑</span>Motor matemático</a>
     <a href="#glossary"><span class="icon">📖</span>Glosario</a>
     <a href="#faq"><span class="icon">❓</span>FAQ</a>
+    <a href="#qnn"><span class="icon">🧠</span>QNN</a>
   </div>
 </nav>
 
@@ -654,6 +656,7 @@ kbd {
     <span class="badge c">Simulación Real 2ⁿ</span>
     <span class="badge m">Hasta 5 Qubits</span>
     <span class="badge g">Open Source</span>
+    <span class="badge v">QNN · VQC</span>
   </div>
 </div>
 
@@ -684,6 +687,7 @@ kbd {
     <li><a href="#math"><span class="toc-num">21</span>Motor matemático</a></li>
     <li><a href="#glossary"><span class="toc-num">22</span>Glosario</a></li>
     <li><a href="#faq"><span class="toc-num">23</span>FAQ</a></li>
+    <li><a href="#qnn"><span class="toc-num">24</span>Redes Neuronales Cuánticas (QNN)</a></li>
   </ul>
 </div>
 
@@ -720,6 +724,7 @@ kbd {
     <li><p>Cálculo de <strong>entropía de Von Neumann</strong>, pureza del estado y detección de entrelazamiento.</p></li>
     <li><p>Historial de mediciones con estadísticas, exportación CSV y <strong>hasta 1000 shots simulados</strong>.</p></li>
     <li><p>Persistencia automática en <strong>localStorage</strong>: el circuito se guarda al cerrar la pestaña.</p></li>
+    <li><p>Módulo <strong>QNN (Red Neuronal Cuántica)</strong>: clasificador cuántico variacional con parameter shift rule, mapa de decisión y 4 problemas de ejemplo.</p></li>
   </ul>
 </section>
 
@@ -1488,6 +1493,140 @@ Pureza del estado reducido de q0 (traza parcial):
     <div class="card-title">¿Puedo usar el simulador sin conexión a internet?</div>
     <p style="margin:0;font-size:.8rem">Sí, completamente. Todo el código está en el archivo HTML. Funciona 100% offline. El localStorage tampoco requiere conexión.</p>
   </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="qnn">
+  <h2>24 · Redes Neuronales Cuánticas (QNN)</h2>
+
+  <p>La pestaña <strong>🧠 QNN</strong> implementa un <span class="hl">Variational Quantum Classifier</span> (VQC): un circuito cuántico parametrizado que aprende a clasificar datos ajustando sus ángulos de rotación mediante descenso de gradiente. Es el punto de entrada más directo al campo del <span class="hc">Machine Learning Cuántico</span>.</p>
+
+  <div class="cols">
+    <div class="card">
+      <div class="card-title">🧠 ¿Qué aprende?</div>
+      <p style="margin:0;font-size:.78rem">El modelo aprende a separar puntos de datos en dos clases ajustando los parámetros θ del circuito ansatz. El resultado se visualiza como un mapa de decisión continuo sobre todo el espacio de entrada.</p>
+    </div>
+    <div class="card c">
+      <div class="card-title">⚛ ¿Cómo funciona?</div>
+      <p style="margin:0;font-size:.78rem">Los datos se codifican en el estado cuántico, el ansatz los transforma con puertas parametrizadas, y el valor esperado <span class="hc">⟨Z⟩</span> del qubit 0 determina la clase predicha.</p>
+    </div>
+  </div>
+
+  <h3>Pipeline completo del clasificador</h3>
+
+  <div class="flow" style="flex-wrap:wrap;gap:4px">
+    <div class="flow-box" style="border-color:rgba(34,211,238,.5);color:var(--ac)">Datos (x₀,x₁)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:rgba(74,222,128,.4);color:var(--ag)">Encoding<br><span style="font-size:.6rem">Ry(πx₀)Rz(πx₁)</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:rgba(168,85,247,.5);color:var(--av)">Ansatz<br><span style="font-size:.6rem">L capas Ry(θ)+CNOT</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:rgba(251,191,36,.5);color:var(--ao)">Medición<br><span style="font-size:.6rem">⟨Z⟩ en q0</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:rgba(251,77,135,.5);color:var(--am)">Sigmoid<br><span style="font-size:.6rem">→ P(clase 1)</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Clase 0 / 1</div>
+  </div>
+
+  <h3>Las cuatro secciones del panel QNN</h3>
+
+  <div class="card">
+    <div class="card-title">① Datos de entrenamiento</div>
+    <p style="margin:0;font-size:.78rem">Elige uno de los 4 problemas precargados en el selector, o añade tus propios puntos haciendo <strong>clic</strong> (clase 0, <span class="hc">●</span>) o <strong>Shift+clic</strong> (clase 1, <span class="hm">◆</span>) sobre el canvas. El clic derecho también añade clase 1. Los puntos viven en el cuadrado <span class="hl">[-1,1]²</span>.</p>
+  </div>
+
+  <div class="card c">
+    <div class="card-title">② Arquitectura del Ansatz</div>
+    <p style="margin:0;font-size:.78rem">Controla el número de <strong>capas</strong> (1–4) y <strong>qubits</strong> (2–4). Cada capa consiste en una rotación <span class="hl">Ry(θ)</span> por qubit seguida de una capa de entrelazamiento CNOT en anillo. El diagrama del circuito se actualiza en tiempo real.</p>
+  </div>
+
+  <div class="card m">
+    <div class="card-title">③ Entrenamiento</div>
+    <p style="margin:0;font-size:.78rem">Ajusta el <strong>learning rate</strong> (LR) y el número de <strong>épocas</strong>. Pulsa <span class="hl">▶ Entrenar</span> para iniciar. La curva de <span class="hm">pérdida</span> (magenta) y <span class="hg">precisión</span> (verde) se actualizan en tiempo real. Puedes parar en cualquier momento con <strong>■ Parar</strong>.</p>
+  </div>
+
+  <div class="card g">
+    <div class="card-title">④ Mapa de decisión</div>
+    <p style="margin:0;font-size:.78rem">Visualiza la frontera de decisión aprendida. El fondo <span class="hc">cian</span> indica zona de clase 0, el <span class="hm">magenta</span> zona de clase 1. La intensidad refleja la confianza del modelo. Los puntos de entrenamiento se superponen con borde <strong>blanco</strong> si están bien clasificados o <strong>rojo</strong> si están mal.</p>
+  </div>
+
+  <h3>Problemas de ejemplo</h3>
+  <table class="gate-table">
+    <thead><tr><th>Problema</th><th>Descripción</th><th>Dificultad</th><th>Capas recomendadas</th></tr></thead>
+    <tbody>
+      <tr><td><strong>XOR</strong></td><td>Los puntos de la misma clase están en diagonales opuestas. No es linealmente separable — requiere interferencia cuántica para aprender la frontera.</td><td>Media</td><td>2–3</td></tr>
+      <tr><td><strong>Círculo</strong></td><td>Clase 0 en el centro, clase 1 en el exterior. La frontera es circular — prueba el poder expresivo del ansatz.</td><td>Media</td><td>2–3</td></tr>
+      <tr><td><strong>Lineal</strong></td><td>Separación lineal simple. Fácil de aprender, útil para verificar que el entrenamiento funciona correctamente.</td><td>Fácil</td><td>1–2</td></tr>
+      <tr><td><strong>Espiral</strong></td><td>Las clases forman espirales entrelazadas. El más difícil: requiere un ansatz con más capas y qubits para capturar la estructura.</td><td>Difícil</td><td>3–4</td></tr>
+    </tbody>
+  </table>
+
+  <span class="ex-launch v" onclick="launchExample('bell')" style="display:none"></span>
+  <div class="ex-launch-group">
+    <span class="ex-launch g" onclick="document.getElementById('qnn-problem')?.dispatchEvent(new Event('change'));window.open('index.html','qsim_main')" title="Abrir el simulador en la pestaña QNN">🧠 Abrir módulo QNN en el simulador</span>
+  </div>
+
+  <h3>La Parameter Shift Rule</h3>
+  <p>El gradiente de cada parámetro θᵢ se calcula de forma <strong>exacta</strong> (no aproximada) usando la regla de desplazamiento de parámetros, estándar en PennyLane y Qiskit:</p>
+
+  <div class="formula">∂L/∂θᵢ = ½ · [L(θᵢ + π/2) − L(θᵢ − π/2)]
+
+Donde L es la función de pérdida (binary cross-entropy):
+  L = −[y·log(p) + (1−y)·log(1−p)]
+
+Y la predicción p se obtiene como:
+  p = sigmoid(3·⟨Z⟩)   con   ⟨Z⟩ ∈ [−1, 1]</div>
+
+  <p>Esto implica que para calcular el gradiente de N parámetros se necesitan <span class="hm">2N evaluaciones del circuito</span> por época — una limitación real de los algoritmos cuánticos variacionales en hardware real.</p>
+
+  <h3>Encoding de datos</h3>
+  <p>Cada punto de datos <span class="hc">(x₀, x₁)</span> con <span class="hc">x₀, x₁ ∈ [−1, 1]</span> se codifica en el estado cuántico aplicando a cada qubit:</p>
+
+  <div class="formula">Ry(π·x₀) · Rz(π·x₁) · |0⟩</div>
+
+  <p>Esto mapea el espacio de entrada 2D al espacio de Hilbert de dimensión 2ⁿ. Con n=2 qubits el espacio de características tiene dimensión 4; con n=4 tiene dimensión 16 — potencialmente más expresivo que un clasificador clásico de entrada 2D.</p>
+
+  <h3>Ansatz variacional</h3>
+  <p>El ansatz tiene <span class="hl">L capas</span>, cada una compuesta por:</p>
+  <ul class="steps">
+    <li><p><strong>Capa de rotación:</strong> una puerta <span class="hl">Ry(θ_{l,q})</span> por cada qubit q en la capa l. Estos θ son los parámetros entrenables.</p></li>
+    <li><p><strong>Capa de entrelazamiento:</strong> CNOTs en anillo: q0→q1, q1→q2, ..., qₙ₋₁→q0. Crea correlaciones entre qubits que aumentan la expresividad del modelo.</p></li>
+  </ul>
+
+  <p>El número total de parámetros es <span class="hc">L × n</span>. Con 2 capas y 2 qubits: 4 parámetros. Con 4 capas y 4 qubits: 16 parámetros.</p>
+
+  <div class="tip">
+    <strong>💡 Consejo de uso:</strong> Empieza con XOR, 2 capas, 2 qubits y LR=0.30. Si la pérdida no baja después de 40 épocas, prueba a aumentar las capas o el LR. El mapa de decisión te muestra visualmente si el modelo está aprendiendo la frontera correcta.
+  </div>
+
+  <div class="warn">
+    <strong>⚠ Limitación conocida:</strong> Con la espiral y 2 qubits el modelo puede quedarse en un mínimo local. Prueba con 3–4 qubits y 3–4 capas, o haz Reset varias veces para cambiar la inicialización aleatoria.
+  </div>
+
+  <div class="note">
+    <strong>📌 Nota sobre escalabilidad:</strong> Este simulador usa hasta 4 qubits (16 estados). En hardware real, el interés de las QNN reside en problemas donde el espacio de Hilbert 2ⁿ supere lo que un ordenador clásico puede manejar eficientemente — típicamente n ≥ 50 qubits. En este simulador el valor es didáctico: entender el mecanismo, no superar al ML clásico.
+  </div>
+
+  <h3>Conceptos clave del ML Cuántico</h3>
+  <div class="cols">
+    <div class="card">
+      <div class="card-title">Barren Plateau</div>
+      <p style="margin:0;font-size:.78rem">A medida que el circuito crece en profundidad y qubits, los gradientes tienden a cero exponencialmente. Es el principal obstáculo del entrenamiento de QNN profundas en la práctica.</p>
+    </div>
+    <div class="card c">
+      <div class="card-title">Expresividad</div>
+      <p style="margin:0;font-size:.78rem">Capacidad del ansatz para aproximar cualquier función unitaria. Más capas = más expresivo, pero también más propenso a barren plateaus y overfitting.</p>
+    </div>
+    <div class="card m">
+      <div class="card-title">Ventaja Cuántica en ML</div>
+      <p style="margin:0;font-size:.78rem">Aún no demostrada de forma concluyente para datos clásicos. Las QNN son prometedoras para datos cuánticos (resultados de mediciones de otro QPU) o kernels cuánticos.</p>
+    </div>
+    <div class="card g">
+      <div class="card-title">Hardware Noise</div>
+      <p style="margin:0;font-size:.78rem">En QPUs reales, el ruido y la decoherencia degradan los gradientes. Este simulador usa qubits perfectos — en hardware real necesitarías técnicas de mitigación de errores.</p>
+    </div>
+  </div>
+
 </section>
 
 <!-- ── FOOTER ───────────────────────────────────────────── -->
