@@ -11,7 +11,7 @@
   --panel:rgba(16,20,38,0.97);--glass:rgba(140,70,255,0.09);--glassc:rgba(0,220,255,0.07);
   --border:rgba(140,70,255,0.28);--borderc:rgba(0,220,255,0.28);
   --av:#c084fc;--ac:#22d3ee;--am:#fb4d87;--ag:#4ade80;--ao:#fbbf24;
-  --text:#eef2ff;--text2:#8899cc;--text3:#4a5a80;
+  --text:#eef2ff;--text2:#a0b0d8;--text3:#6a7fa8;
   --gv:0 0 20px rgba(192,132,252,.5);--gc:0 0 20px rgba(34,211,238,.5);
   --gm:0 0 20px rgba(251,77,135,.5);--gg:0 0 20px rgba(74,222,128,.5);
   --r:10px;--rs:6px;--mono:'Courier New',monospace;--ui:'Trebuchet MS','Segoe UI',sans-serif;
@@ -32,9 +32,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     radial-gradient(ellipse 50% 35% at 80% 80%,rgba(34,211,238,.10) 0,transparent 70%),
     radial-gradient(ellipse 40% 30% at 60% 30%,rgba(251,77,135,.08) 0,transparent 70%)}
 body.lm::before{
-  background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(192,132,252,.08) 0,transparent 70%),
-    radial-gradient(ellipse 50% 35% at 80% 80%,rgba(34,211,238,.07) 0,transparent 70%),
-    radial-gradient(ellipse 40% 30% at 60% 30%,rgba(251,77,135,.06) 0,transparent 70%)}
+  background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(192,132,252,.14) 0,transparent 70%),
+    radial-gradient(ellipse 50% 35% at 80% 80%,rgba(34,211,238,.10) 0,transparent 70%),
+    radial-gradient(ellipse 40% 30% at 60% 30%,rgba(251,77,135,.09) 0,transparent 70%)}
 #app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
 
 /* HEADER */
@@ -111,7 +111,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   background:var(--av);cursor:pointer;box-shadow:var(--gv)}
 .qb{font-family:var(--mono);font-size:.65rem;padding:2px 9px;border-radius:20px;
   background:rgba(168,85,247,.12);border:1px solid var(--border);color:var(--av)}
-.step-info{font-family:var(--mono);font-size:.6rem;color:var(--text2);margin-left:auto;white-space:nowrap}
+.step-info{font-family:var(--mono);font-size:.68rem;color:var(--text);margin-left:auto;white-space:nowrap}
 #cw{flex:1;overflow:auto;padding:18px 14px;position:relative;background:var(--bg);cursor:crosshair}
 #cc{display:block}
 
@@ -178,7 +178,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 .info-card .hc{color:var(--ac);font-family:var(--mono)}
 .mat-box{font-family:var(--mono);font-size:.6rem;color:var(--text2);background:rgba(0,0,0,.25);
   padding:8px 10px;border-radius:var(--rs);border:1px solid var(--border);margin-top:8px;line-height:2;white-space:pre;overflow-x:auto}
-body.lm .mat-box{background:rgba(0,0,0,.05)}
+body.lm .mat-box{background:rgba(255,255,255,.03)}
 
 /* Learn steps */
 .ls{padding:13px;display:none}
@@ -210,12 +210,12 @@ body.lm .mat-box{background:rgba(0,0,0,.05)}
 .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border)}
 .stat-cell{background:var(--bg2);padding:6px 10px;text-align:center}
 .stat-cell .sv2{font-family:var(--mono);font-size:.8rem;color:var(--ac)}
-.stat-cell .sl2{font-family:var(--mono);font-size:.52rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.stat-cell .sl2{font-family:var(--mono);font-size:.6rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
 
 /* Matrix view */
 .matrix-view{font-family:var(--mono);font-size:.58rem;color:var(--text2);background:rgba(0,0,0,.2);
   border:1px solid var(--border);border-radius:var(--rs);padding:8px;overflow-x:auto;white-space:pre;line-height:1.8}
-body.lm .matrix-view{background:rgba(0,0,0,.04)}
+body.lm .matrix-view{background:rgba(255,255,255,.03)}
 
 /* MODALS */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(5px);z-index:200;
@@ -395,6 +395,52 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
 <div id="toasts"></div>
 
 <!-- MODALS -->
+<div class="ov" id="mo-about">
+ <div class="modal" style="max-width:500px">
+  <div class="mhdr"><h2>ℹ Acerca de</h2><button class="mclose" onclick="Q.cm('mo-about')">✕</button></div>
+  <div style="text-align:center;padding:10px 0 18px">
+   <div style="font-size:2.2rem;margin-bottom:8px">⚛</div>
+   <div style="font-family:var(--mono);font-size:1.1rem;color:var(--av);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">Quantum Simulator</div>
+   <div style="font-family:var(--mono);font-size:.65rem;color:var(--text2);letter-spacing:2px;margin-bottom:18px">Simulador Cuántico Educativo</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+   <div style="padding:12px;border:1px solid var(--border);border-radius:var(--r);background:var(--glass)">
+    <div style="font-family:var(--mono);font-size:.56rem;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px">Autor</div>
+    <div style="font-family:var(--mono);font-size:.72rem;color:var(--av)">José Manuel</div>
+    <div style="font-family:var(--mono);font-size:.72rem;color:var(--av)">Fernández Carreira</div>
+   </div>
+   <div style="padding:12px;border:1px solid var(--border);border-radius:var(--r);background:var(--glass)">
+    <div style="font-family:var(--mono);font-size:.56rem;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px">Versión</div>
+    <div style="font-family:var(--mono);font-size:.72rem;color:var(--ac)">v2.0.0</div>
+    <div style="font-family:var(--mono);font-size:.58rem;color:var(--text2);margin-top:2px">Mayo 2025</div>
+   </div>
+  </div>
+  <div style="padding:12px;border:1px solid var(--border);border-radius:var(--r);background:var(--glass);margin-bottom:10px">
+   <div style="font-family:var(--mono);font-size:.56rem;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Tecnologías</div>
+   <div style="display:flex;flex-wrap:wrap;gap:6px">
+    <span style="font-family:var(--mono);font-size:.6rem;padding:3px 9px;border-radius:20px;border:1px solid rgba(168,85,247,.4);color:var(--av);background:rgba(168,85,247,.08)">HTML5 Vanilla</span>
+    <span style="font-family:var(--mono);font-size:.6rem;padding:3px 9px;border-radius:20px;border:1px solid rgba(0,220,255,.35);color:var(--ac);background:rgba(0,220,255,.08)">CSS3</span>
+    <span style="font-family:var(--mono);font-size:.6rem;padding:3px 9px;border-radius:20px;border:1px solid rgba(0,220,255,.35);color:var(--ac);background:rgba(0,220,255,.08)">Canvas 2D</span>
+    <span style="font-family:var(--mono);font-size:.6rem;padding:3px 9px;border-radius:20px;border:1px solid rgba(74,222,128,.35);color:var(--ag);background:rgba(74,222,128,.08)">JavaScript ES2022</span>
+    <span style="font-family:var(--mono);font-size:.6rem;padding:3px 9px;border-radius:20px;border:1px solid rgba(251,191,36,.35);color:var(--ao);background:rgba(251,191,36,.08)">WebAssembly</span>
+    <span style="font-family:var(--mono);font-size:.6rem;padding:3px 9px;border-radius:20px;border:1px solid rgba(251,77,135,.35);color:var(--am);background:rgba(251,77,135,.08)">Sin dependencias externas</span>
+   </div>
+  </div>
+  <div style="padding:12px;border:1px solid var(--border);border-radius:var(--r);background:var(--glass);margin-bottom:14px">
+   <div style="font-family:var(--mono);font-size:.56rem;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Características</div>
+   <div style="font-size:.7rem;color:var(--text2);line-height:1.9">
+    Simulación real 2ⁿ · Hasta 5 qubits · 20 puertas cuánticas<br>
+    Esfera de Bloch · Quantum Universe 3D · QASM 2.0<br>
+    QNN variacional · Modos Libre / Guiado / Retos<br>
+    Funciona 100% offline · GitHub Pages compatible
+   </div>
+  </div>
+  <div style="text-align:center;font-family:var(--mono);font-size:.58rem;color:var(--text3)">
+   Desarrollado con ❤ para la educación cuántica
+  </div>
+ </div>
+</div>
+
 <div class="ov" id="mo-exp">
  <div class="modal" style="max-width:680px">
   <div class="mhdr"><h2>📚 Fundamentos Cuánticos</h2><button class="mclose" onclick="Q.cm('mo-exp')">✕</button></div>
@@ -520,8 +566,9 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   <input type="file" id="imp-qasm" accept=".qasm,.txt" style="display:none" onchange="Q.importQASM(event)">
   <button class="btn g" onclick="Q.saveSlot()" title="Guardar circuito actual en el historial">💾 <span>Guardar</span></button>
   <button class="btn" onclick="Q.openHist()" title="Ver historial de circuitos guardados">📂 <span>Historial</span></button>
-  <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Q3D Universe">🌌 <span>Q3D</span></a>
+  <a class="btn" href="q3d.html" target="_blank" style="text-decoration:none" title="Q3D Universe — Visualizador 3D independiente">🌌 <span>Q3D</span></a>
   <a class="btn" href="help.html" target="_blank" style="text-decoration:none" title="Manual de usuario completo (abre en nueva pestaña)">❓ <span>Ayuda</span></a>
+  <button class="btn" onclick="Q.om('mo-about')" title="Acerca del simulador">ℹ <span>Acerca de</span></button>
  </div>
 </header>
 
@@ -539,7 +586,7 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
   <div><div class="sec-title m">Tres Qubits</div><div class="gates-grid" id="gp3"></div></div>
   <div><div class="sec-title g">Medición · Misc</div><div class="gates-grid" id="gp4"></div></div>
   <div style="margin-top:auto;padding-top:10px;border-top:1px solid var(--border)">
-   <div style="font-family:var(--mono);font-size:.56rem;color:var(--text3);line-height:1.8">
+   <div style="font-family:var(--mono);font-size:.64rem;color:var(--text2);line-height:2.0">
     💡 Arrastra o clic → circuito<br>
     🖱 Clic derecho → eliminar<br>
     ⇧+clic → inspector<br>
@@ -610,7 +657,7 @@ body.lm .matrix-view{background:rgba(0,0,0,.04)}
      <button class="btn" onclick="Q.exportHist()" style="font-size:.6rem">↓ CSV</button>
     </div>
    </div>
-   <div class="rsp"><div class="sec-title v">Puerta Seleccionada</div><div id="gate-info"><div style="font-family:var(--mono);font-size:.62rem;color:var(--text3);padding:8px">Haz clic en una puerta del circuito.</div></div></div>
+   <div class="rsp"><div class="sec-title v">Puerta Seleccionada</div><div id="gate-info"><div style="font-family:var(--mono);font-size:.7rem;color:var(--text2);padding:10px;line-height:1.8">Haz clic en una puerta del circuito.</div></div></div>
   </div>
 
   <div id="mode1" style="display:none">
@@ -1189,7 +1236,7 @@ function renderCircuit(canvas,circuit,sim,hiCol=-1,selId=-1,dragId=-1,dragCol=-1
   canvas.width=W;canvas.height=H
   ctx.clearRect(0,0,W,H)
   const dm=!document.body.classList.contains('lm')
-  ctx.fillStyle=dm?'#060910':'#f0f3fc';ctx.fillRect(0,0,W,H)
+  ctx.fillStyle=dm?'#060910':'#0d0a1e';ctx.fillRect(0,0,W,H)
 
   if(hiCol>=0){
     ctx.fillStyle=dm?'rgba(0,220,255,.06)':'rgba(0,220,255,.1)'
@@ -1204,7 +1251,7 @@ function renderCircuit(canvas,circuit,sim,hiCol=-1,selId=-1,dragId=-1,dragCol=-1
     // |0⟩ label
     ctx.fillStyle=dm?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)'
     ctx.fillRect(PL-1,y-8,14,16)
-    ctx.fillStyle=dm?'#334055':'#9aaac0';ctx.font='10px monospace';ctx.textAlign='center'
+    ctx.fillStyle=dm?'#334055':'#8878cc';ctx.font='10px monospace';ctx.textAlign='center'
     ctx.fillText('0',PL+6,y);ctx.textAlign='left'
   }
   for(const op of circuit.ops){
@@ -1318,8 +1365,8 @@ function renderBloch(canvas,sim){
   const dm=!document.body.classList.contains('lm')
   ctx.clearRect(0,0,W,H)
   const bg=ctx.createRadialGradient(cx-R*.3,cy-R*.3,R*.05,cx,cy,R*1.05)
-  bg.addColorStop(0,dm?'#1a1040':'#ede8ff')
-  bg.addColorStop(1,dm?'#060910':'#f0eaff')
+  bg.addColorStop(0,dm?'#1a1040':'#1a0f3a')
+  bg.addColorStop(1,dm?'#060910':'#0a0620')
   ctx.fillStyle=bg;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill()
   ctx.strokeStyle=dm?'rgba(168,85,247,.2)':'rgba(140,80,220,.35)';ctx.lineWidth=1
   ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke()
@@ -3180,7 +3227,7 @@ const QNN = {
     const{ctx,W,H}=this._getCanvas('qnn-data-canvas')
     if(!ctx)return
     const dm=!document.body.classList.contains('lm')
-    ctx.fillStyle=dm?'#060910':'#f0f3fc';ctx.fillRect(0,0,W,H)
+    ctx.fillStyle=dm?'#060910':'#0d0a1e';ctx.fillRect(0,0,W,H)
     // Grid
     ctx.strokeStyle=dm?'rgba(255,255,255,.04)':'rgba(0,0,0,.06)';ctx.lineWidth=1
     for(let i=1;i<4;i++){
@@ -3223,7 +3270,7 @@ const QNN = {
     if(!ctx)return
     const dm=!document.body.classList.contains('lm')
     const n=this.nQubits,L=this.nLayers
-    ctx.fillStyle=dm?'#060910':'#f0f3fc';ctx.fillRect(0,0,W,H)
+    ctx.fillStyle=dm?'#060910':'#0d0a1e';ctx.fillRect(0,0,W,H)
     const rowH=H/n,colW=W/(L+2)
     const totalParams=L*n
     const colors=['#22d3ee','#c084fc','#fb4d87','#4ade80']
@@ -3284,7 +3331,7 @@ const QNN = {
     const{ctx,W,H}=this._getCanvas('qnn-loss-canvas')
     if(!ctx)return
     const dm=!document.body.classList.contains('lm')
-    ctx.fillStyle=dm?'#060910':'#f0f3fc';ctx.fillRect(0,0,W,H)
+    ctx.fillStyle=dm?'#060910':'#0d0a1e';ctx.fillRect(0,0,W,H)
     if(this.lossHistory.length<2)return
     const pad=8,iW=W-pad*2,iH=H-pad*2
     const maxL=Math.max(...this.lossHistory,.01),minL=0
@@ -3721,7 +3768,7 @@ const QNNP = {
   drawData() {
     const {ctx, W, H} = this._gc('qnnp-data-canvas'); if (!ctx) return;
     const dm = !document.body.classList.contains('lm');
-    ctx.fillStyle = dm ? '#060910' : '#f0f3fc'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = dm ? '#060910' : '#0d0a1e'; ctx.fillRect(0,0,W,H);
     ctx.strokeStyle = dm ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.06)'; ctx.lineWidth = 1;
     for (let i=1;i<4;i++){
       ctx.beginPath();ctx.moveTo(W*i/4,0);ctx.lineTo(W*i/4,H);ctx.stroke();
@@ -3754,7 +3801,7 @@ const QNNP = {
   drawCircuit() {
     const {ctx, W, H} = this._gc('qnnp-circuit-canvas'); if (!ctx) return;
     const dm=!document.body.classList.contains('lm'), n=this.nQubits, L=this.nLayers;
-    ctx.fillStyle=dm?'#060910':'#f0f3fc';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=dm?'#060910':'#0d0a1e';ctx.fillRect(0,0,W,H);
     const rowH=H/n, colW=W/(L+2);
     const cols=['#22d3ee','#c084fc','#fb4d87','#4ade80','#fbbf24','#a78bfa'];
     for (let q=0;q<n;q++){
@@ -3805,7 +3852,7 @@ const QNNP = {
   drawLoss() {
     const {ctx,W,H} = this._gc('qnnp-loss-canvas'); if (!ctx) return;
     const dm=!document.body.classList.contains('lm');
-    ctx.fillStyle=dm?'#060910':'#f0f3fc';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=dm?'#060910':'#0d0a1e';ctx.fillRect(0,0,W,H);
     if (this.lossHistory.length < 2) {
       ctx.fillStyle='rgba(120,100,200,.3)';ctx.font='9px monospace';ctx.textAlign='center';
       ctx.fillText('Curva de pérdida',W/2,H/2);ctx.textAlign='left';return;
@@ -3861,7 +3908,7 @@ const QNNP = {
   _clearMap() {
     const {ctx,W,H} = this._gc('qnnp-map-canvas'); if (!ctx) return;
     const dm=!document.body.classList.contains('lm');
-    ctx.fillStyle=dm?'#060910':'#f0f3fc';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=dm?'#060910':'#0d0a1e';ctx.fillRect(0,0,W,H);
     ctx.fillStyle='rgba(120,100,200,.35)';ctx.font='10px monospace';ctx.textAlign='center';
     ctx.fillText('Entrena para ver la frontera de decisión',W/2,H/2);ctx.textAlign='left';
   },
