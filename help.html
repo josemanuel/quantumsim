@@ -18,8 +18,8 @@
   --ag: #39ff8e;
   --ao: #ffaa00;
   --text: #d8e8f8;
-  --text2: #5a7090;
-  --text3: #2a3a55;
+  --text2: #8faabf;
+  --text3: #566a85;
   --mono: 'Courier New', monospace;
   --ui: 'Trebuchet MS', 'Segoe UI', sans-serif;
   --r: 10px;
@@ -94,14 +94,14 @@ nav {
 }
 
 .nav-title { font-family: var(--mono); font-size: .72rem; color: var(--av); letter-spacing: 2px; text-transform: uppercase; line-height: 1.2; }
-.nav-ver   { font-size: .55rem; color: var(--text2); letter-spacing: 1px; }
+.nav-ver   { font-size: .6rem; color: var(--text2); letter-spacing: 1px; }
 
 .nav-section { margin-bottom: 6px; }
 
 .nav-section-label {
   font-family: var(--mono);
-  font-size: .55rem;
-  color: var(--text3);
+  font-size: .62rem;
+  color: #7a90aa;
   text-transform: uppercase;
   letter-spacing: 2px;
   padding: 6px 8px 3px;
@@ -115,7 +115,7 @@ nav a {
   border-radius: var(--rs);
   color: var(--text2);
   text-decoration: none;
-  font-size: .72rem;
+  font-size: .75rem;
   font-family: var(--mono);
   transition: all .18s;
   border-left: 2px solid transparent;
@@ -232,7 +232,7 @@ h4 {
   margin: 16px 0 8px;
 }
 
-p { color: var(--text2); font-size: .88rem; margin-bottom: 12px; line-height: 1.8; }
+p { color: var(--text2); font-size: .9rem; margin-bottom: 12px; line-height: 1.85; }
 p strong { color: var(--text); }
 p .hl  { color: var(--av); font-family: var(--mono); }
 p .hc  { color: var(--ac); font-family: var(--mono); }
@@ -292,7 +292,7 @@ p .ho  { color: var(--ao); font-family: var(--mono); }
 
 .gate-table td {
   padding: 9px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(255,255,255,.06);
   vertical-align: top;
   color: var(--text2);
   font-size: .78rem;
@@ -327,7 +327,7 @@ p .ho  { color: var(--ao); font-family: var(--mono); }
 }
 .kb-table td {
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(255,255,255,.06);
   color: var(--text2);
   vertical-align: middle;
 }
@@ -358,7 +358,7 @@ kbd {
   border: 1px solid var(--av);
   color: var(--av);
   font-family: var(--mono);
-  font-size: .68rem;
+  font-size: .72rem;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   margin-top: 2px;
@@ -373,7 +373,7 @@ kbd {
   border-radius: 0 var(--rs) var(--rs) 0;
   background: rgba(0,220,255,.05);
   margin: 14px 0;
-  font-size: .8rem;
+  font-size: .85rem;
   color: var(--text2);
 }
 .tip strong { color: var(--ac); font-family: var(--mono); }
@@ -384,7 +384,7 @@ kbd {
   border-radius: 0 var(--rs) var(--rs) 0;
   background: rgba(255,170,0,.05);
   margin: 14px 0;
-  font-size: .8rem;
+  font-size: .85rem;
   color: var(--text2);
 }
 .warn strong { color: var(--ao); font-family: var(--mono); }
@@ -395,7 +395,7 @@ kbd {
   border-radius: 0 var(--rs) var(--rs) 0;
   background: rgba(247,37,133,.05);
   margin: 14px 0;
-  font-size: .8rem;
+  font-size: .85rem;
   color: var(--text2);
 }
 .note strong { color: var(--am); font-family: var(--mono); }
@@ -403,7 +403,7 @@ kbd {
 /* ── FORMULA BOX ─────────────────────────────────────── */
 .formula {
   font-family: var(--mono);
-  font-size: .82rem;
+  font-size: .84rem;
   background: rgba(0,0,0,.3);
   border: 1px solid var(--border);
   border-radius: var(--rs);
@@ -477,7 +477,7 @@ kbd {
 .toc-list li { margin-bottom: 5px; break-inside: avoid; }
 .toc-list a { color: var(--text2); text-decoration: none; font-size: .78rem; transition: color .15s; display: flex; align-items: center; gap: 6px; }
 .toc-list a:hover { color: var(--av); }
-.toc-list a .toc-num { font-family: var(--mono); font-size: .6rem; color: var(--text3); width: 20px; flex-shrink: 0; }
+.toc-list a .toc-num { font-family: var(--mono); font-size: .6rem; color: #6a7fa8; width: 20px; flex-shrink: 0; }
 
 /* ── SCROLLBAR ───────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -586,7 +586,7 @@ kbd {
     <div class="nav-orb">ψ</div>
     <div>
       <div class="nav-title">Quantum<br>Simulator</div>
-      <div class="nav-ver">Manual v1.0</div>
+      <div class="nav-ver">Manual v2.0</div>
     </div>
   </div>
 
@@ -624,7 +624,8 @@ kbd {
     <a href="#mode-learn"><span class="icon">🎓</span>Modo Guiado</a>
     <a href="#mode-challenge"><span class="icon">🏆</span>Retos</a>
     <a href="#mode-state"><span class="icon">📐</span>Inspector de Estado</a>
-    <a href="#qnn"><span class="icon">🧠</span>QNN — Red Neuronal Cuántica</a>
+    <a href="#qnn"><span class="icon">🧠</span>QNN Básico</a>
+    <a href="#qnn-pro"><span class="icon">🧪</span>QNN-Pro</a>
   </div>
 
   <div class="nav-section">
@@ -635,12 +636,16 @@ kbd {
 
   <div class="nav-section">
     <div class="nav-section-label">Avanzado</div>
-    <a href="#io"><span class="icon">💾</span>Import / Export</a>
+    <a href="#io"><span class="icon">💾</span>Import / Export / QASM</a>
     <a href="#shortcuts"><span class="icon">⌨️</span>Atajos de teclado</a>
     <a href="#math"><span class="icon">∑</span>Motor matemático</a>
     <a href="#glossary"><span class="icon">📖</span>Glosario</a>
     <a href="#faq"><span class="icon">❓</span>FAQ</a>
-    <a href="#qnn"><span class="icon">🧠</span>QNN</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Herramientas</div>
+    <a href="#q3d"><span class="icon">🌌</span>Q3D Universe</a>
   </div>
 </nav>
 
@@ -655,6 +660,7 @@ kbd {
     <span class="badge v">HTML5 Vanilla</span>
     <span class="badge c">Simulación Real 2ⁿ</span>
     <span class="badge m">Hasta 5 Qubits</span>
+    <span class="badge v">QNN-Pro · Q3D</span>
     <span class="badge g">Open Source</span>
     <span class="badge v">QNN · VQC</span>
   </div>
@@ -688,6 +694,8 @@ kbd {
     <li><a href="#glossary"><span class="toc-num">22</span>Glosario</a></li>
     <li><a href="#faq"><span class="toc-num">23</span>FAQ</a></li>
     <li><a href="#qnn"><span class="toc-num">24</span>Redes Neuronales Cuánticas (QNN)</a></li>
+    <li><a href="#qnn-pro"><span class="toc-num">25</span>QNN-Pro (Algoritmos PennyLane)</a></li>
+    <li><a href="#q3d"><span class="toc-num">26</span>Q3D Universe — Visualizador 3D</a></li>
   </ul>
 </div>
 
@@ -764,7 +772,7 @@ q1 ────────⊕──────
 
   <div class="card">
     <div class="card-title">① Header (barra superior)</div>
-    <p style="margin:0;font-size:.8rem">Contiene el logo animado, el título y los botones de acción global: <span class="hc">Nuevo circuito</span>, <span class="hl">Reiniciar estado</span>, <span class="hl">Teoría</span>, <span class="hl">Ejemplos</span>, cambio de tema, exportar e importar.</p>
+    <p style="margin:0;font-size:.8rem">Contiene el logo animado y todos los botones de acción: <span class="hc">✦ Nuevo</span>, <span class="hl">↺ Reiniciar</span>, <span class="hl">📚 Teoría</span>, <span class="hl">⚡ Ejemplos</span>, cambio de tema (<span class="hc">Cosmos/Índigo</span>), <span class="ho">↓/↑ JSON</span>, <span class="ho">↓/↑ QASM</span> (OpenQASM 2.0), <span class="hg">💾 Guardar</span>, <span class="hg">📂 Historial</span>, <span class="hc">🌌 Q3D</span>, <span class="hl">❓ Ayuda</span> e <span class="hl">ℹ Acerca de</span>. El slider <span class="hc">☀ Brillo</span> en la barra del circuito ajusta el brillo global.</p>
   </div>
 
   <div class="card">
@@ -807,6 +815,9 @@ q1 ────────⊕──────
 
   <h3>Seleccionar una puerta</h3>
   <p>Haz <strong>clic normal</strong> sobre cualquier puerta en el circuito para seleccionarla (se resalta con halo brillante). Al seleccionarla, el panel derecho muestra su descripción completa y matriz unitaria.</p>
+
+  <h3>Mover una puerta ya colocada</h3>
+  <p>Haz <strong>clic y arrastra</strong> cualquier puerta del circuito para reubicarla en otra columna o qubit. Durante el arrastre aparece un indicador de destino en azul. Al soltar, la puerta se mueve y el circuito se resimula automáticamente. Si el arrastre es menor de 5 píxeles se trata como clic normal (selección).</p>
 
   <h3>Eliminar una puerta</h3>
   <p>Tres métodos disponibles:</p>
@@ -1137,7 +1148,7 @@ q1 ────────⊕──────
   <h3>Visual de cada esfera (estado)</h3>
   <ul class="steps">
     <li><p><strong>Tamaño:</strong> proporcional a la probabilidad. Estados con probabilidad 0 aparecen como fantasmas translúcidos.</p></li>
-    <li><p><strong>Color:</strong> magenta (prob > 55%), cian (prob 22-55%), violeta (prob < 22%).</p></li>
+    <li><p><strong>Color:</strong> cada estado |k⟩ tiene un <span class="hc">tono base único</span> según su índice en el espacio de Hilbert. La fase de la amplitud modula el tono ±30° y la probabilidad ajusta saturación y brillo — estados con alta probabilidad son más brillantes y saturados.</p></li>
     <li><p><strong>Capas de glow:</strong> halos concéntricos que dan efecto de energía plasma.</p></li>
     <li><p><strong>Anillo orbital animado:</strong> gira a velocidad proporcional a la probabilidad. Un punto orbital circunda la esfera.</p></li>
     <li><p><strong>Anillo de fase:</strong> los segmentos del anillo exterior cambian de color según la fase compleja de la amplitud.</p></li>
@@ -1160,6 +1171,8 @@ q1 ────────⊕──────
       <tr><td>💫 Pulsar</td><td>Activa modo pulsar: las esferas laten sinusoidalmente como estrellas de neutrones.</td></tr>
       <tr><td>⊞ Grid</td><td>Muestra/oculta las aristas del hipercubo (estructura geométrica de fondo).</td></tr>
       <tr><td>↻ Auto</td><td>Activa/desactiva la rotación automática cinematográfica.</td></tr>
+      <tr><td>☀ Brillo</td><td>Slider (40%–200%) que controla la intensidad de las esferas sin afectar el fondo nebulosa.</td></tr>
+      <tr><td>📷 PNG</td><td>Exporta el canvas del Universo como imagen PNG descargable.</td></tr>
       <tr><td>⟳ Vista</td><td>Resetea la cámara a la posición inicial óptima.</td></tr>
       <tr><td>Esc</td><td>Cierra el Universo y vuelve al simulador.</td></tr>
     </tbody>
@@ -1357,8 +1370,24 @@ q1 ────────⊕──────
 |00>,42,0.4200
 |11>,58,0.5800</div>
 
+  <h3>Export / Import OpenQASM 2.0</h3>
+  <p>Los botones <strong>↓ QASM</strong> y <strong>↑ QASM</strong> del header permiten interoperar con Qiskit, IBM Quantum y otros entornos estándar.</p>
+  <p><strong>↓ QASM</strong> genera un modal con el código QASM del circuito actual, con opción de copiarlo al portapapeles o descargarlo como <span class="hc">.qasm</span>. <strong>↑ QASM</strong> importa un archivo <span class="hc">.qasm</span> o <span class="hc">.txt</span> con formato OpenQASM 2.0.</p>
+  <div class="formula">OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+
+h q[0];
+cx q[0], q[1];</div>
+  <div class="tip"><strong>💡 Compatibilidad:</strong> El parser soporta puertas estándar h, x, y, z, s, sdg, t, tdg, rx, ry, rz, cx, cz, swap, ccx, ccz, measure y barrier. Puertas no reconocidas se ignoran.</div>
+
+  <h3>Historial de circuitos (💾 Guardar / 📂 Historial)</h3>
+  <p>El botón <strong>💾 Guardar</strong> guarda el circuito actual en el historial con un nombre personalizado. El botón <strong>📂 Historial</strong> abre un modal con los últimos <span class="hc">8 circuitos guardados</span>, mostrando nombre, número de qubits, puertas y fecha. Desde ahí puedes cargar o eliminar cualquier circuito guardado.</p>
+  <div class="warn"><strong>⚠ Nota:</strong> El historial se guarda en localStorage bajo la clave <span class="hc">qsim_hist</span>. Se mantiene entre sesiones pero es local al navegador.</div>
+
   <h3>Persistencia automática</h3>
-  <p>El simulador guarda automáticamente el circuito en <strong>localStorage</strong> del navegador con cada cambio. Al reabrir la página, el circuito se restaura exactamente como estaba. Para borrar el estado guardado, usa el botón <strong>✦ Nuevo</strong> (confirmación requerida).</p>
+  <p>El simulador guarda automáticamente el circuito activo en <strong>localStorage</strong> con cada cambio (clave <span class="hc">qsim3</span>). Al reabrir la página, el circuito se restaura exactamente como estaba. Para limpiar, usa <strong>✦ Nuevo</strong> (pide confirmación).</p>
 </section>
 
 <!-- ══════════════════════════════════════════════════ -->
@@ -1377,6 +1406,8 @@ q1 ────────⊕──────
       <tr><td><kbd>⇧</kbd> + clic en puerta</td><td>Abrir inspector detallado de la puerta</td></tr>
       <tr><td>Clic derecho en puerta</td><td>Eliminar puerta directamente</td></tr>
       <tr><td><kbd>⇧</kbd> + clic en esfera (Universo)</td><td>Colapsar sistema a ese estado</td></tr>
+      <tr><td>Arrastrar puerta en circuito</td><td>Mover puerta a nueva posición (columna / qubit)</td></tr>
+      <tr><td>Clic derecho canvas QNN</td><td>Añadir punto de clase 1</td></tr>
     </tbody>
   </table>
 </section>
@@ -1549,6 +1580,10 @@ Pureza del estado reducido de q0 (traza parcial):
     <div class="card-title">④ Mapa de decisión</div>
     <p style="margin:0;font-size:.78rem">Visualiza la frontera de decisión aprendida. El fondo <span class="hc">cian</span> indica zona de clase 0, el <span class="hm">magenta</span> zona de clase 1. La intensidad refleja la confianza del modelo. Los puntos de entrenamiento se superponen con borde <strong>blanco</strong> si están bien clasificados o <strong>rojo</strong> si están mal.</p>
   </div>
+  <div class="card c">
+    <div class="card-title">⑤ Integración con Quantum Universe</div>
+    <p style="margin:0;font-size:.78rem">Tras el entrenamiento, el botón <span class="hc">🌌 Ver en Universo</span> exporta el estado cuántico del circuito variacional al simulador y abre el Quantum Universe 3D para visualizar el espacio de Hilbert del modelo entrenado.</p>
+  </div>
 
   <h3>Problemas de ejemplo</h3>
   <table class="gate-table">
@@ -1628,6 +1663,97 @@ Y la predicción p se obtiene como:
   </div>
 
 </section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="qnn-pro">
+  <h2>25 · QNN-Pro — Algoritmos PennyLane</h2>
+
+  <p>La pestaña <strong>🧪 QNN-Pro</strong> implementa un clasificador cuántico variacional con los mismos algoritmos que <span class="hc">PennyLane default.qubit</span>, ejecutado en JavaScript nativo sin dependencias externas.</p>
+
+  <div class="cols">
+    <div class="card c">
+      <div class="card-title">⚛ Diferencias con QNN básico</div>
+      <p style="margin:0;font-size:.78rem">QNN-Pro añade: hasta <span class="hc">5 qubits</span>, <span class="hl">6 capas</span>, 3 tipos de ansatz, 4 optimizadores completos con estado (Adam con corrección de sesgo, Nesterov, AdaGrad), 5 datasets incluyendo Medias Lunas, visualización de todos los parámetros θ(φ,θ,ω) por capa/qubit y exportación JSON del modelo entrenado.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🔬 Equivalencia matemática</div>
+      <p style="margin:0;font-size:.78rem">El simulador cuántico es idéntico a PennyLane <span class="hc">default.qubit</span>: mismo álgebra lineal compleja, mismo param-shift exacto <span class="hm">∂L/∂θᵢ = ½[L(θ+π/2)−L(θ−π/2)]</span>, mismo encoding Ry(πx₀)Rz(πx₁) y mismo ⟨Z₀⟩→sigmoid→clase.</p>
+    </div>
+  </div>
+
+  <h3>Tipos de ansatz</h3>
+  <table class="gate-table">
+    <thead><tr><th>Ansatz</th><th>Descripción</th><th>Equivalente PennyLane</th></tr></thead>
+    <tbody>
+      <tr><td><strong>StronglyEntangling</strong></td><td>Rot(φ,θ,ω) por qubit + CNOT ring con múltiples pasos de entrelazamiento. El más expresivo.</td><td><span class="hc">StronglyEntanglingLayers</span></td></tr>
+      <tr><td><strong>BasicEntangler</strong></td><td>Ry(θ) por qubit + cadena CNOT lineal. Más ligero, bueno para problemas simples.</td><td><span class="hc">BasicEntanglerLayers</span></td></tr>
+      <tr><td><strong>HardwareEfficient</strong></td><td>Ry(θ)+Rz(θ) por qubit + CZ ring. Optimizado para hardware superconductor.</td><td>Circuito HEA personalizado</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Optimizadores disponibles</h3>
+  <table class="gate-table">
+    <thead><tr><th>Optimizador</th><th>Descripción</th><th>Recomendado para</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Adam</strong></td><td>Gradiente adaptativo con corrección de sesgo (β₁=0.9, β₂=0.999). Convergencia rápida y robusta.</td><td>Uso general — opción por defecto</td></tr>
+      <tr><td><strong>Nesterov</strong></td><td>Momentum de Nesterov con look-ahead. Mejor que SGD puro en paisajes con valles.</td><td>Problemas con muchas capas</td></tr>
+      <tr><td><strong>AdaGrad</strong></td><td>Tasa de aprendizaje adaptativa por parámetro. Útil cuando los gradientes son muy heterogéneos.</td><td>Datasets sparse o desbalanceados</td></tr>
+      <tr><td><strong>GradDesc</strong></td><td>Descenso de gradiente puro sin momentum. Lento pero predecible.</td><td>Diagnóstico y debugging</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Flujo de trabajo</h3>
+  <ul class="steps">
+    <li><p>Selecciona el <strong>dataset</strong> en el selector o añade puntos manualmente (clic = clase 0, shift+clic o clic derecho = clase 1).</p></li>
+    <li><p>Configura la <strong>arquitectura</strong>: qubits (2–5), capas (1–6), tipo de ansatz y optimizador.</p></li>
+    <li><p>Ajusta <strong>LR</strong> (tasa de aprendizaje, 0.01–0.40) y el número de <strong>épocas</strong> (10–300).</p></li>
+    <li><p>Pulsa <strong>▶ Entrenar</strong>. La curva de pérdida (magenta) y precisión (verde) se actualizan en tiempo real. Cada época ejecuta el param-shift completo sobre todos los parámetros.</p></li>
+    <li><p>Observa el <strong>mapa de decisión</strong> que se actualiza cada 8 épocas durante el entrenamiento.</p></li>
+    <li><p>Usa <strong>🌌 Ver en Universo</strong> para enviar el estado cuántico del modelo al Quantum Universe 3D.</p></li>
+    <li><p>Usa <strong>↓ Export θ JSON</strong> para descargar los parámetros θ aprendidos con metadatos del modelo.</p></li>
+  </ul>
+
+  <div class="tip">
+    <strong>💡 Guía de hiperparámetros:</strong> Para XOR empieza con 3 qubits, 3 capas, StronglyEntangling, Adam, LR=0.08, 80 épocas. Para Espiral usa 4–5 qubits, 4–6 capas y más épocas. Si la pérdida se estanca, prueba Reset (reinicializa parámetros aleatoriamente) para escapar de mínimos locales.
+  </div>
+
+  <div class="note">
+    <strong>📌 Coste computacional:</strong> El param-shift calcula 2 evaluaciones del circuito por parámetro por punto de datos. Con 3 qubits, 3 capas y 8 puntos: 3×3×3×2×8 = 432 ejecuciones del simulador por época. Con 5 qubits y 6 capas puede ser significativamente más lento.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="q3d">
+  <h2>26 · Q3D Universe — Visualizador 3D Independiente</h2>
+
+  <p>El botón <strong>🌌 Q3D</strong> del header abre <span class="hc">q3d.html</span> en una nueva pestaña: un visualizador 3D del espacio de Hilbert completamente independiente del simulador principal, con su propia simulación cuántica y controles.</p>
+
+  <div class="cols">
+    <div class="card c">
+      <div class="card-title">🎯 Diferencias con el UV integrado</div>
+      <p style="margin:0;font-size:.78rem">Q3D tiene su propia barra de herramientas, selector de circuitos de ejemplo independiente y puede usarse sin cargar el simulador completo. Es ideal para presentaciones o exploración visual sin la complejidad del editor de circuitos.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">⚛ Circuitos disponibles</div>
+      <p style="margin:0;font-size:.78rem">Estado de Bell |Φ+⟩, GHZ (3 qubits), Superposición uniforme 2Q y 3Q, Grover (busca |11⟩), Superposición parcial, Estado W, QFT 2 qubits. Cada circuito se puede medir con 📏 o × 100 shots.</p>
+    </div>
+  </div>
+
+  <h3>Controles</h3>
+  <table class="gate-table">
+    <thead><tr><th>Control</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td>Arrastrar</td><td>Rotar el universo en 3D con inercia</td></tr>
+      <tr><td>Rueda</td><td>Zoom 150–900</td></tr>
+      <tr><td>Hover esfera</td><td>Tooltip: estado, probabilidad, amplitud, fase</td></tr>
+      <tr><td>⇧+clic esfera</td><td>Colapsar sistema a ese estado base</td></tr>
+      <tr><td>💫 Modo Pulsar</td><td>Esferas con latido sinusoidal animado</td></tr>
+      <tr><td>⊞ Grid</td><td>Aristas del hipercubo geométrico</td></tr>
+    </tbody>
+  </table>
+</section>
+
 
 <!-- ── FOOTER ───────────────────────────────────────────── -->
 <div style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);
