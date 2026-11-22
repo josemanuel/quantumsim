@@ -2577,6 +2577,15 @@ const Q={
       if(e.shiftKey)this.openGateModal(op)
       else{this.selId=this.selId===op.id?-1:op.id;this.renderCirc();this.showGateInfo(op.gate)}
     })
+    // Hover inspector: matrix tip without stealing click/drag
+    canvas.addEventListener('mousemove',e=>{
+      if(this._dragOp) return
+      const{mx,my}=this.mouse(e)
+      const hop=this.hit(mx,my)
+      if(hop){ canvas.style.cursor='pointer'; this.showGateTip(hop, e.clientX, e.clientY) }
+      else { if(canvas.style.cursor==='pointer') canvas.style.cursor='crosshair'; this.hideGateTip() }
+    })
+    canvas.addEventListener('mouseleave',()=>{ this.hideGateTip(); if(!this._dragOp) canvas.style.cursor='crosshair' })
     canvas.addEventListener('click',e=>{
       const{mx,my}=this.mouse(e);const op=this.hit(mx,my)
       if(op)return
